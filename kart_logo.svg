@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="kart_logo.svg"
+   inkscape:export-filename="/home/danieru/kart/kart_logo.png"
+   inkscape:export-xdpi="54"
+   inkscape:export-ydpi="54">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.959798"
+     inkscape:cx="247.26959"
+     inkscape:cy="836.5867"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1598"
+     inkscape:window-height="880"
+     inkscape:window-x="0"
+     inkscape:window-y="18"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="レイヤー 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#f43f2d;fill-opacity:1;stroke:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+       x="147.14285"
+       y="208.79076"
+       id="text2985"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2987"
+         x="147.14285"
+         y="208.79076"
+         style="letter-spacing:-1.72000003000000001px;-inkscape-font-specification:Ubuntu;font-family:Ubuntu;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;fill:#f43f2d;fill-opacity:1">Kart</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#f43f2d;fill-opacity:1;stroke:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Italic"
+       x="222.85713"
+       y="208.07648"
+       id="text2989"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2991"
+         x="222.85713"
+         y="208.07648"
+         rotate="0 0 0 0 0 0 0"
+         style="font-style:italic;letter-spacing:1.98000002000000008px;-inkscape-font-specification:Ubuntu Italic;font-family:Ubuntu;font-weight:normal;font-stretch:normal;font-variant:normal;fill:#f43f2d;fill-opacity:1"
+         dx="0">Bounty</tspan></text>
+    <rect
+       style="fill:#f43f2d;fill-opacity:1;stroke:none"
+       id="rect3004"
+       width="12.5"
+       height="2.5"
+       x="133.4724"
+       y="184.46358" />
+    <rect
+       style="fill:#f43f2d;fill-opacity:1;stroke:none"
+       id="rect3006"
+       width="23.214287"
+       height="2.1428571"
+       x="122.88438"
+       y="190.42329" />
+    <rect
+       style="fill:#f43f2d;fill-opacity:1;stroke:none"
+       id="rect3008"
+       width="12.504487"
+       height="1.4285715"
+       x="133.55721"
+       y="195.45206" />
+    <rect
+       style="fill:#f43f2d;fill-opacity:1;stroke:none"
+       id="rect3010"
+       width="23.302801"
+       height="2.2493205"
+       x="122.85899"
+       y="199.82784" />
+    <rect
+       style="fill:#f43f2d;fill-opacity:1;stroke:none"
+       id="rect3012"
+       width="12.378807"
+       height="2.5"
+       x="133.55534"
+       y="205.535" />
+  </g>
+</svg>
