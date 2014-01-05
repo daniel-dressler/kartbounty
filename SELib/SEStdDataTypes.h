@@ -1,17 +1,20 @@
 #ifndef __SE_STD_DATATYPES__
 #define __SE_STD_DATATYPES__
 
-typedef			 __int8		Byte;
-typedef	signed	 __int8		Int8;
-typedef unsigned __int8		UInt8;
-typedef	signed	 __int16	Int16;
-typedef unsigned __int16	UInt16;
-typedef	signed	 __int32	Int32;
-typedef unsigned __int32	UInt32;
-typedef	signed	 __int64	Int64;
-typedef unsigned __int64	UInt64;
-typedef			 float		Float32;
-typedef			 double		Float64;
+#include <stdint.h>
+typedef	int8_t   Byte;
+typedef	int8_t   Int8;
+typedef uint8_t	 UInt8;
+typedef	int16_t  Int16;
+typedef uint16_t UInt16;
+typedef	int32_t  Int32;
+typedef uint32_t UInt32;
+typedef	int64_t  Int64;
+typedef uint64_t UInt64;
+// IEEE 754 defines the size of floats
+// so there are no float32_t's
+typedef	float    Float32;
+typedef	double   Float64;
 
 #ifdef SE_DOUBLE_PRECISION
 typedef			 double		Real;

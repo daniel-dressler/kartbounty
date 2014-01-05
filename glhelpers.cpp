@@ -1,7 +1,12 @@
 ﻿#include "Standard.h"
 #include "glhelpers.h"
 
+#ifdef _WIN32
 #include <io.h>
+#else
+#include <stdio.h>
+#endif
+
 #include <fcntl.h>
 #include <memory.h>
 

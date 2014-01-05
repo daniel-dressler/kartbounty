@@ -1,5 +1,6 @@
 #include "Standard.h"
 #include "glhelpers.h"
+#include <SDL.h>
 
 #include "ShaderStructs.h"
 
