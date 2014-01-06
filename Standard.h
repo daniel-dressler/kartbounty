@@ -18,8 +18,19 @@
 
 #else // Linux
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define DEBUGOUT( str, ... ) { fprintf( stderr, str, ##__VA_ARGS__ ); }
+
+long _filelength(int fd)
+{
+	struct stat sb;
+	fstat(fd, &sb);
+	return sb.st_size;
+}
 
 #endif
 

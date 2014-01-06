@@ -78,12 +78,14 @@ int main( int argc, char** argv )
 
 		glClearColor( 0, 0, 0, 1 );
 		glClear( GL_COLOR_BUFFER_BIT );
-
+/* @Phil: Tell me if this does not work
 #ifdef _WIN32
 		SwapBuffers( glhGetHDC() );
 #else
 		SwapBuffers();
 #endif
+*/
+		SDL_GL_SwapWindow(win);
 	}
 
 	glhDestroyBuffer( permesh );

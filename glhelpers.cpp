@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #include <io.h>
 #else
-#include <stdio.h>
+#include <sys/io.h>
 #endif
 
 #include <fcntl.h>
@@ -133,11 +133,10 @@ void glhUnloadEffect( GLeffect effect )
 #else
 
 #define _OPEN			open
-#define _FILELEN		filelength
+#define _FILELEN		_filelength
 #define _READ			read
 #define _CLOSE			close
-#define GLFILE_FLAGS	O_RDONLY | O_BINARY | O_SEQUENTIAL
-
+#define GLFILE_FLAGS	O_RDONLY
 #endif
 
 int glhReadFile( char* strFilename, GLchar*& strSource, GLint& nSize )
