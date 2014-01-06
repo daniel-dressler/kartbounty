@@ -54,10 +54,10 @@ HDC glhGetHDC()
 }
 #endif
 
-GLeffect glhLoadEffect( char* strVertexShader,
-						char* strGeometryShader,
-						char* strPixelShader,
-						char** aryHeaders,
+GLeffect glhLoadEffect( const char* strVertexShader,
+						const char* strGeometryShader,
+						const char* strPixelShader,
+						const char** aryHeaders,
 						int nHeaderCount )
 {
 	GLeffect effect;
@@ -139,7 +139,7 @@ void glhUnloadEffect( GLeffect effect )
 #define GLFILE_FLAGS	O_RDONLY
 #endif
 
-int glhReadFile( char* strFilename, GLchar*& strSource, GLint& nSize )
+int glhReadFile( const char* strFilename, GLchar*& strSource, GLint& nSize )
 {
 	int nFile = _OPEN( strFilename, GLFILE_FLAGS );
 	if( nFile < 0 )
@@ -226,7 +226,7 @@ void glhCheckUniformNames( GLuint program )
 	DEBUGOUT( "\n" );
 }
 
-int glhCreateBuffer( const GLeffect& effect, GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer )
+int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer )
 {
 	if( nSize <= 0 )
 		return 0;

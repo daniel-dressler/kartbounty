@@ -33,9 +33,14 @@ int main( int argc, char** argv )
 		return 1;
 
 #ifdef _WIN32
+	// @Phil: Does SDL_GL_CreateContext not work under windows?
+	// Seems like this should be something SDL is meant to fix
 	if( !glhCreateContext( win ) )
 		return 1;
 #else
+	// @Phil: good job! This worked without any edits which
+	// is impressive since I assume you didn't have a chance to
+	// compile it.
 	SDL_GLContext glcontext = SDL_GL_CreateContext( win );
 	if( !glcontext )
 		return 1;
@@ -50,8 +55,8 @@ int main( int argc, char** argv )
 	glGetIntegerv( GL_MAJOR_VERSION, &major );
 	glGetIntegerv( GL_MINOR_VERSION, &minor );
 
-	GLchar* aryHeaders[] = { "ShaderStructs.glsl" };
-	GLeffect effect = glhLoadEffect( "VShader.glsl", 0, "PShader.glsl", aryHeaders, 1 );
+	const GLchar* aryHeaders[] = { "ShaderStructs.glsl" };
+	GLeffect effect = glhLoadEffect( "VShader.glsl", NULL, "PShader.glsl", aryHeaders, 1 );
 	if( !effect.program )
 		return 1;
 
@@ -62,8 +67,10 @@ int main( int argc, char** argv )
 	if( !glhCreateBuffer( effect, "cstPerFrame", sizeof(cstPerFrame), &perframe ) )
 		return 1;
 
+	/* @Phil: Are these used? I'm not sure what they are supposed to be doing
 	cstPerMesh& perMesh = *(cstPerMesh*)permesh.buffer;
 	cstPerFrame& perFrame = *(cstPerFrame*)perframe.buffer;
+	*/
 
 	glhCheckUniformNames( effect.program );
 

@@ -22,20 +22,20 @@ int glhCreateContext( SDL_Window* win );
 HDC glhGetHDC();
 #endif
 
-GLeffect glhLoadEffect( char* strVertexShader,
-						char* strGeometryShader,
-						char* strPixelShader,
-						char** aryHeaders,
+GLeffect glhLoadEffect( const char* strVertexShader,
+						const char* strGeometryShader,
+						const char* strPixelShader,
+						const char** aryHeaders,
 						int nHeaderCount );
 void glhUnloadEffect( GLeffect effect );
 
-int glhReadFile( char* strFilename, GLchar*& strSource, GLint& nSize );
+int glhReadFile( const char* strFilename, GLchar*& strSource, GLint& nSize );
 GLuint glhCompileShader( GLuint uType, GLsizei nSourceCount, GLchar** arySourceData, GLint* aryDataSizes );
 GLuint glhCombineProgram( GLuint uVertex, GLuint uGeometry, GLuint uPixel );
 
 void glhCheckUniformNames( GLuint program );
 
-int glhCreateBuffer( const GLeffect& effect, GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer );
+int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer );
 int glhUpdateBuffer( const GLbuffer& buffer );
 void glhDestroyBuffer( GLbuffer& buffer );
 
