@@ -1,14 +1,19 @@
 #pragma once
 
+#ifdef _WIN32
+
+#define _SCL_SECURE_NO_WARNINGS
+#define _STL_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
 
 #ifdef _WIN32			// Order of this matters on windows
 
-#define _SCL_SECURE_NO_WARNINGS
-#define _STL_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
 
 #define WIN_32_LEAN_AND_MEAN
 #include <Windows.h>
