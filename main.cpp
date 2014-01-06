@@ -15,8 +15,8 @@ int main( int argc, char** argv )
 #endif
 
 	SDL_Init( SDL_INIT_EVERYTHING );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3.3 ); // Test this with 4.0, 3.3, 3.2
 	/*
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );		// Test this with 4.0, 3.3, 3.2
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
