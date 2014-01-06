@@ -61,11 +61,10 @@ GLeffect glhLoadEffect( const char* strVertexShader,
 						int nHeaderCount )
 {
 	GLeffect effect;
-	GLchar** arySources = (GLchar**)malloc( sizeof(GLchar*) * ( nHeaderCount + 1 ) );
-	GLint* arySizes = (GLint*)malloc( sizeof(GLint) * ( nHeaderCount + 1 ) );
-
-	memset( &effect, 0, sizeof(GLeffect) );
-	memset( arySources, 0, sizeof(GLchar*) * ( nHeaderCount + 1 ) );
+	// @Phil: Hope you don't mind, calloc() does what you were doing with the
+	// memsets
+	GLchar** arySources = (GLchar**)calloc( sizeof(GLchar*), nHeaderCount + 1 );
+	GLint* arySizes = (GLint*)calloc( sizeof(GLint), nHeaderCount + 1 );
 
 	for( int i = 0; i < nHeaderCount; i++ )
 	{
