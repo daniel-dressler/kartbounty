@@ -4,6 +4,8 @@
 // Memory Includes
 #ifdef _WIN32
 	#include <memory.h>
+#else
+	#include <string.h> // for memset
 #endif
 
 // Memory Macros

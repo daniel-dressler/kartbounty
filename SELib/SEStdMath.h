@@ -4,9 +4,7 @@
 #include "SEStdDataTypes.h"
 
 // Math Includes
-#ifdef _WIN32
-	#include <math.h>
-#endif
+#include <math.h>
 
 #define CLOSE		0.0001f
 

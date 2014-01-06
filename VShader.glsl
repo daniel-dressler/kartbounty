@@ -1,8 +1,6 @@
 
 in vec3 vs_position;
 
-uniform vec4	g_matWorldViewProj;
-
 layout (std140,row_major) uniform cstPerMesh
 {
 	mat4	g_matWorld;
