@@ -4,6 +4,8 @@
 
 #include "ShaderStructs.h"
 
+#define GAMENAME "KartBounty"
+
 int main( int argc, char** argv )
 {
 #ifdef _WIN32
@@ -18,12 +20,15 @@ int main( int argc, char** argv )
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ); // SDL's default
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
 	SDL_GL_SetSwapInterval( 1 );
 	*/
 
-	SDL_Window *win = SDL_CreateWindow( "Game Window", 100, 100, 800, 450, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN );
+	SDL_Window *win = SDL_CreateWindow( GAMENAME,
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			800, 450, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
 	if( !win )
 		return 1;
 
