@@ -3,6 +3,10 @@
 #include <SDL.h>
 
 #include "ShaderStructs.h"
+#include "component/events/events.h"
+
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 
 #define GAMENAME "KartBounty"
 
@@ -14,16 +18,9 @@ int main( int argc, char** argv )
 #endif
 #endif
 
-	SDL_Init( SDL_INIT_EVERYTHING );
-	/*
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );		// Test this with 4.0, 3.3, 3.2
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 ); // Test this with 4.0, 3.3, 3.2
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
-	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 ); // SDL's default
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
-	SDL_GL_SetSwapInterval( 1 );
-	*/
+	SDL_Init( SDL_INIT_EVERYTHING );
 
 	SDL_Window *win = SDL_CreateWindow( GAMENAME,
 			SDL_WINDOWPOS_UNDEFINED,
