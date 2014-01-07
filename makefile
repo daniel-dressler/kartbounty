@@ -1,7 +1,7 @@
 BULLET = ./lib/bullet
 
 BULLETFLAGS = -I $(BULLET)/src/
-CXXFLAGS += -g $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
+CXXFLAGS += -g -Wall -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
 
 BULLETLIB = $(BULLET)/static_lib/src
 BULLETLIBS = $(BULLETLIB)/BulletDynamics/libBulletDynamics.a $(BULLETLIB)/BulletCollision/libBulletCollision.a $(BULLETLIB)/LinearMath/libLinearMath.a
@@ -11,7 +11,7 @@ ODIR := obj
 BDIR := build
 
 SRC = main.cpp glhelpers.cpp Standard.cpp SELib/SEStdMath.cpp SELib/SEMatrix.cpp \
-	SELib/SEVector.cpp SELib/SEQuaternion.cpp
+	SELib/SEVector.cpp SELib/SEQuaternion.cpp component/events/events.cpp
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
 
 $(BDIR)/kart: $(OBJS) $(BULLET)/built

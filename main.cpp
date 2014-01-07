@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 #include "ShaderStructs.h"
+#include "component/events/events.h"
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
