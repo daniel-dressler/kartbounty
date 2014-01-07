@@ -8,6 +8,8 @@
 #pragma comment( lib, "SDL2.lib" )
 #pragma comment( lib, "SDL2main.lib" )
 
+#pragma comment( lib, "BulletPhysics.lib" )
+
 #else
 
 long _filelength(int fd)
