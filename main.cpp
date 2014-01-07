@@ -65,7 +65,7 @@ int main( int argc, char** argv )
 	cstPerMesh& perMesh = *(cstPerMesh*)permesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)perframe.data;
 
-	glhCheckUniformNames( effect.program );
+	glhCheckUniformNames( effect.program ); // This is just a test (not needed)
 
 	int bRunning = 1;
 	SDL_Event event;
@@ -94,6 +94,10 @@ int main( int argc, char** argv )
 	glhDestroyBuffer( permesh );
 	glhDestroyBuffer( perframe );
 	glhUnloadEffect( effect );
+
+#ifdef _WIN32
+	glhDestroyContext();
+#endif
 
 	SDL_DestroyWindow( win );
 	SDL_Quit();

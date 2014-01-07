@@ -52,6 +52,16 @@ HDC glhGetHDC()
 {
 	return g_hdc;
 }
+int glhDestroyContext()
+{
+	if( !wglMakeCurrent( 0, 0 ) )
+		return 0;
+
+	if( !wglDeleteContext( g_hglrc ) )
+		return 0;
+
+	return 1;
+}
 #endif
 
 GLeffect glhLoadEffect( const char* strVertexShader,
