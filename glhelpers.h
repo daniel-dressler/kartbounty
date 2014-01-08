@@ -20,6 +20,7 @@ struct GLbuffer
 #ifdef _WIN32
 int glhCreateContext( SDL_Window* win );
 HDC glhGetHDC();
+int glhDestroyContext();
 #endif
 
 GLeffect glhLoadEffect( const char* strVertexShader,
