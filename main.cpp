@@ -2,11 +2,12 @@
 #include "glhelpers.h"
 #include <SDL.h>
 
+#include <thread>
+#include <chrono>
+
 #include "ShaderStructs.h"
 #include "component/events/events.h"
-
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
+#include "component/physics/physics.h"
 
 #define GAMENAME "KartBounty"
 
@@ -66,6 +67,11 @@ int main( int argc, char** argv )
 
 	int bRunning = 1;
 	SDL_Event event;
+
+	// Init components
+	Physics::Simulation *simulation = new Physics::Simulation();
+	simulation->loadWorld();
+
 	while( bRunning )
 	{
 		while( SDL_PollEvent( &event ) )
@@ -78,14 +84,17 @@ int main( int argc, char** argv )
 			}
 		}
 
-		glClearColor( 0, 0, 0, 1 );
+		glClearColor( 100, 10, 0, 1 );
 		glClear( GL_COLOR_BUFFER_BIT );
 
+		simulation->step(1/60.f); // debug draws right now
 #ifdef _WIN32
 		SwapBuffers( glhGetHDC() );
 #else
 		SDL_GL_SwapWindow(win);
 #endif
+		std::chrono::milliseconds timespan(10); // oswhatever
+		std::this_thread::sleep_for(timespan);
 	}
 
 	glhDestroyBuffer( permesh );

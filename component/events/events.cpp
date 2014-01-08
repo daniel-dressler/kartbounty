@@ -79,13 +79,12 @@ class PostOffice {
 static PostOffice *Events_Global_PostOffice = NULL;
 
 #define PO() Events_Global_PostOffice
-Mailbox::Mailbox(std::string box_name)
+Mailbox::Mailbox()
 {
 	if (PO() == NULL) {
 		PO() = new PostOffice();
 	}
 	this->mailbox_id = PO()->getMailboxId();
-	mailbox_name = box_name;
 }
 
 void Mailbox::sendMail(std::vector<Event *> events)

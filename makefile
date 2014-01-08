@@ -11,7 +11,8 @@ ODIR := obj
 BDIR := build
 
 SRC = main.cpp glhelpers.cpp Standard.cpp SELib/SEStdMath.cpp SELib/SEMatrix.cpp \
-	SELib/SEVector.cpp SELib/SEQuaternion.cpp component/events/events.cpp
+	SELib/SEVector.cpp SELib/SEQuaternion.cpp component/events/events.cpp \
+	component/physics/physics.cpp component/physics/GLDebugDrawer.cpp 
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
 
 $(BDIR)/kart: $(OBJS) $(BULLET)/built
