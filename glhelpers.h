@@ -7,6 +7,9 @@ struct GLeffect
 	GLuint vertex;
 	GLuint geometry;
 	GLuint pixel;
+
+	GLint blockcount;
+	GLuint* blocks;
 };
 
 struct GLbuffer
@@ -15,6 +18,16 @@ struct GLbuffer
 	GLuint	buffer;
 	GLchar* data;
 	GLint	size;
+	GLuint  base;
+};
+
+struct GLmesh
+{
+	GLuint	vbuffer;
+	GLuint	ibuffer;
+	GLuint  vstride;
+	GLuint	icount;
+	GLint	type;
 };
 
 #ifdef _WIN32
@@ -37,7 +50,12 @@ GLuint glhCombineProgram( GLuint uVertex, GLuint uGeometry, GLuint uPixel );
 void glhCheckUniformNames( GLuint program );
 
 int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer );
-int glhUpdateBuffer( const GLbuffer& buffer );
+int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer );
 void glhDestroyBuffer( GLbuffer& buffer );
+
+int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata );
+int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh );
+
+void glhPredefinedVertexLayout( Int32 nType );
 
 #endif

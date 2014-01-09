@@ -1,5 +1,4 @@
-//#include "SEGraphics.h"
-#include "SELinearMath.h"
+#include "SELib.h"
 
 Quaternion& Quaternion::Multiply( const Quaternion& q1, const Quaternion& q2 )
 {

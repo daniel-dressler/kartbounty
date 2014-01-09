@@ -3,7 +3,8 @@
 
 // Memory Includes
 #ifdef _WIN32
-	#include <memory.h>
+	#include <stdlib.h>
+	#include <string.h> // for memset
 #else
 	#include <string.h> // for memset
 #endif

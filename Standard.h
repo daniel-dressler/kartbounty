@@ -43,4 +43,4 @@ long _filelength(int fd);
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "SELib/SELinearMath.h"
+#include "SELib/SELib.h"

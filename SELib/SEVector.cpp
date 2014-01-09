@@ -1,5 +1,4 @@
-//#include "SEGraphics.h"
-#include "SELinearMath.h"
+#include "SELib.h"
 
 Vector2& Vector2::Transform( const Matrix3x3& mat )
 {

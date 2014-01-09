@@ -76,19 +76,25 @@
     <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SELib\SEMatrix.cpp" />
+    <ClCompile Include="SELib\SEMesh.cpp" />
     <ClCompile Include="SELib\SEQuaternion.cpp" />
     <ClCompile Include="SELib\SEStdMath.cpp" />
+    <ClCompile Include="SELib\SETimer.cpp" />
     <ClCompile Include="SELib\SEVector.cpp" />
     <ClCompile Include="Standard.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glhelpers.h" />
+    <ClInclude Include="SELib\SECompData.h" />
+    <ClInclude Include="SELib\SELib.h" />
     <ClInclude Include="SELib\SELinearMath.h" />
     <ClInclude Include="SELib\SEMatrix.h" />
+    <ClInclude Include="SELib\SEMesh.h" />
     <ClInclude Include="SELib\SEQuaternion.h" />
     <ClInclude Include="SELib\SEStdDataTypes.h" />
     <ClInclude Include="SELib\SEStdMath.h" />
     <ClInclude Include="SELib\SEStdMemory.h" />
+    <ClInclude Include="SELib\SETimer.h" />
     <ClInclude Include="SELib\SEVector.h" />
     <ClInclude Include="ShaderStructs.h" />
     <ClInclude Include="Standard.h" />

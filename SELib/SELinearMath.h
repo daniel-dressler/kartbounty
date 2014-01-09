@@ -9,10 +9,6 @@
 #define SE_MATRIX_COLMAJOR
 //#define __USE_D3DX__
 
-#include "SEStdDataTypes.h"
-#include "SEStdMemory.h"
-#include "SEStdMath.h"
-
 typedef UInt16 VIndex;
 
 struct Vector2;

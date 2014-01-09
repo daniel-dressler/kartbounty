@@ -43,6 +43,8 @@ int main( int argc, char** argv )
 	if( glewInit() != GLEW_OK )
 		return 1;
 
+	const GLubyte* strVendor = glGetString( GL_VENDOR );
+
 	GLint major, minor;
 	glGetIntegerv( GL_MAJOR_VERSION, &major );
 	glGetIntegerv( GL_MINOR_VERSION, &minor );
@@ -52,18 +54,37 @@ int main( int argc, char** argv )
 	if( !effect.program )
 		return 1;
 
-	GLbuffer permesh, perframe;
-	if( !glhCreateBuffer( effect, "cstPerMesh", sizeof(cstPerMesh), &permesh ) )
-		return 1;
-
-	if( !glhCreateBuffer( effect, "cstPerFrame", sizeof(cstPerFrame), &perframe ) )
-		return 1;
-
-	cstPerMesh& perMesh = *(cstPerMesh*)permesh.data;
-	cstPerFrame& perFrame = *(cstPerFrame*)perframe.data;
-
 	glhCheckUniformNames( effect.program ); // This is just a test (not needed)
 
+	GLbuffer gl_permesh, gl_perframe;
+	glhCreateBuffer( effect, "cstPerMesh", sizeof(cstPerMesh), &gl_permesh );
+	glhCreateBuffer( effect, "cstPerFrame", sizeof(cstPerFrame), &gl_perframe );
+
+	cstPerMesh& perMesh = *(cstPerMesh*)gl_permesh.data;
+	cstPerFrame& perFrame = *(cstPerFrame*)gl_perframe.data;
+
+	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_CULL_FACE );
+//	glFrontFace( GL_CCW );
+	glCullFace( GL_FRONT );
+
+	GLchar* pData;
+	Int32 nSize;
+	if( !glhReadFile( "assets/Wheel.msh", pData, nSize ) )
+		return 1;
+
+	SEG::Mesh meshdata;
+	if( !meshdata.ReadData( (Byte*)pData, nSize ) )
+		return 1;
+
+	free( pData );
+
+	GLmesh glmesh;
+	if( !glhCreateMesh( glmesh, meshdata ) )
+		return 1;
+
+
+	Timer timer;
 	int bRunning = 1;
 	SDL_Event event;
 	while( bRunning )
@@ -72,15 +93,67 @@ int main( int argc, char** argv )
 		{
 			switch( event.type )
 			{
-				case SDL_QUIT:
-					bRunning = 0;
+			case SDL_WINDOWEVENT:
+				switch( event.window.event )
+				{
+				case SDL_WINDOWEVENT_RESIZED:
+					{
+						Int32 nWinWidth, nWinHeight;
+						SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
+						glViewport( 0, 0, nWinWidth, nWinHeight );
+					}
 					break;
+				}
+				break;
+			case SDL_QUIT:
+				bRunning = 0;
+				break;
 			}
 		}
 
-		glClearColor( 0, 0, 0, 1 );
-		glClear( GL_COLOR_BUFFER_BIT );
+		
+		Real fTime = (Real)timer.CalcSeconds();
+		static Real fLastTime = 0;
+		Real fElapse = fTime - fLastTime;
+		while( fElapse < 0.015f )
+		{
+			fTime = (Real)timer.CalcSeconds();
+			fElapse = fTime - fLastTime;
+		}
 
+		static Int32 nFPS = 0;
+		nFPS++;
+		if( (Int32)fTime != (Int32)fLastTime )
+		{
+			DEBUGOUT( "FPS: %d\n", nFPS );
+			nFPS = 0;
+		}
+
+		fLastTime = fTime;
+
+		glClearColor( 0, 0, 0, 1 );
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		Int32 nWinWidth, nWinHeight;
+		SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
+
+		Vector3 vFocus = Vector3( 0, 0, 0 );
+		Vector3 vEyePos = Vector3( 1, 2, 1 ).RotateXZ( fTime );
+		perFrame.vEyePos = vEyePos;
+		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
+		perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+		perFrame.matView.LookAt( vEyePos, vFocus, Vector3( 0, 1, 0 ) );
+		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
+		glhUpdateBuffer( effect, gl_perframe );
+
+		perMesh.matWorld = Matrix::GetRotateX( PI );// * Matrix::GetScale( 10.0f );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( effect, gl_permesh );
+
+		glhDrawMesh( effect, glmesh );
+
+
+		glFlush();
 #ifdef _WIN32
 		SwapBuffers( glhGetHDC() );
 #else
@@ -88,8 +161,8 @@ int main( int argc, char** argv )
 #endif
 	}
 
-	glhDestroyBuffer( permesh );
-	glhDestroyBuffer( perframe );
+	glhDestroyBuffer( gl_permesh );
+	glhDestroyBuffer( gl_perframe );
 	glhUnloadEffect( effect );
 
 #ifdef _WIN32

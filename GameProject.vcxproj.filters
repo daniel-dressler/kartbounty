@@ -25,6 +25,18 @@
       <Filter>SELib</Filter>
     </ClInclude>
     <ClInclude Include="ShaderStructs.h" />
+    <ClInclude Include="SELib\SEMesh.h">
+      <Filter>SELib</Filter>
+    </ClInclude>
+    <ClInclude Include="SELib\SECompData.h">
+      <Filter>SELib</Filter>
+    </ClInclude>
+    <ClInclude Include="SELib\SELib.h">
+      <Filter>SELib</Filter>
+    </ClInclude>
+    <ClInclude Include="SELib\SETimer.h">
+      <Filter>SELib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -40,6 +52,12 @@
       <Filter>SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SEVector.cpp">
+      <Filter>SELib</Filter>
+    </ClCompile>
+    <ClCompile Include="SELib\SEMesh.cpp">
+      <Filter>SELib</Filter>
+    </ClCompile>
+    <ClCompile Include="SELib\SETimer.cpp">
       <Filter>SELib</Filter>
     </ClCompile>
   </ItemGroup>

@@ -28,6 +28,8 @@
 	#define ATAN( x )		atan( x )
 	#define ATAN2( y, x )	atan2( y, x )
 
+	#define FRAC( x )		( x - (Int64)x )
+
 #else
 
 	#define FLTMAX		1E+37f
@@ -46,6 +48,8 @@
 	#define ACOS( x )		acosf( x )
 	#define ATAN( x )		atanf( x )
 	#define ATAN2( y, x )	atan2f( y, x )
+
+	#define FRAC( x )		( x - (Int32)x )
 
 #endif
 

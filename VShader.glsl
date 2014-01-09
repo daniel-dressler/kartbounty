@@ -1,23 +1,29 @@
-
 in vec3 vs_position;
+in vec2 vs_tangents;
+in vec4 vs_color;
+in vec4 vs_texcoord;
 
-layout (std140,row_major) uniform cstPerMesh
-{
-	mat4	g_matWorld;
-	mat4	g_matWorldViewProj;
-};
+out vec3 ps_worldpos;
+out vec3 ps_normal;
+out vec4 ps_color;
 
-layout (std140,row_major) uniform cstPerFrame
-{
-	vec4	g_vEyePos;
-	vec4	g_vEyeDir;
-
-	mat4	g_matView;
-	mat4	g_matProj;
-	mat4	g_matViewProj;
-};
+out vec4 ps_texcoord;
+out vec3 ps_tangent;
+out vec3 ps_bitangent;
 
 void main()
 {
-	gl_Position = vec4( vs_position, 1.0f ) * g_matWorld * g_matViewProj;
+	vec4 position = vec4( vs_position * 0.0005f, 1.0f );
+	vec3 normal   = fract(      vs_tangents.x   * vec3(1,256,65536) ) * 2 - 1;
+	vec3 tangent  = fract( abs( vs_tangents.y ) * vec3(1,256,65536) ) * 2 - 1;
+
+	gl_Position  = position * g_matWorldViewProj;
+
+	ps_worldpos  = vec4( position * g_matWorld ).xyz;
+	ps_normal    = normalize( mat3( g_matWorld ) * normal );
+	ps_color     = vs_color * ( 1.0f / 256.0f );
+
+	ps_texcoord  = vec4( vs_texcoord.xy * 0.0005f, vs_texcoord.zw );
+	ps_tangent   = normalize( mat3( g_matWorld ) * tangent );
+	ps_bitangent = normalize( cross( normal, tangent ) * ( vs_tangents.y > 0 ? 1 : -1 ) );
 }

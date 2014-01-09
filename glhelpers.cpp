@@ -35,15 +35,15 @@ int glhCreateContext( SDL_Window* win )
 
 	int PixelFormat;
 	if( !( PixelFormat = ChoosePixelFormat( g_hdc, &pfd ) ) )
-		return 1;
+		return 0;
 	
+	if( !SetPixelFormat( g_hdc, PixelFormat, &pfd ) )
+		return 0;
+
 	if( !( g_hglrc = wglCreateContext( g_hdc ) ) )
 		return 0;
 
 	if( !wglMakeCurrent( g_hdc, g_hglrc ) )
-		return 0;
-
-	if( !SetPixelFormat( g_hdc, PixelFormat, &pfd ) )
 		return 0;
 
 	return 1;
@@ -71,6 +71,7 @@ GLeffect glhLoadEffect( const char* strVertexShader,
 						int nHeaderCount )
 {
 	GLeffect effect;
+	MEMSET( &effect, 0, sizeof(GLeffect) );
 	// @Phil: Hope you don't mind, calloc() does what you were doing with the
 	// memsets
 	GLchar** arySources = (GLchar**)calloc( sizeof(GLchar*), nHeaderCount + 1 );
@@ -111,6 +112,21 @@ GLeffect glhLoadEffect( const char* strVertexShader,
 
 	effect.program = glhCombineProgram( effect.vertex, effect.geometry, effect.pixel );
 
+	glGetProgramiv( effect.program, GL_ACTIVE_UNIFORM_BLOCKS, &effect.blockcount );
+	effect.blocks = (GLuint*)MALLOC( sizeof(GLuint) * effect.blockcount * 2 );
+
+	GLsizei nLabelSize;
+	GLchar strLabel[256];
+	for( int i = 0; i < effect.blockcount; i++ )
+	{
+		glGetActiveUniformBlockName( effect.program, i, 256, &nLabelSize, strLabel );
+		GLuint index = glGetUniformBlockIndex( effect.program, strLabel );
+		glUniformBlockBinding( effect.program, index, i + 1 );
+
+		effect.blocks[i*2] = index;
+		effect.blocks[i*2+1] = i + 1;
+	}
+
 glLoadProgramEnd:
 	for( int i = 0; i < nHeaderCount; i++ )
 		free( arySources[i] );
@@ -129,6 +145,7 @@ void glhUnloadEffect( GLeffect effect )
 	glDeleteShader( effect.geometry );
 	glDeleteShader( effect.pixel );
 	glDeleteProgram( effect.program );
+	free( effect.blocks );
 }
 
 #ifdef _WIN32
@@ -230,6 +247,8 @@ void glhCheckUniformNames( GLuint program )
 	{
 		GLsizei nSize;
 		glGetActiveUniformBlockName( program, i, 256, &nSize, strLabel );
+		GLuint index = glGetUniformBlockIndex( program, strLabel );
+
 		DEBUGOUT( "%s\n", strLabel );
 	}
 	DEBUGOUT( "\n" );
@@ -237,39 +256,103 @@ void glhCheckUniformNames( GLuint program )
 
 int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSize, GLbuffer* pBuffer )
 {
+	MEMSET( pBuffer, 0, sizeof(GLbuffer) );
+
 	if( nSize <= 0 )
 		return 0;
 
 	glUseProgram( effect.program );
 
+	pBuffer->data = (GLchar*)MALLOC( nSize );
+	if( !pBuffer->data )
+		return 0;
+
+	MEMSET( pBuffer->data, 0, nSize );
+
 	pBuffer->location = glGetUniformBlockIndex( effect.program, strBuffer );
 	if( pBuffer->location < 0 )															// RETURNING -1
 		return 0;
 
-	pBuffer->data = (GLchar*)malloc( nSize );
-	if( !pBuffer->data )
-		return 0;
+	pBuffer->size = nSize;
 
 	glGenBuffers( 1, &pBuffer->buffer );
-	pBuffer->size = nSize;
+	glBindBuffer( GL_UNIFORM_BUFFER, pBuffer->buffer );
+	glBufferData( GL_UNIFORM_BUFFER, pBuffer->size, pBuffer->data, GL_DYNAMIC_DRAW );
+
+	for( Int32 i = 0; i < effect.blockcount; i++ )
+	{
+		if( pBuffer->location == effect.blocks[i*2] )
+		{
+			pBuffer->base = i*2+1;
+			glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[i*2+1], pBuffer->buffer );
+			break;
+		}
+	}
 
 	return 1;
 }
 
-int glhUpdateBuffer( const GLbuffer& buffer )
+int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer )
 {
 	glBindBuffer( GL_UNIFORM_BUFFER, buffer.buffer );
 	glBufferData( GL_UNIFORM_BUFFER, buffer.size, buffer.data, GL_DYNAMIC_DRAW );
-	glBindBufferBase( GL_UNIFORM_BUFFER, buffer.location, buffer.buffer );
+	glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[buffer.base], buffer.buffer );
 
 	return 1;
 }
 
 void glhDestroyBuffer( GLbuffer& buffer )
 {
-	if( buffer.location >= 0 )
+	glDeleteBuffers( 1, &buffer.buffer );
+	free( buffer.data );
+}
+
+int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata )
+{
+	glGenBuffers( 1, &glmesh.vbuffer );
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
+	glBufferData( GL_ARRAY_BUFFER, meshdata.GetVertexDataSize(), meshdata.GetVertexData(), GL_STATIC_DRAW );
+
+	glGenBuffers( 1, &glmesh.ibuffer );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, glmesh.ibuffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, meshdata.GetIndexDataSize(), meshdata.GetIndexData(), GL_STATIC_DRAW );
+
+	glmesh.vstride = meshdata.GetVertexSize();
+	glmesh.icount = meshdata.GetIndexCount();
+	glmesh.type = meshdata.GetType();
+
+	return 1;
+}
+
+int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh )
+{
+	glUseProgram( gleffect.program );
+
+	glhPredefinedVertexLayout( glmesh.type );
+
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, glmesh.ibuffer );
+
+	glDrawElements( GL_TRIANGLES, glmesh.icount, GL_UNSIGNED_SHORT, (void*)0 );
+
+	return 1;
+}
+
+void glhPredefinedVertexLayout( Int32 nType )
+{
+	switch( nType )
 	{
-		glDeleteBuffers( 1, &buffer.buffer );
-		free( buffer.data );
-	}
+	case 1:
+		glVertexAttribPointer( 0, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)0 );
+		glVertexAttribPointer( 1, 2, GL_FLOAT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)8 );
+		glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE,	GL_FALSE, sizeof(SEG::VertexSS), (void*)16 );
+		glVertexAttribPointer( 3, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)20 );
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+		glDisableVertexAttribArray(4);
+		break;
+	};
 }

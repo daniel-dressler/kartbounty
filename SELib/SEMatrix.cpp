@@ -1,5 +1,4 @@
-//#include "SEGraphics.h"
-#include "SELinearMath.h"
+#include "SELib.h"
 
 Real Matrix2::Determinant()
 {
