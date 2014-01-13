@@ -16,7 +16,7 @@ class PostOffice {
 	{
 		// TODO: lock the postoffice
 		for (Event *event : mailboxes[mailbox_id]) {
-			int32_t id = event->id;
+			int32_t id = (int32_t)event->id;
 			if (--ref_counts[id] <= 0) {
 				events.erase(id);
 				ref_counts.erase(id);
@@ -79,13 +79,12 @@ class PostOffice {
 static PostOffice *Events_Global_PostOffice = NULL;
 
 #define PO() Events_Global_PostOffice
-Mailbox::Mailbox(std::string box_name)
+Mailbox::Mailbox()
 {
 	if (PO() == NULL) {
 		PO() = new PostOffice();
 	}
 	this->mailbox_id = PO()->getMailboxId();
-	mailbox_name = box_name;
 }
 
 void Mailbox::sendMail(std::vector<Event *> events)

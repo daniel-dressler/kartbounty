@@ -76,6 +76,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="component\events\events.cpp" />
+    <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
+    <ClCompile Include="component\physics\physics.cpp" />
     <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SELib\SEMatrix.cpp" />
@@ -87,6 +90,9 @@
     <ClCompile Include="Standard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="component\events\events.h" />
+    <ClInclude Include="component\physics\GLDebugDrawer.h" />
+    <ClInclude Include="component\physics\physics.h" />
     <ClInclude Include="glhelpers.h" />
     <ClInclude Include="SELib\SECompData.h" />
     <ClInclude Include="SELib\SELib.h" />

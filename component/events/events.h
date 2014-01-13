@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <stdint.h>
 
 
 // This will change once an entity system exists
@@ -36,7 +37,7 @@ namespace Events {
 	// support getting stale mail.
 	class Mailbox {
 		public:
-		Mailbox(std::string mailbox_name);
+		Mailbox();
 
 		// Must use 'new' to allocate event
 		void sendMail(std::vector<Event *> events);
