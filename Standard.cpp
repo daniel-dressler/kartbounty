@@ -10,6 +10,10 @@
 
 #pragma comment( lib, "BulletPhysics.lib" )
 
+#pragma comment( lib, "winmm.lib" )
+#pragma comment( lib, "version.lib" )
+#pragma comment( lib, "imm32.lib" )
+
 #else
 
 long _filelength(int fd)

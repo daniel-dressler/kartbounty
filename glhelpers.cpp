@@ -10,60 +10,6 @@
 #include <fcntl.h>
 #include <memory.h>
 
-#ifdef _WIN32
-HDC g_hdc = 0;
-HGLRC g_hglrc = 0;
-int glhCreateContext( SDL_Window* win )
-{
-	PIXELFORMATDESCRIPTOR pfd;
-	MEMSET( &pfd, 0, sizeof(PIXELFORMATDESCRIPTOR) );
-	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW |
-				  PFD_SUPPORT_OPENGL |
-				  PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 16;
-	pfd.iLayerType = PFD_MAIN_PLANE;
-
-	SDL_SysWMinfo SysInfo;
-	SDL_VERSION( &SysInfo.version );
-	SDL_GetWindowWMInfo( win, &SysInfo );
-
-	g_hdc = GetDC( (HWND)SysInfo.info.win.window );
-
-	int PixelFormat;
-	if( !( PixelFormat = ChoosePixelFormat( g_hdc, &pfd ) ) )
-		return 0;
-	
-	if( !SetPixelFormat( g_hdc, PixelFormat, &pfd ) )
-		return 0;
-
-	if( !( g_hglrc = wglCreateContext( g_hdc ) ) )
-		return 0;
-
-	if( !wglMakeCurrent( g_hdc, g_hglrc ) )
-		return 0;
-
-	return 1;
-}
-HDC glhGetHDC()
-{
-	return g_hdc;
-}
-int glhDestroyContext()
-{
-	if( !wglMakeCurrent( 0, 0 ) )
-		return 0;
-
-	if( !wglDeleteContext( g_hglrc ) )
-		return 0;
-
-	return 1;
-}
-#endif
-
 GLeffect glhLoadEffect( const char* strVertexShader,
 						const char* strGeometryShader,
 						const char* strPixelShader,

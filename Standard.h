@@ -1,5 +1,7 @@
 #pragma once
 
+#define GAMENAME "KartBounty"
+
 #ifdef _WIN32
 
 #define _SCL_SECURE_NO_WARNINGS
@@ -36,11 +38,15 @@ long _filelength(int fd);
 
 // Common opengl includes are the same on windows and linux, only mac differs
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef _WIN32
+#include <GL/wglew.h>
+#else
+#include <GL/glxew.h>	// I think this is for x-windows
+#endif
 
 // SDL recomends a linking directive which makes this equivilent on all platforms
 #include <SDL.h>
 #include <SDL_syswm.h>
 
 #include "SELib/SELib.h"
+
