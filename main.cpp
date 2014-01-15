@@ -97,8 +97,8 @@ int main( int argc, char** argv )
 	SDL_Event event;
 
 	// Init components
-	Physics::Simulation *simulation = new Physics::Simulation();
-	simulation->loadWorld();
+//	Physics::Simulation *simulation = new Physics::Simulation();
+//	simulation->loadWorld();
 
 	while( bRunning )
 	{
@@ -149,7 +149,7 @@ int main( int argc, char** argv )
 
 
 
-		simulation->step(1/60.f); // debug draws right now
+//		simulation->step(1/60.f); // debug draws right now
 
 
 		Int32 nWinWidth, nWinHeight;
