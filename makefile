@@ -10,8 +10,10 @@ LDLIBS += -g $(shell pkg-config --libs sdl2 glew glu gl) $(BULLETLIBS)
 ODIR := obj
 BDIR := build
 
-SRC = main.cpp glhelpers.cpp Standard.cpp SELib/SEStdMath.cpp SELib/SEMatrix.cpp \
-	SELib/SEVector.cpp SELib/SEQuaternion.cpp component/events/events.cpp \
+SRC = main.cpp glhelpers.cpp Standard.cpp \
+	SELib/SEStdMath.cpp SELib/SEMatrix.cpp SELib/SETimer.cpp \
+	SELib/SEVector.cpp SELib/SEQuaternion.cpp SELib/SEMesh.cpp \
+	component/events/events.cpp \
 	component/physics/physics.cpp component/physics/GLDebugDrawer.cpp 
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
 
