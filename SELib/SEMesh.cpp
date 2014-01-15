@@ -1,5 +1,6 @@
 #include "SELib.h"
 #include "SEMesh.h"
+#include <stdlib.h>
 
 #define SafeFree(x)				{free(x);x=0;}
 

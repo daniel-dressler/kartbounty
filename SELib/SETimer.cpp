@@ -1,5 +1,6 @@
 #include "SELib.h"
 #include "SETimer.h"
+#include <stdlib.h>
 
 #ifdef _WIN32
 #include <Windows.h>
