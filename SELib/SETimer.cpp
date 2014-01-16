@@ -1,3 +1,8 @@
+#ifndef _WIN32
+// For time interface
+#define _POSIX_C_SOURCE = 1999309L
+#endif
+
 #include "SELib.h"
 #include "SETimer.h"
 #include <stdlib.h>
@@ -10,21 +15,19 @@ struct _TimerDataStruct
 	LARGE_INTEGER	m_liStartTime;
 };
 #else
-
-
-
+#include <time.h>
 #endif
+
+#define NANOSECONDS_PER_SECOND (1000000000.0)
+
 
 Timer::Timer( Int32 bAutoStart ) : m_pData( 0 )
 {
 #ifdef _WIN32
-	m_pData = MALLOC( sizeof(_TimerDataStruct) );
-	MEMSET( m_pData, 0, sizeof(_TimerDataStruct) );
+	m_pData = calloc( 1, sizeof(_TimerDataStruct) );
 #else
-
-
+	m_pData = calloc( 1, sizeof(struct timespec) );
 #endif
-
 	ResetClock();
 }
 
@@ -43,9 +46,7 @@ void Timer::ResetClock()
 	QueryPerformanceFrequency( &data.m_liFrequency );
 	QueryPerformanceCounter( &data.m_liStartTime );
 #else
-
-
-
+	//clock_gettime(CLOCK_BOOTTIME, (struct timespec *)m_pData);
 #endif
 }
 
@@ -62,9 +63,10 @@ Float64 Timer::CalcSeconds()
 	QueryPerformanceCounter( &liCurrentTime );
 	fTime = (Float64)( liCurrentTime.QuadPart - data.m_liStartTime.QuadPart ) / data.m_liFrequency.QuadPart;
 #else
-
-
-
+	struct timespec ts;
+	clock_gettime(CLOCK_BOOTTIME, &ts);
+	fTime = ts.tv_sec - ((struct timespec *)m_pData)->tv_sec;
+	fTime += (ts.tv_nsec - ((struct timespec *)m_pData)->tv_nsec) / NANOSECONDS_PER_SECOND;
 #endif
 
 	return fTime;

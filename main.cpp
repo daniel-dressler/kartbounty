@@ -97,8 +97,8 @@ int main( int argc, char** argv )
 	SDL_Event event;
 
 	// Init components
-//	Physics::Simulation *simulation = new Physics::Simulation();
-//	simulation->loadWorld();
+	Physics::Simulation *simulation = new Physics::Simulation();
+	simulation->loadWorld();
 
 	while( bRunning )
 	{
@@ -147,14 +147,12 @@ int main( int argc, char** argv )
 			nFPS = 0;
 		}
 
-		fLastTime = fTime;
 
 		glClearColor( 0, 0, 0, 1 );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-
-
-//		simulation->step(1/60.f); // debug draws right now
+		// Components
+		simulation->step(fElapse);
 
 
 		Int32 nWinWidth, nWinHeight;
@@ -176,6 +174,7 @@ int main( int argc, char** argv )
 
 		SDL_GL_SwapWindow(win);
 
+		fLastTime = fTime;
 		std::chrono::milliseconds timespan(10); // oswhatever
 		std::this_thread::sleep_for(timespan);
 	}
