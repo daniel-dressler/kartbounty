@@ -46,7 +46,7 @@ void Timer::ResetClock()
 	QueryPerformanceFrequency( &data.m_liFrequency );
 	QueryPerformanceCounter( &data.m_liStartTime );
 #else
-	//clock_gettime(CLOCK_BOOTTIME, (struct timespec *)m_pData);
+	clock_gettime(CLOCK_BOOTTIME, (struct timespec *)m_pData);
 #endif
 }
 
