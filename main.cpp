@@ -105,8 +105,13 @@ int main( int argc, char** argv )
 		static Real fLastTime = 0;
 		Real fTime, fElapse;
 
-		do
-		{
+		// Daniel: Caused infinite loop on linux
+		// @Phil: Does windows need multiple pollings?
+		// The SDL_PollEvent should retreive
+		// the queued input so mutliple checks 
+		// of the poll might just complicate our
+		// input architecture.
+		// do {
 			fTime = (Real)timer.CalcSeconds();
 			fElapse = fTime - fLastTime;
 
@@ -132,7 +137,7 @@ int main( int argc, char** argv )
 				}
 			}
 
-		} while( fElapse < 0.008f );
+		//} while( fElapse < 0.008f );
 		
 		static Int32 nFPS = 0;
 		nFPS++;
