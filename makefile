@@ -14,7 +14,8 @@ SRC = main.cpp glhelpers.cpp Standard.cpp \
 	SELib/SEStdMath.cpp SELib/SEMatrix.cpp SELib/SETimer.cpp \
 	SELib/SEVector.cpp SELib/SEQuaternion.cpp SELib/SEMesh.cpp \
 	component/events/events.cpp \
-	component/physics/physics.cpp component/physics/GLDebugDrawer.cpp 
+	component/physics/physics.cpp component/physics/GLDebugDrawer.cpp \
+	component/entities/entities.cpp
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
 
 $(BDIR)/kart: $(OBJS) $(BULLET)/built

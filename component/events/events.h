@@ -2,10 +2,8 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
+#include "../entities/entities.h"
 
-
-// This will change once an entity system exists
-#define entityid_t int32_t
 
 // Use this to get new events
 #define NEWEVENT(type) (new type##Event(type))
@@ -24,7 +22,7 @@ namespace Events {
 	};
 
 	struct ExplosionEvent : Event {
-		entityid_t exploder;
+		entity_id exploder;
 		float force;
 	};
 

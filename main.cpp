@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "ShaderStructs.h"
+#include "component/entities/entities.h"
 #include "component/events/events.h"
 #include "component/physics/physics.h"
 
