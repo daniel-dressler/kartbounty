@@ -23,6 +23,7 @@ struct GLbuffer
 
 struct GLmesh
 {
+	GLuint  vao;
 	GLuint	vbuffer;
 	GLuint	ibuffer;
 	GLuint  vstride;
@@ -49,6 +50,7 @@ void glhDestroyBuffer( GLbuffer& buffer );
 
 int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata );
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh );
+void glhDestroyMesh( GLmesh& glmesh );
 
 void glhPredefinedVertexLayout( Int32 nType );
 

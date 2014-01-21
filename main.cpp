@@ -77,9 +77,14 @@ int main( int argc, char** argv )
 
 	free( pData );
 
-	GLmesh glmesh;
+	GLmesh glmesh, glmesh2;
 	if( !glhCreateMesh( glmesh, meshdata ) )
 		return 1;
+
+	if( !glhCreateMesh( glmesh2, meshdata ) )
+		return 1;
+
+	glhDestroyMesh( glmesh );
 
 	/* FULLSCREEN MODE
 
@@ -168,6 +173,7 @@ int main( int argc, char** argv )
 		glhUpdateBuffer( effect, gl_permesh );
 
 		glhDrawMesh( effect, glmesh );
+		glhDrawMesh( effect, glmesh2 );
 
 		SDL_GL_SwapWindow(win);
 

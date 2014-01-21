@@ -1,41 +1,39 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="glhelpers.h" />
     <ClInclude Include="Standard.h" />
     <ClInclude Include="SELib\SELinearMath.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEMatrix.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEQuaternion.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEStdDataTypes.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEStdMath.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEStdMemory.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SEVector.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderStructs.h" />
     <ClInclude Include="SELib\SEMesh.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SECompData.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SELib.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="SELib\SETimer.h">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClInclude>
     <ClInclude Include="component\events\events.h">
       <Filter>component\events</Filter>
@@ -46,28 +44,33 @@
     <ClInclude Include="component\physics\physics.h">
       <Filter>component\physics</Filter>
     </ClInclude>
+    <ClInclude Include="glhelpers.h">
+      <Filter>component\rendering\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderStructs.h">
+      <Filter>component\rendering\shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="glhelpers.cpp" />
     <ClCompile Include="Standard.cpp" />
     <ClCompile Include="SELib\SEMatrix.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SEQuaternion.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SEStdMath.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SEVector.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SEMesh.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="SELib\SETimer.cpp">
-      <Filter>SELib</Filter>
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
     <ClCompile Include="component\events\events.cpp">
       <Filter>component\events</Filter>
@@ -78,16 +81,22 @@
     <ClCompile Include="component\physics\physics.cpp">
       <Filter>component\physics</Filter>
     </ClCompile>
+    <ClCompile Include="glhelpers.cpp">
+      <Filter>component\rendering\opengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="VShader.glsl" />
-    <None Include="PShader.glsl" />
-    <None Include="ShaderStructs.glsl" />
+    <None Include="ShaderStructs.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
+    <None Include="VShader.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
+    <None Include="PShader.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="SELib">
-      <UniqueIdentifier>{7d0c73a9-fcb7-4d9a-bcc8-817f630eb36e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="component">
       <UniqueIdentifier>{d6671230-0398-4b29-8bfc-599457c28741}</UniqueIdentifier>
     </Filter>
@@ -96,6 +105,18 @@
     </Filter>
     <Filter Include="component\physics">
       <UniqueIdentifier>{eedbed08-86b2-433f-ac76-ea879be98b4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\rendering">
+      <UniqueIdentifier>{8417e7e4-5c03-40b9-929a-db809b3af163}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\rendering\SELib">
+      <UniqueIdentifier>{7d0c73a9-fcb7-4d9a-bcc8-817f630eb36e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\rendering\shaders">
+      <UniqueIdentifier>{5ac8be01-82cd-4598-8327-785b923af1ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\rendering\opengl">
+      <UniqueIdentifier>{cf5d07dd-948b-438e-953f-818acc6a34e4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

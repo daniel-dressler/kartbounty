@@ -255,6 +255,9 @@ void glhDestroyBuffer( GLbuffer& buffer )
 
 int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata )
 {
+	glGenVertexArrays( 1, &glmesh.vao ); 
+    glBindVertexArray( glmesh.vao );
+
 	glGenBuffers( 1, &glmesh.vbuffer );
 	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
 	glBufferData( GL_ARRAY_BUFFER, meshdata.GetVertexDataSize(), meshdata.GetVertexData(), GL_STATIC_DRAW );
@@ -267,21 +270,34 @@ int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata )
 	glmesh.icount = meshdata.GetIndexCount();
 	glmesh.type = meshdata.GetType();
 
+	glhPredefinedVertexLayout( glmesh.type );
+
+	glBindVertexArray( 0 );
+
 	return 1;
 }
 
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh )
 {
 	glUseProgram( gleffect.program );
-
-	glhPredefinedVertexLayout( glmesh.type );
-
-	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, glmesh.ibuffer );
-
+	glBindVertexArray( glmesh.vao );
 	glDrawElements( GL_TRIANGLES, glmesh.icount, GL_UNSIGNED_SHORT, (void*)0 );
+	glBindVertexArray( 0 );
 
 	return 1;
+}
+
+void glhDestroyMesh( GLmesh& glmesh )
+{
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	glBindVertexArray( 0 );
+
+	glDeleteBuffers( 1, &glmesh.vbuffer );
+	glDeleteBuffers( 1, &glmesh.ibuffer );
+	glDeleteVertexArrays( 1, &glmesh.vao );
+
+	MEMSET( &glmesh, -1, sizeof(GLmesh) );
 }
 
 void glhPredefinedVertexLayout( Int32 nType )
@@ -289,16 +305,14 @@ void glhPredefinedVertexLayout( Int32 nType )
 	switch( nType )
 	{
 	case 1:
+		glEnableVertexAttribArray( 0 );
+		glEnableVertexAttribArray( 1 );
+		glEnableVertexAttribArray( 2 );
+		glEnableVertexAttribArray( 3 );
 		glVertexAttribPointer( 0, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)0 );
 		glVertexAttribPointer( 1, 2, GL_FLOAT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)8 );
 		glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE,	GL_FALSE, sizeof(SEG::VertexSS), (void*)16 );
 		glVertexAttribPointer( 3, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)20 );
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
-		glDisableVertexAttribArray(4);
 		break;
 	};
 }
