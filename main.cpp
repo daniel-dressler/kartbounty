@@ -1,11 +1,11 @@
 #include "Standard.h"
-#include "glhelpers.h"
+#include "component/rendering/glhelpers.h"
 #include <SDL.h>
 
 #include <thread>
 #include <chrono>
 
-#include "ShaderStructs.h"
+#include "component/rendering/ShaderStructs.h"
 #include "component/entities/entities.h"
 #include "component/events/events.h"
 #include "component/physics/physics.h"
@@ -55,8 +55,8 @@ int main( int argc, char** argv )
 	glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 	glEnable( GL_MULTISAMPLE );
 
-	const GLchar* aryHeaders[] = { "ShaderStructs.glsl" };
-	GLeffect effect = glhLoadEffect( "VShader.glsl", NULL, "PShader.glsl", aryHeaders, 1 );
+	const GLchar* aryHeaders[] = { "component/rendering/ShaderStructs.glsl" };
+	GLeffect effect = glhLoadEffect( "component/rendering/VShader.glsl", NULL, "component/rendering/PShader.glsl", aryHeaders, 1 );
 	if( !effect.program )
 		return 1;
 

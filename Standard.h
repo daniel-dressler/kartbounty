@@ -48,5 +48,5 @@ long _filelength(int fd);
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "SELib/SELib.h"
+#include "component/rendering/SELib/SELib.h"
 
