@@ -79,7 +79,9 @@ typedef struct Matrix4x4
 	Matrix4x4& Scale( const Vector3& v );
 
 	Matrix4x4& LookAt( const Vector3& eye, const Vector3& at, const Vector3& up );
+	Matrix4x4& LookAtRH( const Vector3& eye, const Vector3& at, const Vector3& up );
 	Matrix4x4& Perspective( const Real fov, const Real aspect, const Real zn, const Real zf );
+	Matrix4x4& PerspectiveRH( const Real fov, const Real aspect, const Real zn, const Real zf );
 	Matrix4x4& Orthographic( const Real l, const Real r, const Real b, const Real t, const Real zn, const Real zf );
 	Matrix4x4& Viewport( const Int32 x, const Int32 y, const Int32 w, const Int32 h, const Real zn, const Real zf );
 

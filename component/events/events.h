@@ -11,7 +11,10 @@ namespace Events {
 	enum EventType {
 		NullEvent,
 		Explosion,
-		RoundStart
+		RoundStart,
+		KartMove,
+		ArenaCollider,
+		StateUpdate
 	};
 
 	struct Event {

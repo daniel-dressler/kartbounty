@@ -73,6 +73,16 @@ typedef struct Comp4x16
 	Int16		z;
 	Int16		w;
 
+	Vector4 Decomp()
+	{
+		Vector4 vOut;
+		vOut.x = (Real)( x * 0.0005f );
+		vOut.y = (Real)( y * 0.0005f );
+		vOut.z = (Real)( z * 0.0005f );
+		vOut.w = (Real)( w * 0.0005f );
+		return vOut;
+	}
+
 	Comp4x16(){}
 	Comp4x16( const Comp3x16& in )
 	{

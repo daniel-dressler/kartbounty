@@ -50,3 +50,4 @@ long _filelength(int fd);
 
 #include "component/rendering/SELib/SELib.h"
 
+#include "component/state/state.h"

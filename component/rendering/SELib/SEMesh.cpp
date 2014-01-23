@@ -1,6 +1,7 @@
 #include "SELib.h"
 #include "SEMesh.h"
 #include <stdlib.h>
+#include <vector>
 
 #define SafeFree(x)				{free(x);x=0;}
 
@@ -74,7 +75,7 @@ namespace SEG
 		SafeFree( m_aryBones );
 	}
 
-	Int32 Mesh::ReadData( Byte* pData, Int32 nSize, UInt32 uFlags )
+	Int32 Mesh::ReadData( Byte* pData, Int32 nSize, UInt32 uFlags, btTriangleMesh* pCollider )
 	{
 		SafeFree( m_aryIndices );
 		SafeFree( m_aryVertices );
@@ -146,6 +147,8 @@ namespace SEG
 			m_aryBones[i].vOffset = pBones[i].ofs.Decomp();
 		}
 
+		std::vector<Vector3> aryVertices;
+
 		Int32 v = 0;
 		switch( m_nType )
 		{
@@ -156,10 +159,26 @@ namespace SEG
 				vtx.Pos = pPoints[scnVertices.Read<UInt16>()];
 				vtx.Color = scnVertices.Read<UInt32>();
 				vtx.Tan = pTangents[scnVertices.Read<UInt16>()].Pack();
+				
+				aryVertices.push_back( vtx.Pos.Decomp().xyz() );
 
 				Comp2x16 tex = pCoords[scnVertices.Read<UInt16>()];
 				UInt8 mat = scnVertices.Read<UInt8>();
 				vtx.Tex = Comp4x16( tex, mat );
+			}
+			if( pCollider )
+			{
+				for( Int32 t = 0; t < m_nTriangleCount; t++ )
+				{
+					Int32 i = t * 3;
+					Int32 ia = m_aryIndices[i];
+					Int32 ib = m_aryIndices[i+1];
+					Int32 ic = m_aryIndices[i+2];
+					btVector3 a = btVector3( aryVertices[ia].x, aryVertices[ia].y, aryVertices[ia].z );
+					btVector3 b = btVector3( aryVertices[ib].x, aryVertices[ib].y, aryVertices[ib].z );
+					btVector3 c = btVector3( aryVertices[ic].x, aryVertices[ic].y, aryVertices[ic].z );
+					pCollider->addTriangle( a, b, c, 1 );
+				}
 			}
 			break;
 		case SE_MT_STATICDUAL:

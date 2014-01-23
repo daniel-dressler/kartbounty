@@ -5,7 +5,7 @@
 #include <thread>
 #include <chrono>
 
-#include "component/rendering/ShaderStructs.h"
+#include "component/rendering/rendering.h"
 #include "component/entities/entities.h"
 #include "component/events/events.h"
 #include "component/physics/physics.h"
@@ -29,7 +29,9 @@ int main( int argc, char** argv )
 	SDL_Window *win = SDL_CreateWindow( GAMENAME,
 			SDL_WINDOWPOS_UNDEFINED,
 			SDL_WINDOWPOS_UNDEFINED,
-			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+//			| SDL_WINDOW_FULLSCREEN
+			);
 	if( !win )
 		return 1;
 
@@ -39,64 +41,17 @@ int main( int argc, char** argv )
 
 	SDL_GL_MakeCurrent( win, glcontext );
 
-	if( glewInit() != GLEW_OK )
+	if( !InitRendering( win ) )
 		return 1;
 
-	const GLubyte* strVendor = glGetString( GL_VENDOR );
+	MEMSET( &GetState(), 0, sizeof(StateData) );
+	GetState().Karts[0].vPos = Vector3( 0, 0.5f, 0 );
+	GetState().Karts[0].qOrient.Identity();
 
-	GLint major, minor;
-	glGetIntegerv( GL_MAJOR_VERSION, &major );
-	glGetIntegerv( GL_MINOR_VERSION, &minor );
-
-	glClearDepth( 1.0f );
-	glEnable( GL_DEPTH_TEST );
-	glEnable( GL_CULL_FACE );
-	glCullFace( GL_FRONT );
-	glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
-	glEnable( GL_MULTISAMPLE );
-
-	const GLchar* aryHeaders[] = { "component/rendering/ShaderStructs.glsl" };
-	GLeffect effect = glhLoadEffect( "component/rendering/VShader.glsl", NULL, "component/rendering/PShader.glsl", aryHeaders, 1 );
-	if( !effect.program )
-		return 1;
-
-	GLbuffer gl_permesh, gl_perframe;
-	glhCreateBuffer( effect, "cstPerMesh", sizeof(cstPerMesh), &gl_permesh );
-	glhCreateBuffer( effect, "cstPerFrame", sizeof(cstPerFrame), &gl_perframe );
-
-	cstPerMesh& perMesh = *(cstPerMesh*)gl_permesh.data;
-	cstPerFrame& perFrame = *(cstPerFrame*)gl_perframe.data;
-
-	GLchar* pData;
-	Int32 nSize;
-	if( !glhReadFile( "assets/Wheel.msh", pData, nSize ) )
-		return 1;
-
-	SEG::Mesh meshdata;
-	if( !meshdata.ReadData( (Byte*)pData, nSize ) )
-		return 1;
-
-	free( pData );
-
-	GLmesh glmesh, glmesh2;
-	if( !glhCreateMesh( glmesh, meshdata ) )
-		return 1;
-
-	if( !glhCreateMesh( glmesh2, meshdata ) )
-		return 1;
-
-	glhDestroyMesh( glmesh );
-
-	/* FULLSCREEN MODE
-
-	SDL_DestroyWindow( win );
-	win = SDL_CreateWindow( GAMENAME,
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN );
-	if( !win )
-		return 1;
-	*/
+	Events::Mailbox* pMailbox = new Events::Mailbox();
+	std::vector<Events::Event*> aryEvents;
+	aryEvents.push_back( new Events::Event( Events::EventType::StateUpdate ) );
+//	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
 
 	Timer timer;
 	int bRunning = 1;
@@ -160,36 +115,16 @@ int main( int argc, char** argv )
 		// Components
 		simulation->step(fElapse);
 
-
-		Int32 nWinWidth, nWinHeight;
-		SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
-
-		Vector3 vFocus = Vector3( 0, 0, 0 );
-		perFrame.vEyePos = Vector3( 1, 2, 1 ).RotateXZ( fTime );
-		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-		perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
-		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
-		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
-		glhUpdateBuffer( effect, gl_perframe );
-
-		perMesh.matWorld = Matrix::GetRotateX( PI );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( effect, gl_permesh );
-
-		glhDrawMesh( effect, glmesh );
-		glhDrawMesh( effect, glmesh2 );
-
-		SDL_GL_SwapWindow(win);
+		UpdateRendering( fElapse );
+		Render();
 
 		fLastTime = fTime;
 		std::chrono::milliseconds timespan(10); // oswhatever
 		std::this_thread::sleep_for(timespan);
 	}
 
-	glhDestroyBuffer( gl_permesh );
-	glhDestroyBuffer( gl_perframe );
-	glhUnloadEffect( effect );
-
+	delete pMailbox;
+	ShutdownRendering();
 	SDL_DestroyWindow( win );
 	SDL_Quit();
 

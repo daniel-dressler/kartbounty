@@ -50,6 +50,12 @@
     <ClInclude Include="component\rendering\glhelpers.h">
       <Filter>component\rendering\opengl</Filter>
     </ClInclude>
+    <ClInclude Include="component\rendering\rendering.h">
+      <Filter>component\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="component\state\state.h">
+      <Filter>component\state</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -84,6 +90,12 @@
     <ClCompile Include="component\rendering\glhelpers.cpp">
       <Filter>component\rendering\opengl</Filter>
     </ClCompile>
+    <ClCompile Include="component\rendering\rendering.cpp">
+      <Filter>component\rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="component\state\state.cpp">
+      <Filter>component\state</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="component">
@@ -106,6 +118,9 @@
     </Filter>
     <Filter Include="component\rendering\opengl">
       <UniqueIdentifier>{cf5d07dd-948b-438e-953f-818acc6a34e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\state">
+      <UniqueIdentifier>{0f0f9d34-8db7-4ea4-8596-dc5cec81926d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

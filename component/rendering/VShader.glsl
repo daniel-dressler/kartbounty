@@ -18,6 +18,8 @@ void main()
 	vec3 tangent  = fract( abs( vs_tangents.y ) * vec3(1,256,65536) ) * 2 - 1;
 
 	gl_Position   = position * g_matWorldViewProj;
+//	gl_Position.y = -gl_Position.y;
+//	gl_Position   = g_matWorldViewProj * position;
 
 	ps_worldpos   = vec4( position * g_matWorld ).xyz;
 	ps_normal     = normalize( mat3( g_matWorld ) * normal );

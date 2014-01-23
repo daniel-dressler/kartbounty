@@ -312,6 +312,33 @@ Matrix3& Matrix3::LookAt( const Vector3& eye, const Vector3& at, const Vector3& 
 	return *this;
 }
 
+Matrix4x4& Matrix3::LookAtRH( const Vector3& eye, const Vector3& at, const Vector3& up )
+{
+#ifdef __USE_D3DX__
+	D3DXMatrixLookAtRH( (D3DXMATRIX*)this, (D3DXVECTOR3*)&eye, (D3DXVECTOR3*)&at, (D3DXVECTOR3*)&up );
+#else
+	Vector3 zaxis = eye - at;
+	zaxis.Normalize();
+
+	Vector3 xaxis = Vector3::Cross( up, zaxis );
+	xaxis.Normalize();
+
+	Vector3 yaxis = Vector3::Cross( zaxis, xaxis );
+		
+	e[0] = xaxis.x; e[4] = xaxis.y; e[8]  = xaxis.z;
+	e[1] = yaxis.x; e[5] = yaxis.y; e[9]  = yaxis.z;
+	e[2] = zaxis.x; e[6] = zaxis.y; e[10] = zaxis.z;
+
+	e[12] = Vector3::Dot( xaxis, eye );
+	e[13] = Vector3::Dot( yaxis, eye );
+	e[14] = Vector3::Dot( zaxis, eye );
+
+	e[3] = e[7] = e[11] = 0.0f;
+	e[15] = 1.0f;
+		
+#endif
+	return *this;}
+
 Matrix3& Matrix3::Perspective( const Real fov, const Real aspect, const Real zn, const Real zf )
 {
 #ifdef __USE_D3DX__
@@ -328,6 +355,27 @@ Matrix3& Matrix3::Perspective( const Real fov, const Real aspect, const Real zn,
 	e[10] = Q;
 	e[14] = -Q * zn;
 	e[11] = 1.0;
+		
+#endif
+	return *this;
+}
+
+Matrix3& Matrix3::PerspectiveRH( const Real fov, const Real aspect, const Real zn, const Real zf )
+{
+#ifdef __USE_D3DX__
+	D3DXMatrixPerspectiveFovRH( (D3DXMATRIX*)this, fov, aspect, zn, zf );
+#else
+	Real h = 1.0f / TAN( fov * 0.5f );
+	Real w = h / aspect;
+	Real Q = zf / ( zn - zf );
+
+	Zero();
+		
+	e[0] = w;
+	e[5] = h;
+	e[10] = Q;
+	e[14] = Q * zn;
+	e[11] = -1.0;
 		
 #endif
 	return *this;
