@@ -51,7 +51,7 @@ int main( int argc, char** argv )
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	std::vector<Events::Event*> aryEvents;
 	aryEvents.push_back( new Events::Event( Events::EventType::StateUpdate ) );
-//	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
+	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
 
 	Timer timer;
 	int bRunning = 1;
