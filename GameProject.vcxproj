@@ -77,6 +77,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="component\events\events.cpp" />
+    <ClCompile Include="component\input\input.cpp" />
     <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
     <ClCompile Include="component\rendering\glhelpers.cpp" />
@@ -93,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="component\events\events.h" />
+    <ClInclude Include="component\input\input.h" />
     <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />
     <ClInclude Include="component\rendering\glhelpers.h" />
