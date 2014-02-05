@@ -56,7 +56,7 @@ class PostOffice {
 			static int64_t last_event_id = 1;
 			int64_t id = ++last_event_id;
 			new_event->id = id;
-			events[id] = new_event;
+			this->events[id] = new_event;
 			ref_counts[id] = receiver_count;
 	
 			// Send it

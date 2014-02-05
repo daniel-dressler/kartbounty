@@ -56,6 +56,9 @@
     <ClInclude Include="component\state\state.h">
       <Filter>component\state</Filter>
     </ClInclude>
+    <ClInclude Include="component\input\input.h">
+      <Filter>component\input</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -96,6 +99,9 @@
     <ClCompile Include="component\state\state.cpp">
       <Filter>component\state</Filter>
     </ClCompile>
+    <ClCompile Include="component\input\input.cpp">
+      <Filter>component\input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="component">
@@ -121,6 +127,9 @@
     </Filter>
     <Filter Include="component\state">
       <UniqueIdentifier>{0f0f9d34-8db7-4ea4-8596-dc5cec81926d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\input">
+      <UniqueIdentifier>{1a452350-b85b-49ea-80fb-c3eca13ab3f3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

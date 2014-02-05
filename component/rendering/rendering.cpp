@@ -146,7 +146,7 @@ int Renderer::Update( float fElapseSec )
 		{
 		case Events::EventType::StateUpdate:
 			{
-				DEBUGOUT( "I GOT HERE!" );
+				//DEBUGOUT( "I GOT HERE!" );
 			}
 			break;
 		}

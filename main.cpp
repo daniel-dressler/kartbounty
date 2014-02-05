@@ -9,6 +9,7 @@
 #include "component/entities/entities.h"
 #include "component/events/events.h"
 #include "component/physics/physics.h"
+#include "component/input/input.h"
 
 int main( int argc, char** argv )
 {
@@ -51,7 +52,7 @@ int main( int argc, char** argv )
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	std::vector<Events::Event*> aryEvents;
 	aryEvents.push_back( new Events::Event( Events::EventType::StateUpdate ) );
-//	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
+	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
 
 	Timer timer;
 	int bRunning = 1;
@@ -60,6 +61,14 @@ int main( int argc, char** argv )
 	// Init components
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
+
+	// Init Input control and the player 1 joystick if plugged in.
+	Input *input = new Input();
+	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
+	if(SDL_NumJoysticks())
+	{
+		input->OpenJoysticks();
+	}
 
 	while( bRunning )
 	{
@@ -77,25 +86,8 @@ int main( int argc, char** argv )
 			fElapse = fTime - fLastTime;
 
 			while( SDL_PollEvent( &event ) )
-			{
-				switch( event.type )
-				{
-				case SDL_WINDOWEVENT:
-					switch( event.window.event )
-					{
-					case SDL_WINDOWEVENT_RESIZED:
-						{
-							Int32 nWinWidth, nWinHeight;
-							SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
-							glViewport( 0, 0, nWinWidth, nWinHeight );
-						}
-						break;
-					}
-					break;
-				case SDL_QUIT:
-					bRunning = 0;
-					break;
-				}
+			{			
+				input->OnEvent(&event);
 			}
 
 		//} while( fElapse < 0.008f );
@@ -107,7 +99,6 @@ int main( int argc, char** argv )
 			DEBUGOUT( "FPS: %d\n", nFPS );
 			nFPS = 0;
 		}
-
 
 		// Components
 		simulation->step(fElapse);
