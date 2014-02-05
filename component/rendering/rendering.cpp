@@ -13,7 +13,6 @@ private:
 	GLbuffer			m_bufPerFrame;
 
 	GLmesh				m_glmArena;
-	btTriangleMesh		m_cldrArena;
 
 	GLmesh				m_glmKart;
 
@@ -102,7 +101,7 @@ int Renderer::Init( SDL_Window* win )
 			return 0;
 
 		SEG::Mesh meshdata;
-		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, &m_cldrArena ) )
+		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, &GetState().bttmArena ) )
 			return 0;
 
 		free( pData );
@@ -182,8 +181,8 @@ int Renderer::Render()
 	glhDrawMesh( m_eftMesh, m_glmArena );
 
 	perMesh.matWorld = Matrix::GetScale( 0.3f, 0.3f, 0.5f ) * 
-		Matrix::GetTranslate( GetState().Karts[0].vPos ) * 
-		Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient );
+		Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
+		Matrix::GetTranslate( GetState().Karts[0].vPos );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_glmKart );

@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 		return 1;
 
 	MEMSET( &GetState(), 0, sizeof(StateData) );
-	GetState().Karts[0].vPos = Vector3( 0, 0.5f, 0 );
+	GetState().Karts[0].vPos = Vector3( 1, 0.5f, 0 );
 	GetState().Karts[0].qOrient.Identity();
 
 	Events::Mailbox* pMailbox = new Events::Mailbox();
