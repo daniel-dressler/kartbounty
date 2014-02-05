@@ -2,6 +2,7 @@
 #define __STATE_DATA__
 
 #include "../rendering/SELib/SELib.h"
+#include <BulletCollision/CollisionShapes/btTriangleMesh.h>
 
 typedef struct StateData
 {
@@ -15,11 +16,15 @@ typedef struct StateData
 
 	} Karts[4];
 
+<<<<<<< HEAD
 	struct 
 	{
 		Vector3		focus;
 		Vector3		cPos;
 	} Camera;
+=======
+	btTriangleMesh	bttmArena;
+>>>>>>> 426eefe357c047a15b4486c054680238a0e8cdec
 
 } StateData;
 
