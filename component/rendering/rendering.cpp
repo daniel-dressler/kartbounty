@@ -156,8 +156,8 @@ int Renderer::Update( float fElapseSec )
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	Vector3 vFocus = Vector3( 0, 0, 0 );
-	perFrame.vEyePos = Vector3( 10, 15, 10 );
+	Vector3 vFocus = GetState().Camera.vFocus;
+	perFrame.vEyePos = GetState().Camera.vPos;
 	perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
 	perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );

@@ -16,15 +16,13 @@ typedef struct StateData
 
 	} Karts[4];
 
-<<<<<<< HEAD
 	struct 
 	{
-		Vector3		focus;
-		Vector3		cPos;
+		Vector3		vFocus;
+		Vector3		vPos;
 	} Camera;
-=======
+
 	btTriangleMesh	bttmArena;
->>>>>>> 426eefe357c047a15b4486c054680238a0e8cdec
 
 } StateData;
 

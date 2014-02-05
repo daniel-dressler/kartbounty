@@ -49,6 +49,9 @@ int main( int argc, char** argv )
 	GetState().Karts[0].vPos = Vector3( 1, 0.5f, 0 );
 	GetState().Karts[0].qOrient.Identity();
 
+	GetState().Camera.vFocus = GetState().Karts[0].vPos + Vector3( 0, 1, 0 );
+	GetState().Camera.vPos = GetState().Camera.vPos + Vector3( 0, 3.0f, 3.0f );
+
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	std::vector<Events::Event*> aryEvents;
 	aryEvents.push_back( new Events::Event( Events::EventType::StateUpdate ) );
