@@ -63,19 +63,13 @@ Quaternion& Quaternion::RotateAxisAngle( const Vector3& vAxis, const Real fAngle
 #ifdef __USE_D3DX__
 	D3DXQuaternionRotationAxis( (D3DXQUATERNION*)this, (D3DXVECTOR3*)&vAxis, fAngle );
 #else
-	if( ::IsClose( fAngle, 0.0f ) )
-		Identity();
-	else
-	{
-		Real fSin = SIN( fAngle * 0.5f );
-		Real fLen = vAxis.SquaredLength();
-		if( !::IsClose( fLen, 0.0f ) )
-			fSin /= SQRT( fLen );
-		w = COS( fAngle * 0.5f );
-		x = vAxis.x * fSin;
-		y = vAxis.y * fSin;
-		z = vAxis.z * fSin;
-	}
+
+	Real fSin = SIN( fAngle * 0.5f );
+	x = vAxis.x * fSin;
+	y = vAxis.y * fSin;
+	z = vAxis.z * fSin;
+	w = COS( fAngle * 0.5f );
+
 #endif
 	return *this;
 }

@@ -114,6 +114,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
+			//GetState().Karts[0].vPos += Vector3(1,1,0);
 			break;
 		case RIGHT_TRIGGER_AXIS:
 			break;
