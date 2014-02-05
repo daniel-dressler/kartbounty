@@ -5,6 +5,9 @@
 
 typedef struct StateData
 {
+	Real	fTime;
+	Real	fElapse;
+
 	struct
 	{
 		Vector3		vPos;

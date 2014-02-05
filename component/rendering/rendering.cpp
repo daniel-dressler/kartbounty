@@ -1,12 +1,6 @@
 #include "rendering.h"
 #include "../events/events.h"
 
-struct RNDKart
-{
-	Vector3		vPos;
-	Quaternion	vOrient;
-};
-
 class Renderer
 {
 private:
@@ -96,7 +90,7 @@ int Renderer::Init( SDL_Window* win )
 	const GLchar* aryHeaders[] = { "component/rendering/ShaderStructs.glsl" };
 	m_eftMesh = glhLoadEffect( "component/rendering/VShader.glsl", NULL, "component/rendering/PShader.glsl", aryHeaders, 1 );
 	if( !m_eftMesh.program )
-		return 1;
+		return 0;
 
 	glhCreateBuffer( m_eftMesh, "cstPerMesh", sizeof(cstPerMesh), &m_bufPerMesh );
 	glhCreateBuffer( m_eftMesh, "cstPerFrame", sizeof(cstPerFrame), &m_bufPerFrame );
@@ -187,7 +181,9 @@ int Renderer::Render()
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_glmArena );
 
-	perMesh.matWorld = Matrix::GetScale( 0.3f, 0.3f, 0.5f ) * Matrix::GetTranslate( 0, 0.5f, 0 );
+	perMesh.matWorld = Matrix::GetScale( 0.3f, 0.3f, 0.5f ) * 
+		Matrix::GetTranslate( GetState().Karts[0].vPos ) * 
+		Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_glmKart );

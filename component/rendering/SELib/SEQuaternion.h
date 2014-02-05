@@ -80,6 +80,18 @@ typedef struct Quaternion
 	Quaternion& Slerp( Quaternion& qA, Quaternion& qB, Real fT );
 	Int32 ToAxisAngle( Vector3* pAxis, Real* pAngle ) const;
 
+	static Quaternion GetRotateMatrix( const Matrix4x4& m )
+	{
+		Quaternion q;
+		return q.RotateMatrix( m );
+	}
+
+	static Quaternion GetRotateAxisAngle( const Vector3& vAxis, const Real fAngle )
+	{
+		Quaternion q;
+		return q.RotateAxisAngle( vAxis, fAngle );
+	}
+
 	inline Quaternion& operator*=( const Quaternion& rhs )
 	{
 		Quaternion m = *this;

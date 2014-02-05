@@ -145,7 +145,7 @@ Matrix3& Matrix3::RotateQuaternion( const Quaternion& quat )
 {
 	e[15] = 1.0f;
 	e[3] = e[7] = e[11] = e[12] = e[13] = e[14] = 0.0f;
-
+	
 	Real ww  = quat.w * quat.w;
 	Real wx2 = quat.w * quat.x * 2.0f;
 	Real wy2 = quat.w * quat.y * 2.0f;
@@ -158,17 +158,68 @@ Matrix3& Matrix3::RotateQuaternion( const Quaternion& quat )
 	Real zz  = quat.z * quat.z;
 
 	e[0]  = ww + xx - yy - zz;
-	e[1]  = xy2 + wz2;
-	e[2]  = xz2 - wy2;
+	e[4]  = xy2 + wz2;
+	e[8]  = xz2 - wy2;
 
-	e[4]  = xy2 - wz2;
+	e[1]  = xy2 - wz2;
 	e[5]  = ww - xx + yy - zz;
-	e[6]  = yz2 + wx2;
+	e[9]  = yz2 + wx2;
 
-	e[8]  = xz2 + wy2;
-	e[9]  = yz2 - wx2;
+	e[2]  = xz2 + wy2;
+	e[6]  = yz2 - wx2;
 	e[10] = ww - xx - yy + zz;
+	
+	/*
+    Real sqw = quat.w*quat.w;
+    Real sqx = quat.x*quat.x;
+    Real sqy = quat.y*quat.y;
+    Real sqz = quat.z*quat.z;
 
+    // invs (inverse square length) is only required if quaternion is not already normalised
+    Real invs = 1 / (sqx + sqy + sqz + sqw);
+    e[0] = ( sqx - sqy - sqz + sqw)*invs ; // since sqw + sqx + sqy + sqz =1/invs*invs
+    e[5] = (-sqx + sqy - sqz + sqw)*invs ;
+    e[10] = (-sqx - sqy + sqz + sqw)*invs ;
+    
+    Real tmp1 = quat.x*quat.y;
+    Real tmp2 = quat.z*quat.w;
+    e[4] = 2.0 * (tmp1 + tmp2)*invs ;
+    e[1] = 2.0 * (tmp1 - tmp2)*invs ;
+    
+    tmp1 = quat.x*quat.z;
+    tmp2 = quat.y*quat.w;
+    e[8] = 2.0 * (tmp1 - tmp2)*invs ;
+    e[2] = 2.0 * (tmp1 + tmp2)*invs ;
+    tmp1 = quat.y*quat.z;
+    tmp2 = quat.x*quat.w;
+    e[9] = 2.0 * (tmp1 + tmp2)*invs ;
+    e[6] = 2.0 * (tmp1 - tmp2)*invs ;
+	*/
+	/*
+	Real xx      = quat.x * quat.x;
+    Real xy      = quat.x * quat.y;
+    Real xz      = quat.x * quat.z;
+    Real xw      = quat.x * quat.w;
+
+    Real yy      = quat.y * quat.y;
+    Real yz      = quat.y * quat.z;
+    Real yw      = quat.y * quat.w;
+
+    Real zz      = quat.z * quat.z;
+    Real zw      = quat.z * quat.w;
+
+	e[0]  = 1 - 2 * ( yy + zz );
+	e[1]  =     2 * ( xy - zw );
+	e[2] =     2 * ( xz + yw );
+
+	e[4]  =     2 * ( xy + zw );
+	e[5]  = 1 - 2 * ( xx + zz );
+	e[6]  =     2 * ( yz - xw );
+
+	e[8]  =     2 * ( xz - yw );
+	e[9]  =     2 * ( yz + xw );
+	e[10] = 1 - 2 * ( xx + yy );
+	*/
 	return *this;
 }
 
