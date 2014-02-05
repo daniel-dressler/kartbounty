@@ -11,6 +11,13 @@ typedef struct StateData
 		Quaternion	qOrient;
 
 	} Karts[4];
+
+	struct 
+	{
+		Vector3		focus;
+		Vector3		cPos;
+	} Camera;
+
 } StateData;
 
 extern StateData& GetState();

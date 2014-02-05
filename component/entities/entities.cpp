@@ -13,7 +13,7 @@ Entity::Entity()
 
 Entity Inventory::FindEntity(entity_id id)
 {
-	entity_store.at(id);
+	return entity_store.at(id);
 }
 
 bool Inventory::Contains(entity_id id)

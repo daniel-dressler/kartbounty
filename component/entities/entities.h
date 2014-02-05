@@ -6,7 +6,7 @@
 typedef UInt64 entity_id;
 
 // Entities do not define models or
-// sounds or similar. Instead the components
+// sounds or similar. Instead the system
 // should match the entity type
 // to data.
 namespace Entities {
@@ -49,6 +49,7 @@ namespace Entities {
 
 		CarEntity(std::string name) : Entity()
 		{
+			this->health = 1;
 			this->name = name;
 			this->powerup_slot = NULL;
 		}

@@ -59,6 +59,9 @@
     <ClInclude Include="component\input\input.h">
       <Filter>component\input</Filter>
     </ClInclude>
+    <ClInclude Include="component\entities\entities.h">
+      <Filter>component\entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -102,6 +105,9 @@
     <ClCompile Include="component\input\input.cpp">
       <Filter>component\input</Filter>
     </ClCompile>
+    <ClCompile Include="component\entities\entities.cpp">
+      <Filter>component\entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="component">
@@ -130,6 +136,9 @@
     </Filter>
     <Filter Include="component\input">
       <UniqueIdentifier>{1a452350-b85b-49ea-80fb-c3eca13ab3f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\entities">
+      <UniqueIdentifier>{3d21884c-6068-44e2-b858-e2d4693a1e57}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

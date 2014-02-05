@@ -85,10 +85,6 @@ int main( int argc, char** argv )
 			fTime = (Real)timer.CalcSeconds();
 			fElapse = fTime - fLastTime;
 
-			//while( SDL_PollEvent( &event ) )
-			//{			
-			//	input->OnEvent(&event);
-			//}
 			input->HandleEvents();
 
 		//} while( fElapse < 0.008f );
