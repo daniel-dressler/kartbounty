@@ -5,14 +5,17 @@ CXXFLAGS += -g -Wall -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(
 
 BULLETLIB = $(BULLET)/static_lib/src
 BULLETLIBS = $(BULLETLIB)/BulletDynamics/libBulletDynamics.a $(BULLETLIB)/BulletCollision/libBulletCollision.a $(BULLETLIB)/LinearMath/libLinearMath.a
-LDLIBS += -g $(shell pkg-config --libs sdl2 glew glu gl) $(BULLETLIBS)
+LDLIBS += -g -lm $(shell pkg-config --libs sdl2 glew glu gl) $(BULLETLIBS) \
+		  -lXv -lXext -lX11 -lXxf86vm -ldl
 
 ODIR := obj
 BDIR := build
 
-SRC = main.cpp glhelpers.cpp Standard.cpp \
+SRC = main.cpp Standard.cpp \
 	component/events/events.cpp \
+	component/input/input.cpp \
 	component/rendering/rendering.cpp \
+	component/rendering/glhelpers.cpp \
 	component/rendering/SELib/SEStdMath.cpp \
 	component/rendering/SELib/SEMatrix.cpp \
 	component/rendering/SELib/SETimer.cpp \
