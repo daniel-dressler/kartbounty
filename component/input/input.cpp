@@ -25,7 +25,7 @@ void Input::OpenJoysticks(){
 	m_joystick1 = SDL_JoystickOpen(0);
 	int number_of_buttons;
 	number_of_buttons = SDL_JoystickNumButtons(m_joystick1);
-	DEBUGOUT("Joystick %i opened with %i buttons", m_joystick1, number_of_buttons);
+	DEBUGOUT("Joystick %i opened with %i buttons\n", m_joystick1, number_of_buttons);
 }
 
 void Input::HandleEvents(){
@@ -98,7 +98,7 @@ void Input::OnEvent(SDL_Event* Event) {
 		OnJoystickButton(Event->jbutton);
 		break;
 	default:
-		//DEBUGOUT("SDL Event type:%i", Event->type);
+		DEBUGOUT("SDL Event type:%i\n", Event->type);\
 		break;
 	}
 }
@@ -144,7 +144,11 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
+<<<<<<< HEAD
 			m_pCurrentInput->brake = max(event.value / scaleFactor, m_pCurrentInput->brake);
+=======
+			GetState().Karts[0].vPos += Vector3(1,1,0);
+>>>>>>> 449a08c8ab4c2107bbec532f87c48395133d37a8
 			break;
 		case RIGHT_TRIGGER_AXIS:
 			m_pCurrentInput->accelerate = max(event.value / scaleFactor, m_pCurrentInput->accelerate);

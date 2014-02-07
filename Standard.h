@@ -34,6 +34,8 @@
 
 long _filelength(int fd);
 
+// Hack, SDL2.0.1 is not in repos
+#define SDL_TICKS_PASSED(A, B)  ((Sint32)((B) - (A)) <= 0)
 #endif
 
 // Common opengl includes are the same on windows and linux, only mac differs
@@ -47,6 +49,7 @@ long _filelength(int fd);
 // SDL recomends a linking directive which makes this equivilent on all platforms
 #include <SDL.h>
 #include <SDL_syswm.h>
+#include <SDL_timer.h>
 
 #include "component/rendering/SELib/SELib.h"
 
