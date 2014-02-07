@@ -144,11 +144,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
-<<<<<<< HEAD
 			m_pCurrentInput->brake = max(event.value / scaleFactor, m_pCurrentInput->brake);
-=======
-			GetState().Karts[0].vPos += Vector3(1,1,0);
->>>>>>> 449a08c8ab4c2107bbec532f87c48395133d37a8
 			break;
 		case RIGHT_TRIGGER_AXIS:
 			m_pCurrentInput->accelerate = max(event.value / scaleFactor, m_pCurrentInput->accelerate);
