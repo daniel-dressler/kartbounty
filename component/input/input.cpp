@@ -4,13 +4,20 @@
 #include "../events/events.h"
 #include "../state/state.h"
 
-Input::Input() {	
+Input::Input() {
+	m_pMailbox = new Events::Mailbox();	
+	
+	// Initialize joysticks
+	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
+	if(SDL_NumJoysticks())
+	{
+		OpenJoysticks();
+	}
+	newInputs = false;
 }
 
 Input::~Input() {
 	SDL_JoystickClose(m_joystick1);
-
-	m_pMailbox = new Events::Mailbox();
 }
 
 void Input::OpenJoysticks(){
@@ -24,17 +31,38 @@ void Input::OpenJoysticks(){
 void Input::HandleEvents(){
 
 	SDL_Event event;
-	Events::Event *outgoingInputEvents = new Events::Event(Events::EventType::KartMove);
 
-	//10ms into the future, ensures the input loop doesn't last longer than 10ms
+	m_pCurrentInput = NEWEVENT(Input);
+	//memset(m_pCurrentInput, 0, sizeof(struct Events::InputEvent));  //This resets everything including the type and id, not good
+	
+	// Make sure all values are set to 0.
+	m_pCurrentInput->accelerate = 0;
+	m_pCurrentInput->brake = 0;
+	m_pCurrentInput->turn = 0;
+	m_pCurrentInput->aPressed = false;
+	m_pCurrentInput->bPressed = false;
+	m_pCurrentInput->xPressed = false;
+	m_pCurrentInput->yPressed = false;
+
+	//20ms into the future, ensures the input loop doesn't last longer than 10ms
 	Uint32 timeout = SDL_GetTicks() + 20;   
 
 	while( SDL_PollEvent(&event) && !SDL_TICKS_PASSED(SDL_GetTicks(), timeout) )
 	{
 		OnEvent(&event);
-
-		//Add code to handle compiling events into one outgoing mail item
 	}
+
+	if(newInputs)
+	{
+		// Send input events to mail system
+		std::vector<Events::Event *> inputEvents;
+		inputEvents.push_back(m_pCurrentInput);
+		m_pMailbox->sendMail(inputEvents);
+	}
+	
+	// Now mailbox owns the object
+	m_pCurrentInput = NULL;
+	newInputs = false;
 }
 
 void Input::OnEvent(SDL_Event* Event) {
@@ -103,9 +131,11 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 
 	if( (event.value >= MIN_JOY_MOVEMENT_THRESHOLD ) || (event.value <= -MIN_JOY_MOVEMENT_THRESHOLD) )
 	{
+		newInputs = true;
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
+			m_pCurrentInput->turn = max(event.value / scaleFactor, m_pCurrentInput->turn);
 			break;
 		case LEFT_STICK_UP_DOWN_AXIS:
 			break;
@@ -114,9 +144,10 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
-			//GetState().Karts[0].vPos += Vector3(1,1,0);
+			m_pCurrentInput->brake = max(event.value / scaleFactor, m_pCurrentInput->brake);
 			break;
 		case RIGHT_TRIGGER_AXIS:
+			m_pCurrentInput->accelerate = max(event.value / scaleFactor, m_pCurrentInput->accelerate);
 			break;
 		default:
 			break;
@@ -127,15 +158,20 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 
 void Input::OnJoystickButton(SDL_JoyButtonEvent event){
 	//DEBUGOUT("Joystick button: %i\n", event.button);
+	newInputs = true;
 	switch (event.button)
 	{
 	case A_BUTTON:
+		m_pCurrentInput->aPressed = true;
 		break;
 	case X_BUTTON:
+		m_pCurrentInput->xPressed = true;
 		break;
 	case B_BUTTON:
+		m_pCurrentInput->bPressed = true;
 		break;
 	case Y_BUTTON:
+		m_pCurrentInput->yPressed = true;
 		break;
 	case LEFT_SHOULDER_BUTTON:
 		break;

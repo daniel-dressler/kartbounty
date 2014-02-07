@@ -54,7 +54,7 @@ int main( int argc, char** argv )
 
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	std::vector<Events::Event*> aryEvents;
-	aryEvents.push_back( new Events::Event( Events::EventType::StateUpdate ) );
+	aryEvents.push_back( NEWEVENT(StateUpdate) );
 	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
 
 	Timer timer;
@@ -67,11 +67,6 @@ int main( int argc, char** argv )
 
 	// Init Input control and the player 1 joystick if plugged in.
 	Input *input = new Input();
-	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
-	if(SDL_NumJoysticks())
-	{
-		input->OpenJoysticks();
-	}
 
 	while( bRunning )
 	{

@@ -9,11 +9,8 @@ private:
 
 	SDL_Joystick *m_joystick1;
 	Events::Mailbox *m_pMailbox;
-
-	struct InputUpdate
-	{
-
-	};
+	Events::InputEvent *m_pCurrentInput;
+	bool newInputs;
 
 public:
 

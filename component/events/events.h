@@ -6,7 +6,7 @@
 
 
 // Use this to get new events
-#define NEWEVENT(type) (new type##Event(type))
+#define NEWEVENT(type) (new Events::type##Event(Events::EventType::type))
 namespace Events {
 	enum EventType {
 		NullEvent,
@@ -14,20 +14,41 @@ namespace Events {
 		RoundStart,
 		KartMove,
 		ArenaCollider,
-		StateUpdate
+		StateUpdate,
+		Input
 	};
 
 	struct Event {
 		EventType type;
-		Event(EventType our_type) : type(our_type) {};
-
 		int64_t id;
 	};
+	
+	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(EventType our_type) {this->type = our_type;};
+	#define ENDEVENT }
 
-	struct ExplosionEvent : Event {
+	EVENTSTRUCT(Explosion)
 		entity_id exploder;
 		float force;
-	};
+	ENDEVENT;
+
+	EVENTSTRUCT(StateUpdate)
+	ENDEVENT;
+
+	EVENTSTRUCT(Input)
+		// Buttons
+		bool xPressed;
+		bool yPressed;
+		bool bPressed;
+		bool aPressed;
+
+		// Axes
+		float accelerate;
+		float turn;
+		float brake;
+	ENDEVENT;
+
+	#undef EVENTSTRUCT
+	#undef ENDEVENT
 
 	// Simple types like RoundStart are class-less
 
