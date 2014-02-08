@@ -36,6 +36,8 @@ long _filelength(int fd);
 
 // Hack, SDL2.0.1 is not in repos
 #define SDL_TICKS_PASSED(A, B)  ((Sint32)((B) - (A)) <= 0)
+
+#define max(x,y) fmax(x,y)
 #endif
 
 // Common opengl includes are the same on windows and linux, only mac differs
