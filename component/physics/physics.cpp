@@ -1,51 +1,149 @@
 #include "physics.h"
 #include "GLDebugDrawer.h"
+#include "../state/state.h"
 
 using namespace Physics;
 
 Simulation::Simulation()
 {
-	// TODO: don't leak this stuff
-	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-	world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-	world->setGravity(btVector3(0,-10,0));
-	this->enableDebugView();
+	m_broadphase = new btDbvtBroadphase();
+	m_collisionConfiguration = new btDefaultCollisionConfiguration();
+	m_dispatcher = new btCollisionDispatcher(m_collisionConfiguration);
+	m_solver = new btSequentialImpulseConstraintSolver;
+	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
+
+	m_world->setGravity(btVector3(10,10,0));
+}
+
+Simulation::~Simulation()
+{
+	/*
+	delete m_world;
+	delete m_solver;
+	delete m_broadphase;
+	delete m_dispatcher;
+	delete m_collisionConfiguration;
+	*/
+}
+
+// Tuning
+// Credit to:
+// http://bullet.googlecode.com/svn-history/r2704/trunk/Demos/ForkLiftDemo/ForkLiftDemo.cpp
+float	gEngineForce = 0.f;
+
+float	defaultBreakingForce = 10.f;
+float	gBreakingForce = 100.f;
+
+float	maxEngineForce = 1000.f;//this should be engine/velocity dependent
+float	maxBreakingForce = 100.f;
+
+float	gVehicleSteering = 0.f;
+float	steeringIncrement = 0.04f;
+float	steeringClamp = 0.3f;
+float	wheelRadius = 0.5f;
+float	wheelWidth = 0.4f;
+float	wheelFriction = 1000;//BT_LARGE_FLOAT;
+float	suspensionStiffness = 20.f;
+float	suspensionDamping = 2.3f;
+float	suspensionCompression = 4.4f;
+float	rollInfluence = 0.1f;//1.0f;
+btScalar suspensionRestLength(0.6);
+#define CUBE_HALF_EXTENTS 1
+
+btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
+{
+	btVector3 localInertia(0, 0, 0);
+	if (mass != 0.0) {
+		shape->calculateLocalInertia(mass, localInertia);
+	}
+	
+
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	
+	btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,shape,localInertia);
+	
+	btRigidBody* body = new btRigidBody(cInfo);
+	body->setContactProcessingThreshold(0.01);
+	
+	m_world->addRigidBody(body);
+
+	return body;
 }
 
 int Simulation::loadWorld()
 {
 	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),1);
-	btCollisionShape* fallShape = new btSphereShape(-1);
+	addRigidBody(0, btTransform(btQuaternion(0,0,0,1),btVector3(0,-1,0)), groundShape);
 
-	btDefaultMotionState* groundMotionState =
-		new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,-1,0)));
-	btRigidBody::btRigidBodyConstructionInfo
-		groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
-	btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-	btDefaultMotionState* fallMotionState =
-		new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,50,0)));
-	world->addRigidBody(groundRigidBody);
+	// Create car
+	btCollisionShape* chassisShape = new btBoxShape(btVector3(1.f,2.f, 0.5f));
+	btCompoundShape* compound = new btCompoundShape();
+	m_collisionShapes.push_back(chassisShape);
+	m_collisionShapes.push_back(compound);
 
-	btScalar mass = 1;
-	btVector3 fallInertia(0,0,0);
-	fallShape->calculateLocalInertia(mass,fallInertia);
-	btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass,fallMotionState,fallShape,fallInertia);
-	btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
-	world->addRigidBody(fallRigidBody);
+	btTransform localTrans; // shift gravity to center of car
+	localTrans.setIdentity();;
+	localTrans.setOrigin(btVector3(0,1,0));
+	compound->addChildShape(localTrans,chassisShape);
+
+	btTransform tr;
+	tr.setIdentity();
+	tr.setOrigin(btVector3(0,0,0));
+	m_carChassis = addRigidBody(800.0, tr, compound);
+
+	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
+	m_vehicle = new btRaycastVehicle(m_tuning,m_carChassis, m_vehicleRayCaster);
+	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
+	m_world->addVehicle(m_vehicle);
+
+	float connectionHeight = 1.2f;
+	bool isFrontWheel=true;
+	btVector3 wheelDirectionCS0(0,-1,0);
+	btVector3 wheelAxleCS(-1,0,0);
+
+	btVector3 connectionPointCS0(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
+
+	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
+	connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
+
+	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
+	connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
+
+	isFrontWheel = false;
+	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
+
+	connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
+	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
+	
+	for (int i=0;i<m_vehicle->getNumWheels();i++)
+	{
+		btWheelInfo& wheel = m_vehicle->getWheelInfo(i);
+		wheel.m_suspensionStiffness = suspensionStiffness;
+		wheel.m_wheelsDampingRelaxation = suspensionDamping;
+		wheel.m_wheelsDampingCompression = suspensionCompression;
+		wheel.m_frictionSlip = wheelFriction;
+		wheel.m_rollInfluence = rollInfluence;
+	}
+
+
 	return 0;
 }
 
 void Simulation::step(double seconds)
 {
-	world->stepSimulation((btScalar)seconds, 10);
-	world->debugDrawWorld();
+	DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
+	m_world->stepSimulation((btScalar)seconds, 10);
+
+	StateData *state = GetMutState();
+	btTransform car1 = m_carChassis->getWorldTransform();
+	btVector3 pos = car1.getOrigin();
+	state->Karts[0].vPos.x = pos.getX();
+	state->Karts[0].vPos.y = pos.getY();
+	state->Karts[0].vPos.z = pos.getZ();
+
+
 }
 
 void Simulation::enableDebugView()
 {
-	GLDebugDrawer *debugView = new GLDebugDrawer();
-	world->setDebugDrawer(debugView);
 }

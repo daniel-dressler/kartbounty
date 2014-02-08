@@ -27,5 +27,6 @@ typedef struct StateData
 } StateData;
 
 extern StateData& GetState();
+extern StateData *GetMutState();
 
 #endif

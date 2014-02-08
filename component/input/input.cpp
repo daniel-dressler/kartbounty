@@ -98,7 +98,7 @@ void Input::OnEvent(SDL_Event* Event) {
 		OnJoystickButton(Event->jbutton);
 		break;
 	default:
-		DEBUGOUT("SDL Event type:%i\n", Event->type);\
+		//DEBUGOUT("SDL Event type:%i\n", Event->type);
 		break;
 	}
 }

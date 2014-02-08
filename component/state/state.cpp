@@ -7,3 +7,8 @@ StateData& GetState()
 {
 	return g_state;
 }
+
+StateData *GetMutState()
+{
+	return &g_state;
+}
