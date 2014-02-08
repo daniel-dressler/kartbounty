@@ -27,9 +27,6 @@ SRC = main.cpp Standard.cpp \
 	component/entities/entities.cpp
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
 
-run: $(BDIR)/kart
-	./$(BDIR)/kart
-
 $(BDIR)/kart: $(OBJS) $(BULLET)/built
 	@mkdir -p $(@D)
 	c++ -o $@ $(OBJS) $(LDLIBS) 
