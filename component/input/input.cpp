@@ -98,7 +98,7 @@ void Input::OnEvent(SDL_Event* Event) {
 		OnJoystickButton(Event->jbutton);
 		break;
 	default:
-		DEBUGOUT("SDL Event type:%i\n", Event->type);\
+		//DEBUGOUT("SDL Event type:%i\n", Event->type);
 		break;
 	}
 }
@@ -111,6 +111,8 @@ void Input::OnKeyDown(SDL_Scancode scancode, Uint16 mod, Uint32 type){
 			exit(0);
 			break;
 		}
+	case SDL_SCANCODE_A:
+		m_pCurrentInput->turn = -1;
 	default:
 		break;
 	}
@@ -132,10 +134,11 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 	if( (event.value >= MIN_JOY_MOVEMENT_THRESHOLD ) || (event.value <= -MIN_JOY_MOVEMENT_THRESHOLD) )
 	{
 		newInputs = true;
+		float moveAmt = (float)event.value / (float)scaleFactor;
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
-			m_pCurrentInput->turn = max(event.value / scaleFactor, m_pCurrentInput->turn);
+			m_pCurrentInput->turn = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
 			break;
 		case LEFT_STICK_UP_DOWN_AXIS:
 			break;
@@ -144,10 +147,10 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
-			m_pCurrentInput->brake = max(event.value / scaleFactor, m_pCurrentInput->brake);
+			m_pCurrentInput->brake = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
 			break;
 		case RIGHT_TRIGGER_AXIS:
-			m_pCurrentInput->accelerate = max(event.value / scaleFactor, m_pCurrentInput->accelerate);
+			m_pCurrentInput->accelerate = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
 			break;
 		default:
 			break;
