@@ -11,6 +11,7 @@ private:
 	SDL_Joystick *m_joystick1;
 	Events::Mailbox *m_pMailbox;
 	Events::InputEvent *m_pCurrentInput;
+	Events::InputEvent *m_pPreviousInput;
 	bool newInputs;
 
 public:
@@ -39,7 +40,9 @@ public:
 	int static const LEFT_TRIGGER_AXIS = 4;
 	int static const RIGHT_TRIGGER_AXIS = 5;
 
-	int static const MIN_JOY_MOVEMENT_THRESHOLD = 3200;
+	//int static const MIN_JOY_MOVEMENT_THRESHOLD = 3200;
+#define MIN_JOY_MOVEMENT_THRESHOLD 200
+#define JOYSTICK_DEADZONE 10000
 
 	Input();
 

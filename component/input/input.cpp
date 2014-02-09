@@ -14,6 +14,17 @@ Input::Input() {
 		OpenJoysticks();
 	}
 	newInputs = false;
+
+	// Setup previous input event struct
+	m_pPreviousInput = NEWEVENT(Input);
+	m_pPreviousInput->rightTrigger = 0;
+	m_pPreviousInput->leftTrigger = 0;
+	m_pPreviousInput->leftThumbStickRL = 0;
+	m_pPreviousInput->rightThumbStickRL = 0;
+	m_pPreviousInput->aPressed = false;
+	m_pPreviousInput->bPressed = false;
+	m_pPreviousInput->xPressed = false;
+	m_pPreviousInput->yPressed = false;
 }
 
 Input::~Input() {
@@ -33,16 +44,17 @@ void Input::HandleEvents(){
 	SDL_Event event;
 
 	m_pCurrentInput = NEWEVENT(Input);
-	//memset(m_pCurrentInput, 0, sizeof(struct Events::InputEvent));  //This resets everything including the type and id, not good
-	
-	// Make sure all values are set to 0 for thumb stick or -1 for triggers
-	m_pCurrentInput->rightTrigger = 0;
-	m_pCurrentInput->leftTrigger = 0;
-	m_pCurrentInput->leftThumbStickRL = 0;
-	m_pCurrentInput->aPressed = false;
-	m_pCurrentInput->bPressed = false;
-	m_pCurrentInput->xPressed = false;
-	m_pCurrentInput->yPressed = false;
+	memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+
+	// Inititialize input event with previous events values, except buttons
+	//m_pCurrentInput->rightTrigger = 0;
+	//m_pCurrentInput->leftTrigger = 0;
+	//m_pCurrentInput->leftThumbStickRL = 0;
+	//m_pCurrentInput->rightThumbStickRL = 0;
+	//m_pCurrentInput->aPressed = false;
+	//m_pCurrentInput->bPressed = false;
+	//m_pCurrentInput->xPressed = false;
+	//m_pCurrentInput->yPressed = false;
 
 	//20ms into the future, ensures the input loop doesn't last longer than 10ms
 	Uint32 timeout = SDL_GetTicks() + 20;   
@@ -52,13 +64,13 @@ void Input::HandleEvents(){
 		OnEvent(&event);
 	}
 
-	if(newInputs)
-	{
-		// Send input events to mail system
-		std::vector<Events::Event *> inputEvents;
-		inputEvents.push_back(m_pCurrentInput);
-		m_pMailbox->sendMail(inputEvents);
-	}
+	// Update previous input event
+	memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
+
+	// Send input events to mail system
+	std::vector<Events::Event *> inputEvents;
+	inputEvents.push_back(m_pCurrentInput);
+	m_pMailbox->sendMail(inputEvents);
 	
 	// Now mailbox owns the object
 	m_pCurrentInput = NULL;
@@ -111,7 +123,8 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	newInputs = true;
 
 	// Add key to state key map
-	GetState().key_map[keycode] = true;
+	if(keycode < 256)
+		GetMutState()->key_map[keycode] = true;
 
 	// Handle key press for sending InputEvent to physics
 	switch (keycode)
@@ -140,7 +153,8 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 }
 
 void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
-	GetState().key_map[keycode] = false;
+	if(keycode < 256)
+		GetMutState()->key_map[keycode] = false;
 }
 
 void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
@@ -155,6 +169,8 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
+			if(abs(moveAmt) < 0.1)
+				moveAmt = 0.0;
 			m_pCurrentInput->leftThumbStickRL = (m_pCurrentInput->leftThumbStickRL + moveAmt) - m_pCurrentInput->leftThumbStickRL;
 			break;
 		case LEFT_STICK_UP_DOWN_AXIS:
@@ -164,11 +180,17 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
-			m_pCurrentInput->leftTrigger = (m_pCurrentInput->leftTrigger + moveAmt) - m_pCurrentInput->leftTrigger;
+			{
+			double leftTriggerValue = (m_pCurrentInput->leftTrigger + moveAmt) - m_pCurrentInput->leftTrigger;
+			m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
 			break;
+			}
 		case RIGHT_TRIGGER_AXIS:
-			m_pCurrentInput->rightTrigger = (m_pCurrentInput->rightTrigger + moveAmt) - m_pCurrentInput->rightTrigger;
+			{
+			double rightTriggerValue = (m_pCurrentInput->rightTrigger + moveAmt) - m_pCurrentInput->rightTrigger;
+			m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
 			break;
+			}
 		default:
 			break;
 		}

@@ -53,8 +53,7 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 	btVector3 localInertia(0, 0, 0);
 	if (mass != 0.0) {
 		shape->calculateLocalInertia(mass, localInertia);
-	}
-	
+	}	
 
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 	
@@ -73,6 +72,8 @@ int Simulation::loadWorld()
 	// Create car
 #define CAR_WIDTH (0.15)
 #define CAR_LENGTH (0.25)
+#define CAR_MASS (400.0)
+
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
 	m_collisionShapes.push_back(chassisShape);
@@ -86,7 +87,7 @@ int Simulation::loadWorld()
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin(btVector3(0,5,0));
-	m_carChassis = addRigidBody(800.0, tr, compound);
+	m_carChassis = addRigidBody(CAR_MASS, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
 	m_tuning.m_maxSuspensionTravelCm = 204.8f;
@@ -152,8 +153,11 @@ int Simulation::loadWorld()
 void Simulation::step(double seconds)
 {
 	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
-	
-	
+
+#define STEER_MAX_ANGLE (40.0)
+#define ENGINE_MAX_FORCE (5000)
+#define BRAKE_MAX_FORCE (3000)
+
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		// Hack: Sorry
@@ -162,18 +166,29 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
-			double steer = input->leftThumbStickRL;
-			if (steer) {
-				gVehicleSteering = 0.5 * steer;
-			}
-			DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			double force = input->rightTrigger;
-			if(force) {
-				gEngineForce = -5000 * force;
-				gEngineForce = gEngineForce;
-			}
-			DEBUGOUT("FORCE %lf\n", gEngineForce);
-			gBreakingForce = 0.f;
+			//double steer = STEER_MAX_ANGLE * input->leftThumbStickRL;
+			//if (steer) {
+			//	gVehicleSteering = steer;
+			//}
+			////DEBUGOUT("STEER %lf, ", gVehicleSteering);
+			//double force = ENGINE_MAX_FORCE * input->rightTrigger;
+			//if(force) {
+			//	gEngineForce = force;
+			//}
+			////DEBUGOUT("FORCE %lf\n", gEngineForce);
+			//double breakingForce = BRAKE_MAX_FORCE * input->leftTrigger;
+			//if(breakingForce)
+			//{
+			//	//gBreakingForce = breakingForce;
+			//	gBreakingForce = 0.0;
+			//	gEngineForce -= breakingForce;
+			//}
+
+			gBreakingForce = 0.0;	// Not using this yet, maybe for E-brake or something.
+			gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
+			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+
+			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBreakingForce, gEngineForce, gVehicleSteering);
 		}
 			break;
 		default:
@@ -182,21 +197,19 @@ void Simulation::step(double seconds)
 	}
 	mb.emptyMail();
 
-	int wheelIndex = 2;
-	m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
-	m_vehicle->setBrake(gBreakingForce,wheelIndex);
-	wheelIndex = 3;
-	m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
-	m_vehicle->setBrake(gBreakingForce,wheelIndex);
+	// Apply steering to front wheels
+	m_vehicle->setSteeringValue(gVehicleSteering, 0);
+	m_vehicle->setSteeringValue(gVehicleSteering, 1);
 
-
-	wheelIndex = 0;
-	m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
-	wheelIndex = 1;
-	m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
+	// Apply braking and engine force to rear wheels
+	m_vehicle->applyEngineForce(gEngineForce, 2);
+	m_vehicle->applyEngineForce(gEngineForce, 3);
+	m_vehicle->setBrake(gBreakingForce, 2);
+	m_vehicle->setBrake(gBreakingForce, 3);
 
 	m_world->stepSimulation((btScalar)seconds, 10);
 
+	// Update the placement of the car in the world state
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
 	btVector3 pos = car1.getOrigin();
@@ -211,8 +224,6 @@ void Simulation::step(double seconds)
 	v.z = axis.getZ();
 	Real angle = -rot.getAngle();
 	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
-
-
 }
 
 void Simulation::enableDebugView()

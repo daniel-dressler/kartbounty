@@ -66,7 +66,7 @@ int main( int argc, char** argv )
 
 	// Init Input control and the player 1 joystick if plugged in.
 	Input *input = new Input();
-	
+
 	while( bRunning )
 	{
 		static Real fLastTime = 0;
@@ -81,7 +81,7 @@ int main( int argc, char** argv )
 		nFPS++;
 		if( (Int32)fTime != (Int32)fLastTime )
 		{
-			DEBUGOUT( "FPS: %d\n", nFPS );
+			//DEBUGOUT( "FPS: %d\n", nFPS );
 			nFPS = 0;
 		}
 
