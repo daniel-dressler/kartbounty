@@ -43,8 +43,6 @@ float	maxBreakingForce = 100.f;
 float	gVehicleSteering = 0.f;
 float	steeringIncrement = 0.04f;
 float	steeringClamp = 0.3f;
-float	wheelRadius = 0.1f;
-float	wheelWidth = 0.05f;
 float	wheelFriction = 1000;//BT_LARGE_FLOAT;
 float	suspensionStiffness = 20.f;
 float	suspensionDamping = 2.3f;
@@ -84,8 +82,8 @@ int Simulation::loadWorld()
 
 	btTransform localTrans; // shift gravity to center of car
 	localTrans.setIdentity();;
-	localTrans.setOrigin(btVector3(0,0.20,0));
-	compound->addChildShape(localTrans,chassisShape);
+	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1.2,0));
+	compound->addChildShape(localTrans, chassisShape);
 
 	btTransform tr;
 	tr.setIdentity();
@@ -102,26 +100,28 @@ int Simulation::loadWorld()
 	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = .25;
+	float connectionHeight = 0.3;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
 #define CON1 CAR_WIDTH
 #define CON2 (CAR_LENGTH)
+	float	wheelRadius = 0.45f;
+	float	wheelWidth = 0.1f;
 	bool isFrontWheel=true;
-	btVector3 connectionPointCS0(CON1- (0.3*wheelWidth),connectionHeight,CON2 - wheelRadius);
+	btVector3 connectionPointCS0(CON1- wheelWidth,connectionHeight,CON2 - wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-	connectionPointCS0 = btVector3(-CON1+ (0.3*wheelWidth),connectionHeight,CON2 - wheelRadius);
+	connectionPointCS0 = btVector3(-CON1+ wheelWidth,connectionHeight,CON2 - wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
 
 	isFrontWheel = false;
 
-	connectionPointCS0 = btVector3(-CON1+(0.3*wheelWidth),connectionHeight,-CON2 + wheelRadius);
+	connectionPointCS0 = btVector3(-CON1+ wheelWidth,connectionHeight,-CON2 + wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-	connectionPointCS0 = btVector3(CON1-(0.3*wheelWidth),connectionHeight,-CON2 + wheelRadius);
+	connectionPointCS0 = btVector3(CON1- wheelWidth,connectionHeight,-CON2 + wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 	
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
