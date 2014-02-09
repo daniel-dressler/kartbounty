@@ -23,6 +23,7 @@ class PostOffice {
 				delete event;
 			}
 		}
+		mailboxes[mailbox_id].clear();
 	}
 
 	const std::vector<Event *> checkMail(int32_t mailbox_id)

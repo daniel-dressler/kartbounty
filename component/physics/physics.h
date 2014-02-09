@@ -31,6 +31,7 @@ namespace Physics {
 		btRaycastVehicle*	m_vehicle;
 		btRaycastVehicle::btVehicleTuning	m_tuning;
 		btRigidBody* m_carChassis;
+		btRigidBody* m_arena;
 		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 
 		class btBroadphaseInterface* m_broadphase;

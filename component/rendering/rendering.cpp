@@ -101,7 +101,8 @@ int Renderer::Init( SDL_Window* win )
 			return 0;
 
 		SEG::Mesh meshdata;
-		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, &GetState().bttmArena ) )
+		GetMutState()->bttmArena = new btTriangleMesh();
+		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena ) )
 			return 0;
 
 		free( pData );

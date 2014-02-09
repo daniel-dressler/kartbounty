@@ -45,7 +45,6 @@ int main( int argc, char** argv )
 	if( !InitRendering( win ) )
 		return 1;
 
-	MEMSET( &GetState(), 0, sizeof(StateData) );
 	GetState().Karts[0].vPos = Vector3( 1, 0.5f, 0 );
 	GetState().Karts[0].qOrient.Identity();
 
@@ -55,7 +54,7 @@ int main( int argc, char** argv )
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	std::vector<Events::Event*> aryEvents;
 	aryEvents.push_back( NEWEVENT(StateUpdate) );
-	pMailbox->sendMail( aryEvents );												// @Daniel: This is breaking it.
+	pMailbox->sendMail( aryEvents );
 
 	Timer timer;
 	int bRunning = 1;

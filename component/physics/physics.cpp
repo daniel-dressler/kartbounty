@@ -1,6 +1,7 @@
 #include "physics.h"
 #include "GLDebugDrawer.h"
 #include "../state/state.h"
+#include <iostream>
 
 using namespace Physics;
 
@@ -12,7 +13,9 @@ Simulation::Simulation()
 	m_solver = new btSequentialImpulseConstraintSolver;
 	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
 
-	m_world->setGravity(btVector3(10,10,0));
+	m_world->setGravity(btVector3(1,-10,0));
+
+	mb.request(Events::EventType::Input);
 }
 
 Simulation::~Simulation()
@@ -88,7 +91,7 @@ int Simulation::loadWorld()
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,0,0));
+	tr.setOrigin(btVector3(0,1,0));
 	m_carChassis = addRigidBody(800.0, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
@@ -126,12 +129,52 @@ int Simulation::loadWorld()
 	}
 
 
+	// Add map
+	StateData *state = GetMutState();
+	btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape(state->bttmArena, true, true);
+	m_arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
+
+
 	return 0;
 }
 
 void Simulation::step(double seconds)
 {
-	DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
+	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
+	
+	
+	for ( Events::Event *event : (mb.checkMail()) )
+	{
+		// Hack: Sorry
+		Events::InputEvent *input = (Events::InputEvent *)event;
+		switch ( event->type )
+		{
+		case Events::EventType::Input:
+			gVehicleSteering = input->turn;
+			DEBUGOUT("STEER %lf, ", gVehicleSteering);
+			gEngineForce += input->accelerate;
+			DEBUGOUT("FORCE %lf\n", gEngineForce);
+			gBreakingForce = 0.f;
+			break;
+		default:
+			break;
+		}
+	}
+	mb.emptyMail();
+
+	int wheelIndex = 2;
+	m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
+	m_vehicle->setBrake(gBreakingForce,wheelIndex);
+	wheelIndex = 3;
+	m_vehicle->applyEngineForce(gEngineForce,wheelIndex);
+	m_vehicle->setBrake(gBreakingForce,wheelIndex);
+
+
+	wheelIndex = 0;
+	m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
+	wheelIndex = 1;
+	m_vehicle->setSteeringValue(gVehicleSteering,wheelIndex);
+
 	m_world->stepSimulation((btScalar)seconds, 10);
 
 	StateData *state = GetMutState();

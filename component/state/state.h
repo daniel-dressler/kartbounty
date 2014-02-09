@@ -22,7 +22,7 @@ typedef struct StateData
 		Vector3		vPos;
 	} Camera;
 
-	btTriangleMesh	bttmArena;
+	btTriangleMesh	*bttmArena;
 
 } StateData;
 
