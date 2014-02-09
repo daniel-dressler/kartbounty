@@ -16,6 +16,7 @@ SRC = main.cpp Standard.cpp \
 	component/input/input.cpp \
 	component/rendering/rendering.cpp \
 	component/rendering/glhelpers.cpp \
+	component/rendering/Outsource/lodepng.cpp \
 	component/rendering/SELib/SEStdMath.cpp \
 	component/rendering/SELib/SEMatrix.cpp \
 	component/rendering/SELib/SETimer.cpp \

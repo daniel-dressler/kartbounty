@@ -28,7 +28,8 @@ The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
-#include "..\OutSource\lodepng.h"
+#include "lodepng.h"
+#include "../../../Standard.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #endif /*LODEPNG_COMPILE_CPP*/
 
 #define VERSION_STRING "20121027"
+
 
 /*
 This source file is built up in the following large parts. The code sections
@@ -346,39 +348,12 @@ static void lodepng_add32bitInt(ucvector* buffer, unsigned value)
 
 unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* filename)
 {
-  FILE* file;
-  long size;
-
-  /*provide some proper output values if error will happen*/
-  *out = 0;
-  *outsize = 0;
-
-  fopen_s( &file, filename, "rb");
-  if(!file) return 78;
-
-  /*get filesize:*/
-  fseek(file , 0 , SEEK_END);
-  size = ftell(file);
-  rewind(file);
-
-  /*read contents of the file into the vector*/
-  *outsize = 0;
-  *out = (unsigned char*)mymalloc((size_t)size);
-  if(size && (*out)) (*outsize) = fread(*out, 1, (size_t)size, file);
-
-  fclose(file);
-  if(!(*out) && size) return 83; /*the above malloc failed*/
   return 0;
 }
 
 /*write given buffer to the file, overwriting the file, it doesn't append to it.*/
 unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const char* filename)
 {
-  FILE* file;
-  fopen_s( &file, filename, "wb" );
-  if(!file) return 79;
-  fwrite((char*)buffer , 1 , buffersize, file);
-  fclose(file);
   return 0;
 }
 
