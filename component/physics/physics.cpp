@@ -82,7 +82,7 @@ int Simulation::loadWorld()
 
 	btTransform localTrans; // shift gravity to center of car
 	localTrans.setIdentity();;
-	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1.2,0));
+	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1.2, 0));
 	compound->addChildShape(localTrans, chassisShape);
 
 	btTransform tr;
@@ -91,7 +91,7 @@ int Simulation::loadWorld()
 	m_carChassis = addRigidBody(800.0, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-	m_tuning.m_maxSuspensionTravelCm = 0.4f;
+	m_tuning.m_maxSuspensionTravelCm = 0.8f;
 	m_tuning.m_suspensionCompression = 4.4f;
 	m_tuning.m_suspensionDamping = 2.3f;
 	m_tuning.m_frictionSlip = 1000.0f;
@@ -104,8 +104,8 @@ int Simulation::loadWorld()
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
-#define CON1 CAR_WIDTH
-#define CON2 (CAR_LENGTH)
+#define CON1 (2*CAR_WIDTH)
+#define CON2 (2*CAR_LENGTH)
 	float	wheelRadius = 0.45f;
 	float	wheelWidth = 0.1f;
 	bool isFrontWheel=true;
