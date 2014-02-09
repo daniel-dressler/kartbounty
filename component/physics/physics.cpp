@@ -41,13 +41,11 @@ float	maxEngineForce = 1000.f;//this should be engine/velocity dependent
 float	maxBreakingForce = 100.f;
 
 float	gVehicleSteering = 0.f;
-float	steeringIncrement = 0.04f;
-float	steeringClamp = 0.3f;
 float	wheelFriction = 1000;//BT_LARGE_FLOAT;
-float	suspensionStiffness = 20.f;
-float	suspensionDamping = 2.3f;
-float	suspensionCompression = 4.4f;
-float	rollInfluence = 0.01f;//1.0f;
+float	suspensionStiffness = 2.f;
+float	suspensionDamping = 1.3f;
+float	suspensionCompression = 1.1f;
+float	rollInfluence = 1.01f;//1.0f;
 btScalar suspensionRestLength(0.2);
 
 btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
@@ -81,8 +79,8 @@ int Simulation::loadWorld()
 	m_collisionShapes.push_back(compound);
 
 	btTransform localTrans; // shift gravity to center of car
-	localTrans.setIdentity();;
-	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1.2, 0));
+	localTrans.setIdentity();
+	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1, 0));
 	compound->addChildShape(localTrans, chassisShape);
 
 	btTransform tr;
@@ -94,20 +92,20 @@ int Simulation::loadWorld()
 	m_tuning.m_maxSuspensionTravelCm = 0.8f;
 	m_tuning.m_suspensionCompression = 4.4f;
 	m_tuning.m_suspensionDamping = 2.3f;
-	m_tuning.m_frictionSlip = 1000.0f;
+	m_tuning.m_frictionSlip = 10000.0f;
 	m_tuning.m_suspensionStiffness = 5.0f;
 	m_vehicle = new btRaycastVehicle(m_tuning,m_carChassis, m_vehicleRayCaster);
 	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = 0.3;
+	float connectionHeight = 0.1;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
-#define CON1 (2*CAR_WIDTH)
+#define CON1 (CAR_WIDTH)
 #define CON2 (2*CAR_LENGTH)
-	float	wheelRadius = 0.45f;
-	float	wheelWidth = 0.1f;
+	float	wheelRadius = 0.075f;
+	float	wheelWidth = 0.03f;
 	bool isFrontWheel=true;
 	btVector3 connectionPointCS0(CON1- wheelWidth,connectionHeight,CON2 - wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
@@ -165,12 +163,14 @@ void Simulation::step(double seconds)
 			Events::InputEvent *input = (Events::InputEvent *)event;
 			double steer = input->leftThumbStickRL;
 			if (steer) {
-				gVehicleSteering = 10000 * steer;
+				gVehicleSteering = steer;
 			}
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
 			double force = input->rightTrigger;
-			gEngineForce = -10000 * force;
-			gEngineForce = gEngineForce;
+			if(force) {
+				gEngineForce = -10000 * force;
+				gEngineForce = gEngineForce;
+			}
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
 		}
