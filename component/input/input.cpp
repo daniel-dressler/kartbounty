@@ -85,6 +85,9 @@ void Input::OnEvent(SDL_Event* Event) {
 	case SDL_QUIT:
 		exit(0);
 		break;
+	case SDL_JOYBUTTONDOWN:
+		OnJoystickButton(Event->jbutton);
+		break;
 	case SDL_KEYDOWN:
 		OnKeyDown(Event->key.keysym.scancode, Event->key.keysym.mod, Event->key.type);
 		break;
@@ -93,9 +96,6 @@ void Input::OnEvent(SDL_Event* Event) {
 		break;
 	case SDL_JOYAXISMOTION:
 		OnJoystickAxisMotion(Event->jaxis);
-		break;
-	case SDL_JOYBUTTONDOWN:
-		OnJoystickButton(Event->jbutton);
 		break;
 	default:
 		//DEBUGOUT("SDL Event type:%i\n", Event->type);
