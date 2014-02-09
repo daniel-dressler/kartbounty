@@ -1,6 +1,8 @@
 #ifndef __SHADER_STRUCTS__
 #define __SHADER_STRUCTS__
 
+#define MAX_LIGHTS	5
+
 struct cstPerMesh
 {
 	Matrix matWorld;
@@ -16,6 +18,8 @@ struct cstPerFrame
 	Matrix matView;
 	Matrix matProj;
 	Matrix matViewProj;
+
+	Vector4 vLight[MAX_LIGHTS];
 };
 
 #endif

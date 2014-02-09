@@ -170,6 +170,13 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
+
+	perFrame.vLight[0] = Vector4( 0, 5, 0, 10 );	
+	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
+	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
+	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
+	perFrame.vLight[4] = Vector4( 0, 5, -10, 10 );
+	
 	glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
 	return 1;
@@ -188,8 +195,7 @@ int Renderer::Render()
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_glmArena );
 
-	perMesh.matWorld = Matrix::GetScale( 0.3f, 0.3f, 0.5f ) * 
-		Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
+	perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
 		Matrix::GetTranslate( GetState().Karts[0].vPos );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
