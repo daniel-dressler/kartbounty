@@ -91,7 +91,7 @@ int Simulation::loadWorld()
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,1,0));
+	tr.setOrigin(btVector3(0,10,0));
 	m_carChassis = addRigidBody(800.0, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
@@ -152,7 +152,7 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 			gVehicleSteering = input->turn;
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			gEngineForce += input->accelerate;
+			gEngineForce += 10 * input->accelerate;
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
 			break;
