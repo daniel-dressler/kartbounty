@@ -67,6 +67,7 @@ int Renderer::Init( SDL_Window* win )
 {
 	m_Window = win;
 	m_pMailbox = new Events::Mailbox();
+	m_pMailbox->request(Events::EventType::Input);
 
 	if( glewInit() != GLEW_OK )
 		return 1;
@@ -147,6 +148,12 @@ int Renderer::Update( float fElapseSec )
 		case Events::EventType::StateUpdate:
 			{
 				//DEBUGOUT( "I GOT HERE!" );
+			}
+			break;
+		case Events::EventType::Input:
+			{
+				Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
+				
 			}
 			break;
 		}
