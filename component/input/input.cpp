@@ -47,7 +47,7 @@ void Input::HandleEvents(){
 	//20ms into the future, ensures the input loop doesn't last longer than 10ms
 	Uint32 timeout = SDL_GetTicks() + 20;   
 
-	while( SDL_PollEvent(&event) && !SDL_TICKS_PASSED(SDL_GetTicks(), timeout) )
+	while( SDL_PollEvent(&event) )
 	{
 		OnEvent(&event);
 	}

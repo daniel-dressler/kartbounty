@@ -45,13 +45,13 @@ float	steeringIncrement = 0.04f;
 float	steeringClamp = 0.3f;
 float	wheelRadius = 0.1f;
 float	wheelWidth = 0.05f;
-float	wheelFriction = 1000;//BT_LARGE_FLOAT;
+float	wheelFriction = 100;//BT_LARGE_FLOAT;
 float	suspensionStiffness = 20.f;
 float	suspensionDamping = 2.3f;
 float	suspensionCompression = 4.4f;
-float	rollInfluence = 0.1f;//1.0f;
-btScalar suspensionRestLength(0.5);
-#define CUBE_HALF_EXTENTS (0.15)
+float	rollInfluence = 0.01f;//1.0f;
+btScalar suspensionRestLength(0.2);
+#define CUBE_HALF_EXTENTS (0.25)
 
 btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
 {
@@ -83,7 +83,7 @@ int Simulation::loadWorld()
 
 	btTransform localTrans; // shift gravity to center of car
 	localTrans.setIdentity();;
-	localTrans.setOrigin(btVector3(0,.1,0));
+	localTrans.setOrigin(btVector3(0,0.20,0));
 	compound->addChildShape(localTrans,chassisShape);
 
 	btTransform tr;
@@ -92,16 +92,16 @@ int Simulation::loadWorld()
 	m_carChassis = addRigidBody(800.0, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-	m_tuning.m_maxSuspensionTravelCm = 500.0f;
+	m_tuning.m_maxSuspensionTravelCm = 0.4f;
 	m_tuning.m_suspensionCompression = 4.4f;
 	m_tuning.m_suspensionDamping = 2.3f;
 	m_tuning.m_frictionSlip = 1000.0f;
-	m_tuning.m_suspensionStiffness = 20.0f;
+	m_tuning.m_suspensionStiffness = 5.0f;
 	m_vehicle = new btRaycastVehicle(m_tuning,m_carChassis, m_vehicleRayCaster);
 	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = .4f;
+	float connectionHeight = .25;
 	bool isFrontWheel=true;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
@@ -158,7 +158,7 @@ void Simulation::step(double seconds)
 		switch ( event->type )
 		{
 		case Events::EventType::Input:
-			gVehicleSteering = input->leftThumbStickRL;
+			gVehicleSteering = 10* input->leftThumbStickRL;
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
 			gEngineForce += -10 * input->rightTrigger;
 			gEngineForce = fmax(fmin(gEngineForce, maxEngineForce), 0);
@@ -204,7 +204,6 @@ void Simulation::step(double seconds)
 	v.y = axis.getY();
 	v.z = axis.getZ();
 	Real angle = rot.getAngle();
-	state->Karts[0].qOrient *= Quaternion();
 	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
 
 
