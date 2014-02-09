@@ -1,6 +1,8 @@
 ﻿#include "../../Standard.h"
 #include "glhelpers.h"
 
+#include "Outsource/lodepng.h"
+
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -316,3 +318,40 @@ void glhPredefinedVertexLayout( Int32 nType )
 		break;
 	};
 }
+
+int glhLoadTexture( GLtex& gltex, char* strFilename )
+{
+	int nSize;
+	char* pData;
+	if( !glhReadFile( strFilename, pData, nSize ) )
+		return 0;
+
+	unsigned char* pImageData;
+	unsigned int nWidth, nHeight;
+	unsigned int rtn = lodepng_decode32( &pImageData, &nWidth, &nHeight, (unsigned char*)pData, nSize );
+	
+	free( pData );
+	if( rtn )
+		return 0;
+
+
+
+	return 1;
+}
+
+int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData )
+{
+	glGenTextures( 1, &gltex.id );
+	glBindTexture( GL_TEXTURE_2D, gltex.id );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, pData );
+	glGenerateMipmap( GL_TEXTURE_2D);
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+	return 1;
+}
+
+
+

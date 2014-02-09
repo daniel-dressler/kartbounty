@@ -31,6 +31,11 @@ struct GLmesh
 	GLint	type;
 };
 
+struct GLtex
+{
+	GLuint	id;
+};
+
 GLeffect glhLoadEffect( const char* strVertexShader,
 						const char* strGeometryShader,
 						const char* strPixelShader,
@@ -53,5 +58,8 @@ int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh );
 void glhDestroyMesh( GLmesh& glmesh );
 
 void glhPredefinedVertexLayout( Int32 nType );
+
+int glhLoadTexture( GLtex& gltex, char* strFilename );
+int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData );
 
 #endif

@@ -82,6 +82,7 @@
     <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
     <ClCompile Include="component\rendering\glhelpers.cpp" />
+    <ClCompile Include="component\rendering\Outsource\lodepng.cpp" />
     <ClCompile Include="component\rendering\rendering.cpp" />
     <ClCompile Include="component\rendering\SELib\SEMatrix.cpp" />
     <ClCompile Include="component\rendering\SELib\SEMesh.cpp" />
@@ -100,6 +101,7 @@
     <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />
     <ClInclude Include="component\rendering\glhelpers.h" />
+    <ClInclude Include="component\rendering\Outsource\lodepng.h" />
     <ClInclude Include="component\rendering\rendering.h" />
     <ClInclude Include="component\rendering\SELib\SECompData.h" />
     <ClInclude Include="component\rendering\SELib\SELib.h" />
