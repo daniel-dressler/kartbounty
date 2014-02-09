@@ -162,9 +162,9 @@ void Simulation::step(double seconds)
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
 
-			if (input->accelerate > 0.5) {
-				m_carChassis->applyImpulse(btVector3(0,200,0),btVector3(0,1,1));
-				DEBUGOUT("impuled");
+			if (input->rightTrigger > 0.1) {
+				//m_carChassis->applyImpulse(btVector3(0,200,0),btVector3(0,0,0));
+				//DEBUGOUT("impuled");
 			}
 			break;
 		default:
