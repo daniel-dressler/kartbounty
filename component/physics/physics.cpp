@@ -150,9 +150,9 @@ void Simulation::step(double seconds)
 		switch ( event->type )
 		{
 		case Events::EventType::Input:
-			gVehicleSteering = input->turn;
+			gVehicleSteering = input->leftThumbStickRL;
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			gEngineForce += 10 * input->accelerate;
+			gEngineForce += 10 * input->rightTrigger;
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
 			break;

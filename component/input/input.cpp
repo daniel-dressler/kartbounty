@@ -35,10 +35,10 @@ void Input::HandleEvents(){
 	m_pCurrentInput = NEWEVENT(Input);
 	//memset(m_pCurrentInput, 0, sizeof(struct Events::InputEvent));  //This resets everything including the type and id, not good
 	
-	// Make sure all values are set to 0.
-	m_pCurrentInput->accelerate = 0;
-	m_pCurrentInput->brake = 0;
-	m_pCurrentInput->turn = 0;
+	// Make sure all values are set to 0 for thumb stick or -1 for triggers
+	m_pCurrentInput->rightTrigger = -1;
+	m_pCurrentInput->leftTrigger = -1;
+	m_pCurrentInput->leftThumbStickRL = 0;
 	m_pCurrentInput->aPressed = false;
 	m_pCurrentInput->bPressed = false;
 	m_pCurrentInput->xPressed = false;
@@ -86,10 +86,10 @@ void Input::OnEvent(SDL_Event* Event) {
 		exit(0);
 		break;
 	case SDL_KEYDOWN:
-		OnKeyDown(Event->key.keysym.scancode, Event->key.keysym.mod, Event->key.type);
+		OnKeyDown(Event->key.keysym.sym, Event->key.keysym.mod, Event->key.type);
 		break;
 	case SDL_KEYUP:
-		OnKeyUp(Event->key.keysym.scancode, Event->key.keysym.mod, Event->key.type);
+		OnKeyUp(Event->key.keysym.sym, Event->key.keysym.mod, Event->key.type);
 		break;
 	case SDL_JOYAXISMOTION:
 		OnJoystickAxisMotion(Event->jaxis);
@@ -103,27 +103,38 @@ void Input::OnEvent(SDL_Event* Event) {
 	}
 }
 
-void Input::OnKeyDown(SDL_Scancode scancode, Uint16 mod, Uint32 type){
-	switch (scancode)
+void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
+	newInputs = true;
+
+	// Add key to state key map
+	GetState().key_map[keycode] = true;
+
+	// Handle key press for sending InputEvent to physics
+	switch (keycode)
 	{
-	case SDL_SCANCODE_ESCAPE:	//This should pause the game but for now it just exits the program
+	case SDLK_ESCAPE:	//This should pause the game but for now it just exits the program
 		{
 			exit(0);
 			break;
 		}
-	case SDL_SCANCODE_A:
-		m_pCurrentInput->turn = -1;
+	case SDLK_a:
+		m_pCurrentInput->leftThumbStickRL = -1;
+		break;
+	case SDLK_d:
+		m_pCurrentInput->leftThumbStickRL = 1;
+		break;
+	case SDLK_w:
+		m_pCurrentInput->rightTrigger = 1;
+		break;
+	case SDLK_s:
+		m_pCurrentInput->leftTrigger = 1;
 	default:
 		break;
 	}
 }
 
-void Input::OnKeyUp(SDL_Scancode scancode, Uint16 mod, Uint32 type){
-	switch (scancode)
-	{
-	default:
-		break;
-	}
+void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
+	GetState().key_map[keycode] = false;
 }
 
 void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
@@ -138,7 +149,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
-			m_pCurrentInput->turn = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
+			m_pCurrentInput->leftThumbStickRL = (m_pCurrentInput->leftThumbStickRL + moveAmt) - m_pCurrentInput->leftThumbStickRL;
 			break;
 		case LEFT_STICK_UP_DOWN_AXIS:
 			break;
@@ -147,10 +158,10 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		case RIGHT_STICK_UP_DOWN_AXIS:
 			break;
 		case LEFT_TRIGGER_AXIS:
-			m_pCurrentInput->brake = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
+			m_pCurrentInput->leftTrigger = (m_pCurrentInput->leftTrigger + moveAmt) - m_pCurrentInput->leftTrigger;
 			break;
 		case RIGHT_TRIGGER_AXIS:
-			m_pCurrentInput->accelerate = (m_pCurrentInput->turn + moveAmt) - m_pCurrentInput->turn;
+			m_pCurrentInput->rightTrigger = (m_pCurrentInput->rightTrigger + moveAmt) - m_pCurrentInput->rightTrigger;
 			break;
 		default:
 			break;
