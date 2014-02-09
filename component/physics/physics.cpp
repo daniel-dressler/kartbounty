@@ -89,11 +89,12 @@ int Simulation::loadWorld()
 	m_carChassis = addRigidBody(800.0, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-	m_tuning.m_maxSuspensionTravelCm = 0.8f;
+	m_tuning.m_maxSuspensionTravelCm = 204.8f;
 	m_tuning.m_suspensionCompression = 4.4f;
 	m_tuning.m_suspensionDamping = 2.3f;
 	m_tuning.m_frictionSlip = 10000.0f;
 	m_tuning.m_suspensionStiffness = 5.0f;
+	m_tuning.m_maxSuspensionForce = 1000.0;
 	m_vehicle = new btRaycastVehicle(m_tuning,m_carChassis, m_vehicleRayCaster);
 	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
 	m_world->addVehicle(m_vehicle);
@@ -103,23 +104,23 @@ int Simulation::loadWorld()
 	btVector3 wheelAxleCS(-1,0,0);
 
 #define CON1 (CAR_WIDTH)
-#define CON2 (2*CAR_LENGTH)
+#define CON2 (CAR_LENGTH)
 	float	wheelRadius = 0.075f;
 	float	wheelWidth = 0.03f;
 	bool isFrontWheel=true;
-	btVector3 connectionPointCS0(CON1- wheelWidth,connectionHeight,CON2 - wheelRadius);
+	btVector3 connectionPointCS0(CON1,connectionHeight,CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-	connectionPointCS0 = btVector3(-CON1+ wheelWidth,connectionHeight,CON2 - wheelRadius);
+	connectionPointCS0 = btVector3(-CON1,connectionHeight,CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
 
 	isFrontWheel = false;
 
-	connectionPointCS0 = btVector3(-CON1+ wheelWidth,connectionHeight,-CON2 + wheelRadius);
+	connectionPointCS0 = btVector3(-CON1,connectionHeight,-CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-	connectionPointCS0 = btVector3(CON1- wheelWidth,connectionHeight,-CON2 + wheelRadius);
+	connectionPointCS0 = btVector3(CON1,connectionHeight,-CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 	
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
@@ -163,12 +164,12 @@ void Simulation::step(double seconds)
 			Events::InputEvent *input = (Events::InputEvent *)event;
 			double steer = input->leftThumbStickRL;
 			if (steer) {
-				gVehicleSteering = steer;
+				gVehicleSteering = 0.5 * steer;
 			}
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
 			double force = input->rightTrigger;
 			if(force) {
-				gEngineForce = -10000 * force;
+				gEngineForce = -5000 * force;
 				gEngineForce = gEngineForce;
 			}
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
