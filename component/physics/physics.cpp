@@ -45,7 +45,7 @@ float	steeringIncrement = 0.04f;
 float	steeringClamp = 0.3f;
 float	wheelRadius = 0.5f;
 float	wheelWidth = 0.4f;
-float	wheelFriction = 1000;//BT_LARGE_FLOAT;
+float	wheelFriction = 10;//BT_LARGE_FLOAT;
 float	suspensionStiffness = 20.f;
 float	suspensionDamping = 2.3f;
 float	suspensionCompression = 4.4f;
@@ -79,7 +79,7 @@ int Simulation::loadWorld()
 	addRigidBody(0, btTransform(btQuaternion(0,0,0,1),btVector3(0,-1,0)), groundShape);
 
 	// Create car
-	btCollisionShape* chassisShape = new btBoxShape(btVector3(1.f,2.f, 0.5f));
+	btCollisionShape* chassisShape = new btBoxShape(btVector3(0.3f,0.3f, 0.5f));
 	btCompoundShape* compound = new btCompoundShape();
 	m_collisionShapes.push_back(chassisShape);
 	m_collisionShapes.push_back(compound);
@@ -134,6 +134,12 @@ int Simulation::loadWorld()
 	btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape(state->bttmArena, true, true);
 	m_arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
 
+	m_vehicle->resetSuspension();
+	for (int i=0;i<m_vehicle->getNumWheels();i++)
+	{
+		//synchronize the wheels with the (interpolated) chassis worldtransform
+		m_vehicle->updateWheelTransform(i,true);
+	}
 
 	return 0;
 }
@@ -150,11 +156,16 @@ void Simulation::step(double seconds)
 		switch ( event->type )
 		{
 		case Events::EventType::Input:
-			gVehicleSteering = input->turn;
+			gVehicleSteering = input->leftThumbStickRL;
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			gEngineForce += 10 * input->accelerate;
+			gEngineForce += 10 * input->rightTrigger;
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
+
+			if (input->rightTrigger > 0.1) {
+				//m_carChassis->applyImpulse(btVector3(0,200,0),btVector3(0,0,0));
+				//DEBUGOUT("impuled");
+			}
 			break;
 		default:
 			break;
@@ -178,11 +189,20 @@ void Simulation::step(double seconds)
 	m_world->stepSimulation((btScalar)seconds, 10);
 
 	StateData *state = GetMutState();
-	btTransform car1 = m_carChassis->getWorldTransform();
+	btTransform car1 = m_vehicle->getChassisWorldTransform();
 	btVector3 pos = car1.getOrigin();
 	state->Karts[0].vPos.x = pos.getX();
 	state->Karts[0].vPos.y = pos.getY();
 	state->Karts[0].vPos.z = pos.getZ();
+	btQuaternion rot = car1.getRotation();
+	btVector3 axis = rot.getAxis();
+	Vector3 v;
+	v.x = axis.getX();
+	v.y = axis.getY();
+	v.z = axis.getZ();
+	Real angle = rot.getAngle();
+	state->Karts[0].qOrient *= Quaternion();
+	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
 
 
 }

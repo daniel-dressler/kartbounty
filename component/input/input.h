@@ -51,8 +51,8 @@ public:
 	void OnEvent(SDL_Event* Event);
 
 	// Keyboard events
-	void OnKeyDown(SDL_Scancode scancode, Uint16 mod, Uint32 type);
-	void OnKeyUp(SDL_Scancode scancode, Uint16 mod, Uint32 type);
+	void OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type);
+	void OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type);
 
 	//Joystick Events
 	void OnJoystickAxisMotion(SDL_JoyAxisEvent event);

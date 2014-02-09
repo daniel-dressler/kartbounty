@@ -24,6 +24,8 @@ typedef struct StateData
 
 	btTriangleMesh	*bttmArena;
 
+	bool key_map[256];
+
 } StateData;
 
 extern StateData& GetState();
