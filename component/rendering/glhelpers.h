@@ -61,5 +61,7 @@ void glhPredefinedVertexLayout( Int32 nType );
 
 int glhLoadTexture( GLtex& gltex, char* strFilename );
 int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData );
+int glhEnableTexture( GLtex& gltex, int nIndex = 0 );
+void glhMapTexture( GLeffect& gleft, char* strName, int nIndex );
 
 #endif

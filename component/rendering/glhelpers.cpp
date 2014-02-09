@@ -334,7 +334,8 @@ int glhLoadTexture( GLtex& gltex, char* strFilename )
 	if( rtn )
 		return 0;
 
-
+	if( !glhCreateTexture( gltex, (int)nWidth, (int)nHeight, (char*)pImageData ) )
+		return 0;
 
 	return 1;
 }
@@ -343,15 +344,34 @@ int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData )
 {
 	glGenTextures( 1, &gltex.id );
 	glBindTexture( GL_TEXTURE_2D, gltex.id );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, pData );
-	glGenerateMipmap( GL_TEXTURE_2D);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
+	glEnable( GL_TEXTURE_2D );
+	glGenerateMipmap( GL_TEXTURE_2D );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	return 1;
 }
 
+int glhEnableTexture( GLtex& gltex, int nIndex )
+{
+	if( !nIndex )
+		glActiveTexture( GL_TEXTURE0 );
+	else
+		glActiveTexture( GL_TEXTURE1 );
+	glBindTexture( GL_TEXTURE_2D, gltex.id );
+
+	return 1;
+}
+
+void glhMapTexture( GLeffect& gleft, char* strName, int nIndex )
+{
+	GLint texLoc;
+	texLoc = glGetUniformLocation( gleft.program, strName );
+	glUniform1i( texLoc, nIndex );
+}
 
 

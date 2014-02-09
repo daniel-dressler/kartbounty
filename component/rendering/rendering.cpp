@@ -16,6 +16,9 @@ private:
 
 	GLmesh				m_glmKart;
 
+	GLtex				m_gltTexture;
+	GLtex				m_gltNormal;
+
 public:
 	int Init( SDL_Window* win );
 	int Update( float fElapseSec );
@@ -128,6 +131,15 @@ int Renderer::Init( SDL_Window* win )
 			return 0;
 	}
 
+	if( !glhLoadTexture( m_gltTexture, "assets/1003_Stone.png" ) )
+		return 0;
+
+	if( !glhLoadTexture( m_gltNormal, "assets/1004_Stone_Norm.png" ) )
+		return 0;
+
+	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
+	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
+
 	m_pMailbox->request( Events::EventType::StateUpdate );
 
 	m_bInitComplete = 1;
@@ -141,7 +153,7 @@ int Renderer::Update( float fElapseSec )
 		return 0;
 
 	const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
-	for( int i = 0; i < aryEvents.size(); i++ )
+	for( unsigned int i = 0; i < aryEvents.size(); i++ )
 	{
 		switch( aryEvents[i]->type )
 		{
@@ -159,6 +171,10 @@ int Renderer::Update( float fElapseSec )
 		}
 	}
 
+	// THIS IS TEMP HACK FOR CHASE CAM
+	GetState().Camera.vFocus = GetState().Karts[0].vPos;
+	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 0, 5, 5 );
+
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
 	Int32 nWinWidth, nWinHeight;
@@ -171,7 +187,7 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
-	perFrame.vLight[0] = Vector4( 0, 5, 0, 10 );
+	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ), 1, COS( GetState().fTime ), 3 );
 	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
 	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
 	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
@@ -199,6 +215,9 @@ int Renderer::Render()
 		Matrix::GetTranslate( GetState().Karts[0].vPos );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+	glhEnableTexture( m_gltTexture );
+	glhEnableTexture( m_gltNormal, 1 );
 	glhDrawMesh( m_eftMesh, m_glmKart );
 
 	SDL_GL_SwapWindow( m_Window );
