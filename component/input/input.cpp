@@ -36,8 +36,8 @@ void Input::HandleEvents(){
 	//memset(m_pCurrentInput, 0, sizeof(struct Events::InputEvent));  //This resets everything including the type and id, not good
 	
 	// Make sure all values are set to 0 for thumb stick or -1 for triggers
-	m_pCurrentInput->rightTrigger = -1;
-	m_pCurrentInput->leftTrigger = -1;
+	m_pCurrentInput->rightTrigger = 0;
+	m_pCurrentInput->leftTrigger = 0;
 	m_pCurrentInput->leftThumbStickRL = 0;
 	m_pCurrentInput->aPressed = false;
 	m_pCurrentInput->bPressed = false;

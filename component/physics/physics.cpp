@@ -45,13 +45,12 @@ float	steeringIncrement = 0.04f;
 float	steeringClamp = 0.3f;
 float	wheelRadius = 0.1f;
 float	wheelWidth = 0.05f;
-float	wheelFriction = 100;//BT_LARGE_FLOAT;
+float	wheelFriction = 1000;//BT_LARGE_FLOAT;
 float	suspensionStiffness = 20.f;
 float	suspensionDamping = 2.3f;
 float	suspensionCompression = 4.4f;
 float	rollInfluence = 0.01f;//1.0f;
 btScalar suspensionRestLength(0.2);
-#define CUBE_HALF_EXTENTS (0.25)
 
 btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
 {
@@ -66,7 +65,7 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 	btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,shape,localInertia);
 	
 	btRigidBody* body = new btRigidBody(cInfo);
-	body->setContactProcessingThreshold(0.1);
+	body->setContactProcessingThreshold(1);
 	
 	m_world->addRigidBody(body);
 
@@ -76,7 +75,9 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 int Simulation::loadWorld()
 {
 	// Create car
-	btCollisionShape* chassisShape = new btBoxShape(btVector3(0.15f,0.15f, 0.25f));
+#define CAR_WIDTH (0.15)
+#define CAR_LENGTH (0.25)
+	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
 	m_collisionShapes.push_back(chassisShape);
 	m_collisionShapes.push_back(compound);
@@ -102,22 +103,25 @@ int Simulation::loadWorld()
 	m_world->addVehicle(m_vehicle);
 
 	float connectionHeight = .25;
-	bool isFrontWheel=true;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
-	btVector3 connectionPointCS0(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
-
+#define CON1 CAR_WIDTH
+#define CON2 (CAR_LENGTH)
+	bool isFrontWheel=true;
+	btVector3 connectionPointCS0(CON1- (0.3*wheelWidth),connectionHeight,CON2 - wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
-	connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
 
+	connectionPointCS0 = btVector3(-CON1+ (0.3*wheelWidth),connectionHeight,CON2 - wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
-	connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
+
 
 	isFrontWheel = false;
+
+	connectionPointCS0 = btVector3(-CON1+(0.3*wheelWidth),connectionHeight,-CON2 + wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-	connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
+	connectionPointCS0 = btVector3(CON1-(0.3*wheelWidth),connectionHeight,-CON2 + wheelRadius);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 	
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
@@ -154,21 +158,22 @@ void Simulation::step(double seconds)
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		// Hack: Sorry
-		Events::InputEvent *input = (Events::InputEvent *)event;
 		switch ( event->type )
 		{
 		case Events::EventType::Input:
-			gVehicleSteering = 10* input->leftThumbStickRL;
+		{
+			Events::InputEvent *input = (Events::InputEvent *)event;
+			double steer = input->leftThumbStickRL;
+			if (steer) {
+				gVehicleSteering = 10000 * steer;
+			}
 			DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			gEngineForce += -10 * input->rightTrigger;
-			gEngineForce = fmax(fmin(gEngineForce, maxEngineForce), 0);
+			double force = input->rightTrigger;
+			gEngineForce = -10000 * force;
+			gEngineForce = gEngineForce;
 			DEBUGOUT("FORCE %lf\n", gEngineForce);
 			gBreakingForce = 0.f;
-
-			if (input->rightTrigger > 0.1) {
-				//m_carChassis->applyImpulse(btVector3(0,200,0),btVector3(0,0,0));
-				//DEBUGOUT("impuled");
-			}
+		}
 			break;
 		default:
 			break;
@@ -203,7 +208,7 @@ void Simulation::step(double seconds)
 	v.x = axis.getX();
 	v.y = axis.getY();
 	v.z = axis.getZ();
-	Real angle = rot.getAngle();
+	Real angle = -rot.getAngle();
 	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
 
 
