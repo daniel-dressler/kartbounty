@@ -12,12 +12,11 @@ private:
 	GLbuffer			m_bufPerMesh;
 	GLbuffer			m_bufPerFrame;
 
-	GLmesh				m_glmArena;
+	GLmesh				m_mshArena;
+	GLmesh				m_mshKart;
 
-	GLmesh				m_glmKart;
-
-	GLtex				m_gltTexture;
-	GLtex				m_gltNormal;
+	GLtex				m_texDiffuse;
+	GLtex				m_texNormal;
 
 public:
 	int Init( SDL_Window* win );
@@ -57,20 +56,30 @@ int ShutdownRendering()
 Renderer::Renderer()
 {
 	m_bInitComplete = 0;
+	m_Window = 0;
+	m_pMailbox = 0;
 }
 
 Renderer::~Renderer()
 {
+	glhDestroyTexture( m_texDiffuse );
+	glhDestroyTexture( m_texNormal );
+	glhDestroyMesh( m_mshArena );
+	glhDestroyMesh( m_mshKart );
 	glhDestroyBuffer( m_bufPerMesh );
 	glhDestroyBuffer( m_bufPerFrame );
 	glhUnloadEffect( m_eftMesh );
+
+	if( m_pMailbox )
+		delete m_pMailbox;
 }
 
 int Renderer::Init( SDL_Window* win )
 {
 	m_Window = win;
 	m_pMailbox = new Events::Mailbox();
-	m_pMailbox->request(Events::EventType::Input);
+	m_pMailbox->request( Events::EventType::Input );
+	m_pMailbox->request( Events::EventType::StateUpdate );
 
 	if( glewInit() != GLEW_OK )
 		return 1;
@@ -97,7 +106,7 @@ int Renderer::Init( SDL_Window* win )
 
 	glhCreateBuffer( m_eftMesh, "cstPerMesh", sizeof(cstPerMesh), &m_bufPerMesh );
 	glhCreateBuffer( m_eftMesh, "cstPerFrame", sizeof(cstPerFrame), &m_bufPerFrame );
-
+	
 	{
 		GLchar* pData;
 		Int32 nSize;
@@ -111,7 +120,7 @@ int Renderer::Init( SDL_Window* win )
 
 		free( pData );
 
-		if( !glhCreateMesh( m_glmArena, meshdata ) )
+		if( !glhCreateMesh( m_mshArena, meshdata ) )
 			return 0;
 	}
 
@@ -127,20 +136,18 @@ int Renderer::Init( SDL_Window* win )
 
 		free( pData );
 
-		if( !glhCreateMesh( m_glmKart, meshdata ) )
+		if( !glhCreateMesh( m_mshKart, meshdata ) )
 			return 0;
 	}
-
-	if( !glhLoadTexture( m_gltTexture, "assets/1003_Stone.png" ) )
-		return 0;
-
-	if( !glhLoadTexture( m_gltNormal, "assets/1004_Stone_Norm.png" ) )
-		return 0;
-
+	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
 
-	m_pMailbox->request( Events::EventType::StateUpdate );
+	if( !glhLoadTexture( m_texDiffuse, "assets/1003_Stone.png" ) )
+		return 0;
+
+	if( !glhLoadTexture( m_texNormal, "assets/1004_Stone_Norm.png" ) )
+		return 0;
 
 	m_bInitComplete = 1;
 
@@ -152,22 +159,25 @@ int Renderer::Update( float fElapseSec )
 	if( !m_bInitComplete )
 		return 0;
 
-	const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
-	for( unsigned int i = 0; i < aryEvents.size(); i++ )
+	if( m_pMailbox )
 	{
-		switch( aryEvents[i]->type )
+		const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
+		for( unsigned int i = 0; i < aryEvents.size(); i++ )
 		{
-		case Events::EventType::StateUpdate:
+			switch( aryEvents[i]->type )
 			{
-				//DEBUGOUT( "I GOT HERE!" );
-			}
-			break;
-		case Events::EventType::Input:
-			{
-				Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
+			case Events::EventType::StateUpdate:
+				{
+					//DEBUGOUT( "I GOT HERE!" );
+				}
+				break;
+			case Events::EventType::Input:
+				{
+					Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
 				
+				}
+				break;
 			}
-			break;
 		}
 	}
 
@@ -206,19 +216,19 @@ int Renderer::Render()
 	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
+	glhEnableTexture( m_texDiffuse );
+	glhEnableTexture( m_texNormal, 1 );
+
 	perMesh.matWorld.Identity();
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_glmArena );
+	glhDrawMesh( m_eftMesh, m_mshArena );
 
 	perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
 		Matrix::GetTranslate( GetState().Karts[0].vPos );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-
-	glhEnableTexture( m_gltTexture );
-	glhEnableTexture( m_gltNormal, 1 );
-	glhDrawMesh( m_eftMesh, m_glmKart );
+	glhDrawMesh( m_eftMesh, m_mshKart );
 
 	SDL_GL_SwapWindow( m_Window );
 

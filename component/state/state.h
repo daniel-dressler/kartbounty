@@ -26,6 +26,8 @@ typedef struct StateData
 
 	bool key_map[256];
 
+	StateData();
+	~StateData();
 } StateData;
 
 extern StateData& GetState();

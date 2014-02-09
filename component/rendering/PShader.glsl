@@ -34,8 +34,11 @@ void main()
 
 		light++;
 	}
+	fPower = saturate( fPower );
 
-	vec3 color = texDiffuse.xyz * saturate( fPower );
-	out_color  = vec4( color, ps_color.a );
-//	out_color  = vec4( 1,1,1,1 );
+	vec3 color = ps_color.rgb * texDiffuse.rgb * fPower;
+	out_color  = vec4( color, ps_color.a * texDiffuse.a );
+
+	// Lighting Test
+//	out_color = vec4( fPower, fPower, fPower, 1 );
 }

@@ -328,13 +328,15 @@ int glhLoadTexture( GLtex& gltex, char* strFilename )
 
 	unsigned char* pImageData;
 	unsigned int nWidth, nHeight;
-	unsigned int rtn = lodepng_decode32( &pImageData, &nWidth, &nHeight, (unsigned char*)pData, nSize );
+	int rtn = (int)lodepng_decode32( &pImageData, &nWidth, &nHeight, (unsigned char*)pData, nSize );
 	
 	free( pData );
 	if( rtn )
 		return 0;
 
-	if( !glhCreateTexture( gltex, (int)nWidth, (int)nHeight, (char*)pImageData ) )
+	rtn = glhCreateTexture( gltex, (int)nWidth, (int)nHeight, (char*)pImageData );
+	free( pImageData );
+	if( !rtn )
 		return 0;
 
 	return 1;
@@ -374,4 +376,8 @@ void glhMapTexture( GLeffect& gleft, char* strName, int nIndex )
 	glUniform1i( texLoc, nIndex );
 }
 
+void glhDestroyTexture( GLtex& gltex )
+{
+	glDeleteTextures( 1, &gltex.id );
+}
 

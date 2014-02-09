@@ -83,7 +83,11 @@ void Input::OnEvent(SDL_Event* Event) {
 		}
 		break;
 	case SDL_QUIT:
-		exit(0);
+		{
+			std::vector<Events::Event *> quitEvent;
+			quitEvent.push_back( NEWEVENT( Quit ) );
+			m_pMailbox->sendMail( quitEvent );
+		}
 		break;
 	case SDL_JOYBUTTONDOWN:
 		OnJoystickButton(Event->jbutton);
@@ -114,7 +118,9 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	{
 	case SDLK_ESCAPE:	//This should pause the game but for now it just exits the program
 		{
-			exit(0);
+			std::vector<Events::Event *> quitEvent;
+			quitEvent.push_back( NEWEVENT( Quit ) );
+			m_pMailbox->sendMail( quitEvent );
 			break;
 		}
 	case SDLK_a:

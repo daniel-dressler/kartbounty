@@ -12,3 +12,14 @@ StateData *GetMutState()
 {
 	return &g_state;
 }
+
+StateData::StateData()
+{
+	MEMSET( this, 0, sizeof(this) );
+}
+
+StateData::~StateData()
+{
+	if( bttmArena )
+		delete bttmArena;
+}

@@ -50,12 +50,13 @@ int main( int argc, char** argv )
 
 	GetState().Camera.vFocus = Vector3( 0, 1, 0 );
 	GetState().Camera.vPos = GetState().Camera.vPos + Vector3( 0, 5, 5 );
-
+	
 	Events::Mailbox* pMailbox = new Events::Mailbox();
+	pMailbox->request( Events::EventType::Quit );
 	std::vector<Events::Event*> aryEvents;
 	aryEvents.push_back( NEWEVENT(StateUpdate) );
 	pMailbox->sendMail( aryEvents );
-
+	
 	Timer timer;
 	int bRunning = 1;
 
@@ -65,26 +66,17 @@ int main( int argc, char** argv )
 
 	// Init Input control and the player 1 joystick if plugged in.
 	Input *input = new Input();
-
+	
 	while( bRunning )
 	{
 		static Real fLastTime = 0;
 		Real fTime, fElapse;
 
-		// Daniel: Caused infinite loop on linux
-		// @Phil: Does windows need multiple pollings?
-		// The SDL_PollEvent should retreive
-		// the queued input so mutliple checks 
-		// of the poll might just complicate our
-		// input architecture.
-		// do {
-			fTime = (Real)timer.CalcSeconds();
-			fElapse = fTime - fLastTime;
+		fTime = (Real)timer.CalcSeconds();
+		fElapse = fTime - fLastTime;
 
-			input->HandleEvents();
+		input->HandleEvents();
 
-		//} while( fElapse < 0.008f );
-		
 		static Int32 nFPS = 0;
 		nFPS++;
 		if( (Int32)fTime != (Int32)fLastTime )
@@ -109,8 +101,19 @@ int main( int argc, char** argv )
 		fLastTime = fTime;
 		std::chrono::milliseconds timespan(10); // oswhatever
 		std::this_thread::sleep_for(timespan);
-	}
 
+		const std::vector<Events::Event*> aryEvents = pMailbox->checkMail();
+		for( unsigned int i = 0; i < aryEvents.size(); i++ )
+		{
+			switch( aryEvents[i]->type )
+			{
+			case Events::EventType::Quit:
+				bRunning = 0;
+				break;
+			}
+		}
+	}
+	
 	delete pMailbox;
 	ShutdownRendering();
 	SDL_DestroyWindow( win );

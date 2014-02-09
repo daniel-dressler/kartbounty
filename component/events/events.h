@@ -15,7 +15,8 @@ namespace Events {
 		KartMove,
 		ArenaCollider,
 		StateUpdate,
-		Input
+		Input,
+		Quit
 	};
 
 	struct Event {
@@ -49,6 +50,9 @@ namespace Events {
 		float rightThumbStickRL;
 		float rightThumbStickUD;
 
+	ENDEVENT;
+
+	EVENTSTRUCT(Quit)
 	ENDEVENT;
 
 	#undef EVENTSTRUCT
