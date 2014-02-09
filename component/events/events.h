@@ -35,16 +35,20 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
-		// Buttons
+		// Controller Buttons
 		bool xPressed;
 		bool yPressed;
 		bool bPressed;
 		bool aPressed;
 
 		// Axes
-		float accelerate;
-		float turn;
-		float brake;
+		float rightTrigger;
+		float leftTrigger;
+		float leftThumbStickRL;
+		float leftThumbStickUD;
+		float rightThumbStickRL;
+		float rightThumbStickUD;
+
 	ENDEVENT;
 
 	#undef EVENTSTRUCT
