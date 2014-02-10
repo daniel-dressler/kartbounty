@@ -52,12 +52,12 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 {
 	btVector3 localInertia(0, 0, 0);
 	if (mass != 0.0) {
-		shape->calculateLocalInertia(mass, localInertia);
+		shape->calculateLocalInertia((btScalar)mass, localInertia);
 	}	
 
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 	
-	btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,shape,localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo((btScalar)mass,myMotionState,shape,localInertia);
 	
 	btRigidBody* body = new btRigidBody(cInfo);
 	body->setContactProcessingThreshold(1);
@@ -70,9 +70,9 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 int Simulation::loadWorld()
 {
 	// Create car
-#define CAR_WIDTH (0.15)
-#define CAR_LENGTH (0.25)
-#define CAR_MASS (200.0)
+#define CAR_WIDTH (0.15f)
+#define CAR_LENGTH (0.25f)
+#define CAR_MASS (200.0f)
 
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
@@ -96,7 +96,7 @@ int Simulation::loadWorld()
 	m_vehicle->setCoordinateSystem(0,1,0);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = 0.15;
+	float connectionHeight = 0.15f;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
@@ -153,17 +153,22 @@ void Simulation::step(double seconds)
 {
 	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
 
-#define STEER_MAX_ANGLE (40.0)
+#define STEER_MAX_ANGLE (40)
 #define ENGINE_MAX_FORCE (1000)
+<<<<<<< HEAD
 #define BRAKE_MAX_FORCE (800)
 #define E_BRAKE_FORCE (300)
 #define MAX_SPEED (10)
+=======
+#define BRAKE_MAX_FORCE (3000)
+>>>>>>> 639e5dce51abaedf2ae0496c4bc9a348e2656f30
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		// Hack: Sorry
 		switch ( event->type )
 		{
+<<<<<<< HEAD
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
@@ -190,7 +195,45 @@ void Simulation::step(double seconds)
 			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 			//DEBUGOUT("Speed: %f\n", (float)m_vehicle->getCurrentSpeedKmHour());
 		}
+=======
+			case Events::EventType::Input:
+			{
+				Events::InputEvent *input = (Events::InputEvent *)event;
+
+				//double steer = STEER_MAX_ANGLE * input->leftThumbStickRL;
+				//if (steer) {
+				//	gVehicleSteering = steer;
+				//}
+				////DEBUGOUT("STEER %lf, ", gVehicleSteering);
+				//double force = ENGINE_MAX_FORCE * input->rightTrigger;
+				//if(force) {
+				//	gEngineForce = force;
+				//}
+				////DEBUGOUT("FORCE %lf\n", gEngineForce);
+				//double breakingForce = BRAKE_MAX_FORCE * input->leftTrigger;
+				//if(breakingForce)
+				//{
+				//	//gBreakingForce = breakingForce;
+				//	gBreakingForce = 0.0;
+				//	gEngineForce -= breakingForce;
+				//}
+
+				gBrakingForce = 0.0;	// Not using this yet, maybe for E-brake or something.
+				gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
+				gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+
+				DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+
+				if( GetState().key_map['r'] )
+				{
+					btTransform trans;
+					trans.setOrigin( btVector3( 0, 5, 0 ) );
+					m_vehicle->getRigidBody()->setWorldTransform( trans );
+				}
+			}
+>>>>>>> 639e5dce51abaedf2ae0496c4bc9a348e2656f30
 			break;
+
 		default:
 			break;
 		}
@@ -217,18 +260,17 @@ void Simulation::UpdateGameState()
 {
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
+
 	btVector3 pos = car1.getOrigin();
-	state->Karts[0].vPos.x = pos.getX();
-	state->Karts[0].vPos.y = pos.getY();
-	state->Karts[0].vPos.z = pos.getZ();
+	state->Karts[0].vPos.x = (Real)pos.getX();
+	state->Karts[0].vPos.y = (Real)pos.getY();
+	state->Karts[0].vPos.z = (Real)pos.getZ();
+
 	btQuaternion rot = car1.getRotation();
-	btVector3 axis = rot.getAxis();
-	Vector3 v;
-	v.x = axis.getX();
-	v.y = axis.getY();
-	v.z = axis.getZ();
-	Real angle = -rot.getAngle();
-	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
+	state->Karts[0].qOrient.x = (Real)rot.getX();
+	state->Karts[0].qOrient.y = (Real)-rot.getY();
+	state->Karts[0].qOrient.z = (Real)rot.getZ();
+	state->Karts[0].qOrient.w = (Real)rot.getW();
 }
 
 void Simulation::enableDebugView()
