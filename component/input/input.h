@@ -12,7 +12,6 @@ private:
 	Events::Mailbox *m_pMailbox;
 	Events::InputEvent *m_pCurrentInput;
 	Events::InputEvent *m_pPreviousInput;
-	bool newInputs;
 
 public:
 
@@ -31,6 +30,7 @@ public:
 	int static const B_BUTTON = 11;
 	int static const X_BUTTON = 12;
 	int static const Y_BUTTON = 13;
+	int static const XBOX_BUTTON = 14;
 
 	// X-BOX controller joystick axis mappings
 	int static const LEFT_STICK_LEFT_RIGHT_AXIS = 0;

@@ -70,6 +70,7 @@ int main( int argc, char** argv )
 	while( bRunning )
 	{
 		static Real fLastTime = 0;
+		static Real fLastPhysTime = 0;
 		Real fTime, fElapse;
 
 		fTime = (Real)timer.CalcSeconds();
@@ -86,7 +87,12 @@ int main( int argc, char** argv )
 		}
 
 		// Components
-		simulation->step(fElapse);
+		if( fTime - fLastPhysTime > 0.02f )
+		{
+			simulation->step( fTime - fLastPhysTime );
+			fLastPhysTime = fTime;
+		}
+
 		GetState().fTime = fTime;
 		GetState().fElapse = fElapse;
 		//GetState().Karts[0].qOrient = Quaternion::GetRotateAxisAngle( Vector3( 0, 1, 0 ), fTime );

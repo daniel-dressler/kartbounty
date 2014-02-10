@@ -110,7 +110,7 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Arena2.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
@@ -199,7 +199,7 @@ int Renderer::Update( float fElapseSec )
 
 	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ) * 3, 2, COS( GetState().fTime ) * 3, 10 );
 	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
-	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
+	perFrame.vLight[2] = Vector4( 0, 5, 10, 10);
 	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
 	perFrame.vLight[4] = Vector4( 0, 5, -10, 10 );
 	

@@ -13,7 +13,6 @@ Input::Input() {
 	{
 		OpenJoysticks();
 	}
-	newInputs = false;
 
 	// Setup previous input event struct
 	m_pPreviousInput = NEWEVENT(Input);
@@ -74,7 +73,6 @@ void Input::HandleEvents(){
 	
 	// Now mailbox owns the object
 	m_pCurrentInput = NULL;
-	newInputs = false;
 }
 
 void Input::OnEvent(SDL_Event* Event) {
@@ -120,7 +118,6 @@ void Input::OnEvent(SDL_Event* Event) {
 }
 
 void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
-	newInputs = true;
 
 	// Add key to state key map
 	if(keycode < 256)
@@ -129,7 +126,7 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	// Handle key press for sending InputEvent to physics
 	switch (keycode)
 	{
-	case SDLK_ESCAPE:	//This should pause the game but for now it just exits the program
+	case SDLK_ESCAPE :	//This should pause the game but for now it just exits the program
 		{
 			std::vector<Events::Event *> quitEvent;
 			quitEvent.push_back( NEWEVENT( Quit ) );
@@ -155,6 +152,23 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	if(keycode < 256)
 		GetMutState()->key_map[keycode] = false;
+	switch (keycode)
+	{
+	case SDLK_a:
+		m_pCurrentInput->leftThumbStickRL = 0;
+		break;
+	case SDLK_d:
+		m_pCurrentInput->leftThumbStickRL = 0;
+		break;
+	case SDLK_w:
+		m_pCurrentInput->rightTrigger = 0;
+		break;
+	case SDLK_s:
+		m_pCurrentInput->leftTrigger = 0;
+		break;
+	default:
+		break;
+	}
 }
 
 void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
@@ -164,12 +178,11 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 
 	if( (event.value >= MIN_JOY_MOVEMENT_THRESHOLD ) || (event.value <= -MIN_JOY_MOVEMENT_THRESHOLD) )
 	{
-		newInputs = true;
 		float moveAmt = (float)event.value / (float)scaleFactor;
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
-			if(abs(moveAmt) < 0.1)
+			if(abs(moveAmt) < 0.14)
 				moveAmt = 0.0;
 			m_pCurrentInput->leftThumbStickRL = (m_pCurrentInput->leftThumbStickRL + moveAmt) - m_pCurrentInput->leftThumbStickRL;
 			break;
@@ -200,7 +213,6 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 
 void Input::OnJoystickButton(SDL_JoyButtonEvent event){
 	//DEBUGOUT("Joystick button: %i\n", event.button);
-	newInputs = true;
 	switch (event.button)
 	{
 	case A_BUTTON:
@@ -223,6 +235,13 @@ void Input::OnJoystickButton(SDL_JoyButtonEvent event){
 		break;
 	case BACK_BUTTON:
 		break;
+	case XBOX_BUTTON:
+		{
+		std::vector<Events::Event *> quitEvent;
+		quitEvent.push_back( NEWEVENT( Quit ) );
+		m_pMailbox->sendMail( quitEvent );
+		break;
+		}
 	default:
 		break;
 	}
