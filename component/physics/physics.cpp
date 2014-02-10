@@ -16,7 +16,7 @@ Simulation::Simulation()
 	m_solver = new btSequentialImpulseConstraintSolver;
 	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
 
-	m_world->setGravity(btVector3(0,-10,0));
+	m_world->setGravity(btVector3(0,-5,0));
 
 	mb.request(Events::EventType::Input);
 }
@@ -38,18 +38,18 @@ Simulation::~Simulation()
 // Also:
 // https://code.google.com/p/bullet/source/browse/trunk/Demos/VehicleDemo/VehicleDemo.cpp
 
+float	gVehicleSteering = 0.0f;
 float	gEngineForce = 0.0f;
 float	gBrakingForce = 0.0f;
 
-float	gVehicleSteering = 0.f;
-float	wheelFriction = 1000;//BT_LARGE_FLOAT;
-float	suspensionStiffness = 5.0f; //0.5f; //2.f;
-float	suspensionDamping = 2.0f; //1.3f;
-float	suspensionCompression = 0.3f; //1.1f;
-float	suspensionTravelcm = 300.0f;
-float	rollInfluence = 1.01f;//1.0f;
-//btScalar suspensionRestLength(0.2);
-btScalar suspensionRestLength(0.5);
+float	wheelFriction = 5;
+float	suspensionStiffness = 10;
+float	suspensionDamping = 0.5f;
+float	suspensionCompression = 0.3f;
+float	rollInfluence = 0.05f; // Keep low to prevent car flipping
+
+btScalar suspensionRestLength(0.1f);// Suspension Interval = rest +/- travel * 0.01
+float	suspensionTravelcm = 20;
 
 btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
 {
@@ -63,7 +63,7 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 	btRigidBody::btRigidBodyConstructionInfo cInfo((btScalar)mass,myMotionState,shape,localInertia);
 	
 	btRigidBody* body = new btRigidBody(cInfo);
-	body->setContactProcessingThreshold(1);
+	body->setContactProcessingThreshold(0.1f);
 	
 	m_world->addRigidBody(body);
 
@@ -81,8 +81,8 @@ extern ContactAddedCallback gContactAddedCallback;
 int Simulation::loadWorld()
 {
 	// Create car
-#define CAR_WIDTH (0.15f)
-#define CAR_LENGTH (0.25f)
+#define CAR_WIDTH (0.11f)
+#define CAR_LENGTH (0.15f)
 #define CAR_MASS (800.0f)
 
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
@@ -90,14 +90,14 @@ int Simulation::loadWorld()
 	m_collisionShapes.push_back(chassisShape);
 	m_collisionShapes.push_back(compound);
 
-	btTransform localTrans; // shift gravity to center of car
+	btTransform localTrans;
 	localTrans.setIdentity();
-	localTrans.setOrigin(btVector3(0,CAR_WIDTH*1, 0));
+	localTrans.setOrigin(btVector3(0,0.05f, 0));
 	compound->addChildShape(localTrans, chassisShape);
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,5,0));		// This sets where the car initially spawns
+	tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
 	m_carChassis = addRigidBody(CAR_MASS, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
@@ -107,15 +107,14 @@ int Simulation::loadWorld()
 	m_vehicle->setCoordinateSystem(0,1,0);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = 0.15f;
+	float connectionHeight = 0.10f;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
 #define CON1 (CAR_WIDTH)
 #define CON2 (CAR_LENGTH)
 
-	float	wheelRadius = 0.075f;
-	float	wheelWidth = 0.02f;
+	float	wheelRadius = 0.15f;
 	
 	// Setup front 2 wheels
 	bool isFrontWheel=true;
@@ -144,6 +143,8 @@ int Simulation::loadWorld()
 		wheel.m_wheelsDampingCompression = suspensionCompression;
 		wheel.m_frictionSlip = wheelFriction;
 		wheel.m_rollInfluence = rollInfluence;
+
+		
 	}
 
 	// Add map
@@ -169,11 +170,11 @@ int Simulation::loadWorld()
 
 void Simulation::step(double seconds)
 {
-#define STEER_MAX_ANGLE (30)
-#define ENGINE_MAX_FORCE (3000)
-#define BRAKE_MAX_FORCE (3000)
-#define E_BRAKE_FORCE (100)
-#define MAX_SPEED (10)
+#define STEER_MAX_ANGLE (25)
+#define ENGINE_MAX_FORCE (1500)
+#define BRAKE_MAX_FORCE (1000)
+#define E_BRAKE_FORCE (200)
+#define MAX_SPEED (25)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -183,21 +184,34 @@ void Simulation::step(double seconds)
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
+			Real fTurnSqr = input->leftThumbStickRL * input->leftThumbStickRL;
+
+			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * ( input->leftThumbStickRL < 0 ? -fTurnSqr : fTurnSqr );
+
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
-			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
-			gEngineForce = m_vehicle->getCurrentSpeedKmHour() < MAX_SPEED ?
-				ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger : 0;
+			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
 
 			if( GetState().key_map['r'] )
 			{
 				btTransform trans;
-				trans.setOrigin( btVector3( 0, 5, 0 ) );
+				trans.setOrigin( btVector3( 0, 1, 0 ) );
+				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+				m_vehicle->getRigidBody()->setWorldTransform( trans );
 				m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+			}
+
+			if( input->yPressed )
+			{
+				btTransform trans = m_vehicle->getRigidBody()->getWorldTransform();
+				btVector3 orig = trans.getOrigin();
+				orig.setY( orig.getY() + 0.01f );
+				trans.setOrigin( orig );
+				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 			}
 
-			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
-			//DEBUGOUT("Speed: %f\n", (float)m_vehicle->getCurrentSpeedKmHour());
+//			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+//			DEBUGOUT("Speed: %f\n", (float)ABS( m_vehicle->getCurrentSpeedKmHour() ) );
 		}
 		default:
 			break;
@@ -205,17 +219,29 @@ void Simulation::step(double seconds)
 	}
 	mb.emptyMail();
 
+	if( ABS( m_vehicle->getCurrentSpeedKmHour() ) > MAX_SPEED )
+		gEngineForce = 0;
+
 	// Apply steering to front wheels
 	m_vehicle->setSteeringValue(gVehicleSteering, 0);
 	m_vehicle->setSteeringValue(gVehicleSteering, 1);
 
 	// Apply braking and engine force to rear wheels
-	m_vehicle->applyEngineForce(gEngineForce, 2);
-	m_vehicle->applyEngineForce(gEngineForce, 3);
+	m_vehicle->applyEngineForce(gEngineForce, 0);
+	m_vehicle->applyEngineForce(gEngineForce, 1);
 	m_vehicle->setBrake(gBrakingForce, 2);
 	m_vehicle->setBrake(gBrakingForce, 3);
 
 	m_world->stepSimulation((btScalar)seconds, 10);
+
+	btVector3 pos = m_vehicle->getRigidBody()->getWorldTransform().getOrigin();
+	if( pos.y() < -0.5f )
+	{
+		pos.setY( 1.5f );
+		btTransform trans;
+		trans.setOrigin( pos );
+		m_vehicle->getRigidBody()->setWorldTransform( trans );
+	}
 
 	UpdateGameState();
 }

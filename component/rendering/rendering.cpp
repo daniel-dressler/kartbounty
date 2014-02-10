@@ -18,6 +18,8 @@ private:
 	GLtex				m_texDiffuse;
 	GLtex				m_texNormal;
 
+	Vector3				m_vArenaScale;
+
 public:
 	int Init( SDL_Window* win );
 	int Update( float fElapseSec );
@@ -77,6 +79,9 @@ int ShutdownRendering()
 
 Renderer::Renderer()
 {
+	m_vArenaScale = Vector3( 1, 1.0f, 1 );
+
+
 	m_bInitComplete = 0;
 	m_Window = 0;
 	m_pMailbox = 0;
@@ -141,6 +146,8 @@ int Renderer::Init( SDL_Window* win )
 		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena ) )
 			return 0;
 
+		GetMutState()->bttmArena->setScaling( btVector3( m_vArenaScale.x, m_vArenaScale.y, m_vArenaScale.z ) );
+
 		free( pData );
 
 		if( !glhCreateMesh( m_mshArena, meshdata ) )
@@ -179,6 +186,9 @@ int Renderer::Init( SDL_Window* win )
 
 int Renderer::Update( float fElapseSec )
 {
+	static Real fTime = 0;
+	fTime += fElapseSec;
+
 	if( !m_bInitComplete )
 		return 0;
 
@@ -208,8 +218,8 @@ int Renderer::Update( float fElapseSec )
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	// THIS IS TEMP HACK FOR CHASE CAM
-	GetState().Camera.vFocus = GetState().Karts[0].vPos;
-	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 0, 5, 5 );
+	GetState().Camera.vFocus = GetState().Karts[0].vPos + Vector3( 0, 0.5f, 0 );
+	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 1.5, 1.0f, 1.5f );
 
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
@@ -223,9 +233,9 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
-	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ) * 3, 2, COS( GetState().fTime ) * 3, 10 );
+	perFrame.vLight[0] = Vector4( SIN( fTime ) * 3, 2, COS( fTime ) * 3, 10 );
 	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
-	perFrame.vLight[2] = Vector4( 0, 5, 10, 10);
+	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
 	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
 	perFrame.vLight[4] = Vector4( 0, 5, -10, 10 );
 	
@@ -245,7 +255,7 @@ int Renderer::Render()
 	glhEnableTexture( m_texDiffuse );
 	glhEnableTexture( m_texNormal, 1 );
 
-	perMesh.matWorld.Identity();
+	perMesh.matWorld = Matrix::GetScale( m_vArenaScale );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_mshArena );
