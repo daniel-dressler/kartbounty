@@ -72,7 +72,7 @@ int Simulation::loadWorld()
 	// Create car
 #define CAR_WIDTH (0.15f)
 #define CAR_LENGTH (0.25f)
-#define CAR_MASS (200.0f)
+#define CAR_MASS (800.0f)
 
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
@@ -153,9 +153,9 @@ void Simulation::step(double seconds)
 {
 	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
 
-#define STEER_MAX_ANGLE (40)
-#define ENGINE_MAX_FORCE (1000)
-#define BRAKE_MAX_FORCE (800)
+#define STEER_MAX_ANGLE (30)
+#define ENGINE_MAX_FORCE (3000)
+#define BRAKE_MAX_FORCE (3000)
 #define E_BRAKE_FORCE (100)
 #define MAX_SPEED (10)
 
