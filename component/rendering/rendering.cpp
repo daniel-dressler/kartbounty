@@ -110,7 +110,7 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Arena2.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
@@ -143,10 +143,10 @@ int Renderer::Init( SDL_Window* win )
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
 
-	if( !glhLoadTexture( m_texDiffuse, "assets/1003_Stone.png" ) )
+	if( !glhLoadTexture( m_texDiffuse, "assets/brick_diff.png" ) )
 		return 0;
 
-	if( !glhLoadTexture( m_texNormal, "assets/1004_Stone_Norm.png" ) )
+	if( !glhLoadTexture( m_texNormal, "assets/brick_norm.png" ) )
 		return 0;
 
 	m_bInitComplete = 1;
@@ -197,7 +197,7 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
-	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ), 1, COS( GetState().fTime ), 6 );
+	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ) * 3, 2, COS( GetState().fTime ) * 3, 10 );
 	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
 	perFrame.vLight[2] = Vector4( 0, 5, 10, 10);
 	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
