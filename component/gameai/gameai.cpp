@@ -31,7 +31,7 @@ int GameAi::planFrame()
 	Real timeForLastFrame = frame_timer.CalcSeconds();
 	Real sleepPeriod = 0.016 - timeForLastFrame;
 	if (sleepPeriod > 0.0) {
-		std::chrono::duration<float> timespan(sleepPeriod);
+		std::chrono::milliseconds timespan( (int)( sleepPeriod * 1000.0f ) );
 		std::this_thread::sleep_for(timespan);
 	}
 

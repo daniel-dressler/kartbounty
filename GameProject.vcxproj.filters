@@ -65,6 +65,9 @@
     <ClInclude Include="component\rendering\Outsource\lodepng.h">
       <Filter>component\rendering\lodepng</Filter>
     </ClInclude>
+    <ClInclude Include="component\gameai\gameai.h">
+      <Filter>component\gameai</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -114,6 +117,9 @@
     <ClCompile Include="component\rendering\Outsource\lodepng.cpp">
       <Filter>component\rendering\lodepng</Filter>
     </ClCompile>
+    <ClCompile Include="component\gameai\gameai.cpp">
+      <Filter>component\gameai</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="component">
@@ -148,6 +154,9 @@
     </Filter>
     <Filter Include="component\rendering\lodepng">
       <UniqueIdentifier>{2206909d-72ab-4bf0-a1a7-57bc9ff4e757}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\gameai">
+      <UniqueIdentifier>{a2dc28fc-638f-4e23-aa27-ffe520eb6892}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
