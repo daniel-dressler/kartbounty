@@ -40,12 +40,13 @@ float	gBrakingForce = 0.0f;
 
 float	gVehicleSteering = 0.f;
 float	wheelFriction = 1000;//BT_LARGE_FLOAT;
-float	suspensionStiffness = 10.0f; //0.5f; //2.f;
-float	suspensionDamping = 1.3f;
+float	suspensionStiffness = 5.0f; //0.5f; //2.f;
+float	suspensionDamping = 2.0f; //1.3f;
 float	suspensionCompression = 0.3f; //1.1f;
-float	suspensionTravelcm = 100.0f;
+float	suspensionTravelcm = 300.0f;
 float	rollInfluence = 1.01f;//1.0f;
-btScalar suspensionRestLength(0.2);
+//btScalar suspensionRestLength(0.2);
+btScalar suspensionRestLength(0.5);
 
 btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape)
 {
@@ -194,7 +195,12 @@ void Simulation::step(double seconds)
 
 	m_world->stepSimulation((btScalar)seconds, 10);
 
-	// Update the placement of the car in the world state
+	UpdateGameState();
+}
+
+// Updates the car placement in the world state
+void Simulation::UpdateGameState()
+{
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
 	btVector3 pos = car1.getOrigin();
