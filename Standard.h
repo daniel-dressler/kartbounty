@@ -23,6 +23,13 @@
 #include <crtdbg.h>
 #define DEBUGOUT( str, ... ) { char out[4096]; sprintf_s( out, 4096, str, ##__VA_ARGS__ ); OutputDebugString( out ); }
 
+#ifdef _DEBUG
+#define INIT_PLATFORM() \
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF )
+#else
+#define INIT_PLATFORM()
+#endif
+
 #else // Linux
 
 #include <sys/types.h>
@@ -38,6 +45,8 @@ long _filelength(int fd);
 #define SDL_TICKS_PASSED(A, B)  ((Sint32)((B) - (A)) <= 0)
 
 #define max(x,y) fmax(x,y)
+
+#define INIT_PLATFORM()
 #endif
 
 // Common opengl includes are the same on windows and linux, only mac differs
