@@ -257,11 +257,32 @@ void Simulation::UpdateGameState()
 	state->Karts[0].vPos.y = (Real)pos.getY();
 	state->Karts[0].vPos.z = (Real)pos.getZ();
 
+	// Focus updating, for now no spring.
+
+	state->Camera.vFocus.x=(Real)pos.getX();
+	state->Camera.vFocus.y=(Real)pos.getY();
+	state->Camera.vFocus.z=(Real)pos.getZ();
+
 	btQuaternion rot = car1.getRotation();
+
 	state->Karts[0].qOrient.x = (Real)rot.getX();
 	state->Karts[0].qOrient.y = (Real)rot.getY();
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
+
+	// Camera set up to follow car - you can play around with the parameters.
+	// Distance from car to camera on the x/z plain.
+	btScalar DIST_CAR_CAM = 2.f;
+	// hight of camera from ground.
+	btScalar HEIGHT_CAM_GROUND = 1.5f;
+
+	btVector3 normDir =  m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
+	normDir = normDir * DIST_CAR_CAM;
+	normDir = normDir.rotate(btVector3(0,1,0), DEGTORAD(-90));
+
+	state->Camera.vPos.x = state->Karts[0].vPos.x - normDir.getX();
+	state->Camera.vPos.y = HEIGHT_CAM_GROUND;
+	state->Camera.vPos.z = state->Karts[0].vPos.z - normDir.getZ();
 }
 
 void Simulation::enableDebugView()

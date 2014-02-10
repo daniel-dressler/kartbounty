@@ -22,6 +22,7 @@ typedef struct StateData
 	{
 		Vector3		vFocus;
 		Vector3		vPos;
+		btVector3	oldVec;
 	} Camera;
 
 	btTriangleMesh	*bttmArena;

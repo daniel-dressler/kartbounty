@@ -218,8 +218,8 @@ int Renderer::Update( float fElapseSec )
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	// THIS IS TEMP HACK FOR CHASE CAM
-	GetState().Camera.vFocus = GetState().Karts[0].vPos + Vector3( 0, 0.5f, 0 );
-	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 1.5, 1.0f, 1.5f );
+	// moved to Physics input handling, updates as car pos updates. Also will include rotations.
+
 
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
