@@ -15,7 +15,7 @@ StateData *GetMutState()
 
 StateData::StateData()
 {
-	MEMSET( this, 0, sizeof(this) );
+	MEMSET( this, 0, sizeof(*this) );
 }
 
 StateData::~StateData()
