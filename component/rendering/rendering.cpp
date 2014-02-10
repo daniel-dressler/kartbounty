@@ -29,9 +29,31 @@ public:
 
 Renderer* g_pRenderer = 0;
 
-int InitRendering( SDL_Window* win )
+int InitRendering()
 {
-	if( g_pRenderer ) return 0;
+	SDL_Init( SDL_INIT_EVERYTHING );
+	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
+
+	SDL_Window *win = SDL_CreateWindow( GAMENAME,
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+			);
+	if( !win )
+		return 0;
+
+	SDL_GLContext glcontext = SDL_GL_CreateContext( win );
+	if( !glcontext )
+		return 0;
+
+	SDL_GL_MakeCurrent( win, glcontext );
+
+	if( g_pRenderer )
+		return 0;
+
 	g_pRenderer = new Renderer();
 	return g_pRenderer ? g_pRenderer->Init( win ) : 0;
 }
@@ -69,6 +91,7 @@ Renderer::~Renderer()
 	glhDestroyBuffer( m_bufPerMesh );
 	glhDestroyBuffer( m_bufPerFrame );
 	glhUnloadEffect( m_eftMesh );
+	SDL_DestroyWindow( m_Window );
 
 	if( m_pMailbox )
 		delete m_pMailbox;

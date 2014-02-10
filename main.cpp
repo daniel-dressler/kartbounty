@@ -19,38 +19,9 @@ int main( int argc, char** argv )
 #endif
 #endif
 
-	SDL_Init( SDL_INIT_EVERYTHING );
-//	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );		// This breaks shit...
-//	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
-
-	SDL_Window *win = SDL_CreateWindow( GAMENAME,
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-//			| SDL_WINDOW_FULLSCREEN
-			);
-	if( !win )
+	if( !InitRendering() )
 		return 1;
 
-	SDL_GLContext glcontext = SDL_GL_CreateContext( win );
-	if( !glcontext )
-		return 1;
-
-	SDL_GL_MakeCurrent( win, glcontext );
-
-	if( !InitRendering( win ) )
-		return 1;
-
-	GetState().Karts[0].vPos = Vector3( 0, 0.5f, 0 );
-	GetState().Karts[0].qOrient.Identity();
-
-	GetState().Camera.vFocus = Vector3( 0, 1, 0 );
-	GetState().Camera.vPos = GetState().Camera.vPos + Vector3( 0, 5, 5 );
-	
 	Events::Mailbox* pMailbox = new Events::Mailbox();
 	pMailbox->request( Events::EventType::Quit );
 	std::vector<Events::Event*> aryEvents;
@@ -60,13 +31,17 @@ int main( int argc, char** argv )
 	Timer timer;
 	int bRunning = 1;
 
-	// Init components
+	// -- Init components -----------------------------------------------------
+	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
 
-	// Init Input control and the player 1 joystick if plugged in.
+	// Input
+	// Player 1 requires joystick
 	Input *input = new Input();
 
+
+	// -- Main Loop -----------------------------------------------------------
 	while( bRunning )
 	{
 		static Real fLastTime = 0;
@@ -95,7 +70,6 @@ int main( int argc, char** argv )
 
 		GetState().fTime = fTime;
 		GetState().fElapse = fElapse;
-		//GetState().Karts[0].qOrient = Quaternion::GetRotateAxisAngle( Vector3( 0, 1, 0 ), fTime );
 
 		glClearColor( 0, 0, 0, 1 );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -105,7 +79,7 @@ int main( int argc, char** argv )
 		Render();
 
 		fLastTime = fTime;
-		std::chrono::milliseconds timespan(10); // oswhatever
+		std::chrono::milliseconds timespan(10);
 		std::this_thread::sleep_for(timespan);
 
 		const std::vector<Events::Event*> aryEvents = pMailbox->checkMail();
@@ -116,14 +90,19 @@ int main( int argc, char** argv )
 			case Events::EventType::Quit:
 				bRunning = 0;
 				break;
+			default:
+				break;
 			}
 		}
 	}
+
 	
+	// -- Cleanup & Exit ------------------------------------------------------
+	delete input;
+	delete simulation;
 	delete pMailbox;
 	ShutdownRendering();
-	SDL_DestroyWindow( win );
-	SDL_Quit();
 
+	SDL_Quit();
 	return 0;
 }
