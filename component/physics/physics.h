@@ -40,5 +40,6 @@ namespace Physics {
 		class btDefaultCollisionConfiguration* m_collisionConfiguration;
 
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
+		void UpdateGameState();
 	};
 };

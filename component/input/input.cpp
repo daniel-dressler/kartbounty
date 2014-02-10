@@ -139,11 +139,18 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_d:
 		m_pCurrentInput->leftThumbStickRL = 1;
 		break;
+	case SDLK_RIGHT:
+		m_pCurrentInput->leftThumbStickRL = 1;
+		break;
+	case SDLK_LEFT:
+		m_pCurrentInput->leftThumbStickRL = -1;
+		break;
 	case SDLK_w:
 		m_pCurrentInput->rightTrigger = 1;
 		break;
 	case SDLK_s:
 		m_pCurrentInput->leftTrigger = 1;
+		break;
 	default:
 		break;
 	}
@@ -165,6 +172,12 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_s:
 		m_pCurrentInput->leftTrigger = 0;
+		break;
+	case SDLK_LEFT:
+		m_pCurrentInput->leftThumbStickRL = 0;
+		break;
+	case SDLK_RIGHT:
+		m_pCurrentInput->leftThumbStickRL = 0;
 		break;
 	default:
 		break;
