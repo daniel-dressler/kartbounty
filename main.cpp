@@ -5,6 +5,7 @@
 #include <thread>
 #include <chrono>
 
+#include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
 #include "component/entities/entities.h"
 #include "component/events/events.h"
@@ -19,19 +20,15 @@ int main( int argc, char** argv )
 #endif
 #endif
 
+
+	// -- Init components -----------------------------------------------------
+	// Rendering
 	if( !InitRendering() )
 		return 1;
 
-	Events::Mailbox* pMailbox = new Events::Mailbox();
-	pMailbox->request( Events::EventType::Quit );
-	std::vector<Events::Event*> aryEvents;
-	aryEvents.push_back( NEWEVENT(StateUpdate) );
-	pMailbox->sendMail( aryEvents );
-	
-	Timer timer;
-	int bRunning = 1;
+	// GameAi
+	GameAi *gameai = new GameAi();
 
-	// -- Init components -----------------------------------------------------
 	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
@@ -42,7 +39,8 @@ int main( int argc, char** argv )
 
 
 	// -- Main Loop -----------------------------------------------------------
-	while( bRunning )
+	Timer timer;
+	while (gameai->planFrame())
 	{
 		static Real fLastTime = 0;
 		static Real fLastPhysTime = 0;
@@ -81,26 +79,13 @@ int main( int argc, char** argv )
 		fLastTime = fTime;
 		std::chrono::milliseconds timespan(10);
 		std::this_thread::sleep_for(timespan);
-
-		const std::vector<Events::Event*> aryEvents = pMailbox->checkMail();
-		for( unsigned int i = 0; i < aryEvents.size(); i++ )
-		{
-			switch( aryEvents[i]->type )
-			{
-			case Events::EventType::Quit:
-				bRunning = 0;
-				break;
-			default:
-				break;
-			}
-		}
 	}
 
 	
 	// -- Cleanup & Exit ------------------------------------------------------
 	delete input;
 	delete simulation;
-	delete pMailbox;
+	delete gameai;
 	ShutdownRendering();
 
 	SDL_Quit();
