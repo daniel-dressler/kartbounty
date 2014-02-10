@@ -96,7 +96,7 @@ int Simulation::loadWorld()
 	m_vehicle->setCoordinateSystem(0,1,0);
 	m_world->addVehicle(m_vehicle);
 
-	float connectionHeight = 0.1;
+	float connectionHeight = 0.15;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
