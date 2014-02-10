@@ -127,7 +127,7 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/RedBox.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Kart.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
