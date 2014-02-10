@@ -204,6 +204,9 @@ int Renderer::Update( float fElapseSec )
 		}
 	}
 
+	glClearColor( 0, 0, 0, 1 );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 	// THIS IS TEMP HACK FOR CHASE CAM
 	GetState().Camera.vFocus = GetState().Karts[0].vPos;
 	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 0, 5, 5 );
