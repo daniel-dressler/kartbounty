@@ -28,6 +28,7 @@ Input::Input() {
 
 Input::~Input() {
 	SDL_JoystickClose(m_joystick1);
+	delete m_pMailbox;
 }
 
 void Input::OpenJoysticks(){
@@ -100,7 +101,10 @@ void Input::OnEvent(SDL_Event* Event) {
 		}
 		break;
 	case SDL_JOYBUTTONDOWN:
-		OnJoystickButton(Event->jbutton);
+		OnJoystickButtonDown(Event->jbutton);
+		break;
+	case SDL_JOYBUTTONUP:
+		OnJoystickButtonUp(Event->jbutton);
 		break;
 	case SDL_KEYDOWN:
 		OnKeyDown(Event->key.keysym.sym, Event->key.keysym.mod, Event->key.type);
@@ -195,7 +199,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		switch (event.axis)
 		{
 		case LEFT_STICK_LEFT_RIGHT_AXIS:
-			if(abs(moveAmt) < 0.14)
+			if(abs(moveAmt) < 0.08)
 				moveAmt = 0.0;
 			m_pCurrentInput->leftThumbStickRL = (m_pCurrentInput->leftThumbStickRL + moveAmt) - m_pCurrentInput->leftThumbStickRL;
 			break;
@@ -224,7 +228,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 
 }
 
-void Input::OnJoystickButton(SDL_JoyButtonEvent event){
+void Input::OnJoystickButtonDown(SDL_JoyButtonEvent event){
 	//DEBUGOUT("Joystick button: %i\n", event.button);
 	switch (event.button)
 	{
@@ -255,6 +259,35 @@ void Input::OnJoystickButton(SDL_JoyButtonEvent event){
 		m_pMailbox->sendMail( quitEvent );
 		break;
 		}
+	default:
+		break;
+	}
+}
+
+void Input::OnJoystickButtonUp(SDL_JoyButtonEvent event){
+	//DEBUGOUT("Joystick button: %i\n", event.button);
+	switch (event.button)
+	{
+	case A_BUTTON:
+		m_pCurrentInput->aPressed = false;
+		break;
+	case X_BUTTON:
+		m_pCurrentInput->xPressed = false;
+		break;
+	case B_BUTTON:
+		m_pCurrentInput->bPressed = false;
+		break;
+	case Y_BUTTON:
+		m_pCurrentInput->yPressed = false;
+		break;
+	case LEFT_SHOULDER_BUTTON:
+		break;
+	case RIGHT_SHOULDER_BUTTON:
+		break;
+	case START_BUTTON:
+		break;
+	case BACK_BUTTON:
+		break;
 	default:
 		break;
 	}

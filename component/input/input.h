@@ -41,8 +41,8 @@ public:
 	int static const RIGHT_TRIGGER_AXIS = 5;
 
 	//int static const MIN_JOY_MOVEMENT_THRESHOLD = 3200;
-#define MIN_JOY_MOVEMENT_THRESHOLD 200
-#define JOYSTICK_DEADZONE 10000
+#define MIN_JOY_MOVEMENT_THRESHOLD 500
+#define JOYSTICK_DEADZONE 3000
 
 	Input();
 
@@ -59,6 +59,7 @@ public:
 
 	//Joystick Events
 	void OnJoystickAxisMotion(SDL_JoyAxisEvent event);
-	void OnJoystickButton(SDL_JoyButtonEvent event);
+	void OnJoystickButtonDown(SDL_JoyButtonEvent event);
+	void OnJoystickButtonUp(SDL_JoyButtonEvent event);
 
 };

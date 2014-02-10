@@ -156,6 +156,8 @@ void Simulation::step(double seconds)
 #define STEER_MAX_ANGLE (40.0)
 #define ENGINE_MAX_FORCE (1000)
 #define BRAKE_MAX_FORCE (800)
+#define E_BRAKE_FORCE (300)
+#define MAX_SPEED (10)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -166,14 +168,26 @@ void Simulation::step(double seconds)
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
-			gBrakingForce = 0.0;	// Not using brakingforce yet, maybe for E-brake or something.
-			gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
-			if(m_vehicle->getCurrentSpeedKmHour() < 10)
-				gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
-			else
+			if(input->bPressed)	// E Brake turn
+			{
 				gEngineForce = 0;
+				gBrakingForce = E_BRAKE_FORCE;
 
-			//DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+				// Could maybe apply a sideways force to the back of the car based on turning direction
+				// Set wheel friction super low
+
+			}
+			else
+			{
+				gBrakingForce = 0.0;
+				gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
+				if(m_vehicle->getCurrentSpeedKmHour() < MAX_SPEED)
+					gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+				else
+					gEngineForce = 0;
+			}
+
+			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 			//DEBUGOUT("Speed: %f\n", (float)m_vehicle->getCurrentSpeedKmHour());
 		}
 			break;
