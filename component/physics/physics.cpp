@@ -234,13 +234,13 @@ void Simulation::step(double seconds)
 
 	m_world->stepSimulation((btScalar)seconds, 10);
 
-	btVector3 pos = m_vehicle->getRigidBody()->getWorldTransform().getOrigin();
-	if( pos.y() < -0.5f )
+	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -1.0f )
 	{
-		pos.setY( 1.5f );
 		btTransform trans;
-		trans.setOrigin( pos );
+		trans.setOrigin( btVector3( 0, 1, 0 ) );
+		trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_vehicle->getRigidBody()->setWorldTransform( trans );
+		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 	}
 
 	UpdateGameState();
