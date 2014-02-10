@@ -6,7 +6,7 @@
 #include "glhelpers.h"
 #include "ShaderStructs.h"
 
-int InitRendering( SDL_Window* win );
+int InitRendering();
 int UpdateRendering( float fElapseSec );
 int Render();
 int ShutdownRendering();
