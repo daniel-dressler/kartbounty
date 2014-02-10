@@ -2,6 +2,9 @@
 #include "GLDebugDrawer.h"
 #include "../state/state.h"
 #include <iostream>
+#include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
+#include <BulletCollision/CollisionShapes/btTriangleShape.h>
+#include <btBulletDynamicsCommon.h>
 
 using namespace Physics;
 
@@ -66,6 +69,14 @@ btRigidBody *Simulation::addRigidBody(double mass, const btTransform& startTrans
 
 	return body;
 }
+
+static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,	const btCollisionObjectWrapper* colObj0Wrap,int partId0,int index0,const btCollisionObjectWrapper* colObj1Wrap,int partId1,int index1)
+{
+	btAdjustInternalEdgeContacts(cp,colObj1Wrap,colObj0Wrap, partId1,index1);
+	return true;
+}
+
+extern ContactAddedCallback gContactAddedCallback;
 
 int Simulation::loadWorld()
 {
@@ -136,9 +147,16 @@ int Simulation::loadWorld()
 	}
 
 	// Add map
+	// Credit to http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?t=6662
+	// for solution to wheels bouncing off triangle edges
+	gContactAddedCallback = CustomMaterialCombinerCallback;
 	StateData *state = GetMutState();
 	btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape(state->bttmArena, true, true);
+
 	m_arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
+	m_arena->setCollisionFlags(m_arena->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+	btTriangleInfoMap* triangleInfoMap = new btTriangleInfoMap();
+	btGenerateInternalEdgeInfo(arenaShape, triangleInfoMap);
 
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
 	{
@@ -151,8 +169,6 @@ int Simulation::loadWorld()
 
 void Simulation::step(double seconds)
 {
-	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
-
 #define STEER_MAX_ANGLE (40)
 #define ENGINE_MAX_FORCE (1000)
 #define BRAKE_MAX_FORCE (800)
@@ -161,7 +177,6 @@ void Simulation::step(double seconds)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
-		// Hack: Sorry
 		switch ( event->type )
 		{
 		case Events::EventType::Input:
