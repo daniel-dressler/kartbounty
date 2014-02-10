@@ -154,8 +154,8 @@ void Simulation::step(double seconds)
 {
 	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
 
-#define STEER_MAX_ANGLE (40.0)
-#define ENGINE_MAX_FORCE (5000)
+#define STEER_MAX_ANGLE (40)
+#define ENGINE_MAX_FORCE (3000)
 #define BRAKE_MAX_FORCE (3000)
 
 	for ( Events::Event *event : (mb.checkMail()) )
@@ -185,10 +185,17 @@ void Simulation::step(double seconds)
 			//}
 
 			gBreakingForce = 0.0;	// Not using this yet, maybe for E-brake or something.
-			gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
+			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
 			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
 
 			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBreakingForce, gEngineForce, gVehicleSteering);
+
+			if( GetState().key_map['r'] )
+			{
+				btTransform trans;
+				trans.setOrigin( btVector3( 0, 5, 0 ) );
+				m_vehicle->getRigidBody()->setWorldTransform( trans );
+			}
 		}
 			break;
 		default:
@@ -212,18 +219,17 @@ void Simulation::step(double seconds)
 	// Update the placement of the car in the world state
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
+
 	btVector3 pos = car1.getOrigin();
-	state->Karts[0].vPos.x = pos.getX();
-	state->Karts[0].vPos.y = pos.getY();
-	state->Karts[0].vPos.z = pos.getZ();
+	state->Karts[0].vPos.x = (Real)pos.getX();
+	state->Karts[0].vPos.y = (Real)pos.getY();
+	state->Karts[0].vPos.z = (Real)pos.getZ();
+
 	btQuaternion rot = car1.getRotation();
-	btVector3 axis = rot.getAxis();
-	Vector3 v;
-	v.x = axis.getX();
-	v.y = axis.getY();
-	v.z = axis.getZ();
-	Real angle = -rot.getAngle();
-	state->Karts[0].qOrient.RotateAxisAngle(v, angle);
+	state->Karts[0].qOrient.x = (Real)rot.getX();
+	state->Karts[0].qOrient.y = (Real)-rot.getY();
+	state->Karts[0].qOrient.z = (Real)rot.getZ();
+	state->Karts[0].qOrient.w = (Real)rot.getW();
 }
 
 void Simulation::enableDebugView()
