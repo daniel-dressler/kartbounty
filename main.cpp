@@ -2,9 +2,6 @@
 #include "component/rendering/glhelpers.h"
 #include <SDL.h>
 
-#include <thread>
-#include <chrono>
-
 #include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
 #include "component/entities/entities.h"
@@ -42,43 +39,17 @@ int main( int argc, char** argv )
 	Timer timer;
 	while (gameai->planFrame())
 	{
-		static Real fLastTime = 0;
-		static Real fLastPhysTime = 0;
-		Real fTime, fElapse;
-
-		fTime = (Real)timer.CalcSeconds();
-		fElapse = fTime - fLastTime;
+		Real elapsed_time = gameai->getElapsedTime();
 
 		input->HandleEvents();
-
-		static Int32 nFPS = 0;
-		nFPS++;
-		if( (Int32)fTime != (Int32)fLastTime )
-		{
-			//DEBUGOUT( "FPS: %d\n", nFPS );
-			nFPS = 0;
-		}
-
-		// Components
-		if( fTime - fLastPhysTime > 0.01f )
-		{
-			simulation->step( fTime - fLastPhysTime );
-			fLastPhysTime = fTime;
-		}
-
-		GetState().fTime = fTime;
-		GetState().fElapse = fElapse;
+		simulation->step(elapsed_time);
 
 		glClearColor( 0, 0, 0, 1 );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 
-		UpdateRendering( fElapse );
+		UpdateRendering(elapsed_time);
 		Render();
-
-		fLastTime = fTime;
-		std::chrono::milliseconds timespan(10);
-		std::this_thread::sleep_for(timespan);
 	}
 
 	
