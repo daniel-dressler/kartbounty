@@ -36,9 +36,6 @@ void main()
 	}
 	fPower = saturate( fPower );
 
-	if( fPower < 0.5f )
-		fPower = 0.5f;
-
 	vec3 color = ps_color.rgb * texDiffuse.rgb * fPower;
 	out_color  = vec4( color, ps_color.a * texDiffuse.a );
 
