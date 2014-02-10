@@ -4,8 +4,6 @@
 // Sub-System Components
 #include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
-#include "component/entities/entities.h"
-#include "component/events/events.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
 
