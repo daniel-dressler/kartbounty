@@ -232,9 +232,9 @@ void Simulation::UpdateGameState()
 
 	btQuaternion rot = car1.getRotation();
 	state->Karts[0].qOrient.x = (Real)rot.getX();
-	state->Karts[0].qOrient.y = (Real)-rot.getY();
+	state->Karts[0].qOrient.y = (Real)rot.getY();
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
-	state->Karts[0].qOrient.w = (Real)rot.getW();
+	state->Karts[0].qOrient.w = (Real)-rot.getW();
 }
 
 void Simulation::enableDebugView()
