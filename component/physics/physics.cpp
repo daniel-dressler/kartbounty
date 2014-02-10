@@ -32,19 +32,18 @@ Simulation::~Simulation()
 // Tuning
 // Credit to:
 // http://bullet.googlecode.com/svn-history/r2704/trunk/Demos/ForkLiftDemo/ForkLiftDemo.cpp
-float	gEngineForce = 0.f;
+// Also:
+// https://code.google.com/p/bullet/source/browse/trunk/Demos/VehicleDemo/VehicleDemo.cpp
 
-float	defaultBreakingForce = 10.f;
-float	gBreakingForce = 100.f;
-
-float	maxEngineForce = 1000.f;//this should be engine/velocity dependent
-float	maxBreakingForce = 100.f;
+float	gEngineForce = 0.0f;
+float	gBrakingForce = 0.0f;
 
 float	gVehicleSteering = 0.f;
 float	wheelFriction = 1000;//BT_LARGE_FLOAT;
-float	suspensionStiffness = 2.f;
+float	suspensionStiffness = 10.0f; //0.5f; //2.f;
 float	suspensionDamping = 1.3f;
-float	suspensionCompression = 1.1f;
+float	suspensionCompression = 0.3f; //1.1f;
+float	suspensionTravelcm = 100.0f;
 float	rollInfluence = 1.01f;//1.0f;
 btScalar suspensionRestLength(0.2);
 
@@ -72,7 +71,7 @@ int Simulation::loadWorld()
 	// Create car
 #define CAR_WIDTH (0.15)
 #define CAR_LENGTH (0.25)
-#define CAR_MASS (400.0)
+#define CAR_MASS (200.0)
 
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
@@ -86,18 +85,14 @@ int Simulation::loadWorld()
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,5,0));
+	tr.setOrigin(btVector3(0,5,0));		// This sets where the car initially spawns
 	m_carChassis = addRigidBody(CAR_MASS, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-	m_tuning.m_maxSuspensionTravelCm = 204.8f;
-	m_tuning.m_suspensionCompression = 4.4f;
-	m_tuning.m_suspensionDamping = 2.3f;
-	m_tuning.m_frictionSlip = 10000.0f;
-	m_tuning.m_suspensionStiffness = 5.0f;
-	m_tuning.m_maxSuspensionForce = 1000.0;
+
 	m_vehicle = new btRaycastVehicle(m_tuning,m_carChassis, m_vehicleRayCaster);
 	m_carChassis->setActivationState(DISABLE_DEACTIVATION);
+	m_vehicle->setCoordinateSystem(0,1,0);
 	m_world->addVehicle(m_vehicle);
 
 	float connectionHeight = 0.1;
@@ -106,8 +101,11 @@ int Simulation::loadWorld()
 
 #define CON1 (CAR_WIDTH)
 #define CON2 (CAR_LENGTH)
+
 	float	wheelRadius = 0.075f;
-	float	wheelWidth = 0.03f;
+	float	wheelWidth = 0.02f;
+	
+	// Setup front 2 wheels
 	bool isFrontWheel=true;
 	btVector3 connectionPointCS0(CON1,connectionHeight,CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
@@ -115,18 +113,20 @@ int Simulation::loadWorld()
 	connectionPointCS0 = btVector3(-CON1,connectionHeight,CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
-
+	// Setup rear  2 wheels
 	isFrontWheel = false;
 
 	connectionPointCS0 = btVector3(-CON1,connectionHeight,-CON2);
 	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
 	connectionPointCS0 = btVector3(CON1,connectionHeight,-CON2);
-	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
-	
+	m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);	
+
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
 	{
 		btWheelInfo& wheel = m_vehicle->getWheelInfo(i);
+		
+		wheel.m_maxSuspensionTravelCm = suspensionTravelcm;
 		wheel.m_suspensionStiffness = suspensionStiffness;
 		wheel.m_wheelsDampingRelaxation = suspensionDamping;
 		wheel.m_wheelsDampingCompression = suspensionCompression;
@@ -134,13 +134,11 @@ int Simulation::loadWorld()
 		wheel.m_rollInfluence = rollInfluence;
 	}
 
-
 	// Add map
 	StateData *state = GetMutState();
 	btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape(state->bttmArena, true, true);
 	m_arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
 
-	m_vehicle->resetSuspension();
 	for (int i=0;i<m_vehicle->getNumWheels();i++)
 	{
 		//synchronize the wheels with the (interpolated) chassis worldtransform
@@ -155,8 +153,8 @@ void Simulation::step(double seconds)
 	// DEBUGOUT("RUNING PHYSICS %lf\n", seconds);
 
 #define STEER_MAX_ANGLE (40.0)
-#define ENGINE_MAX_FORCE (5000)
-#define BRAKE_MAX_FORCE (3000)
+#define ENGINE_MAX_FORCE (1000)
+#define BRAKE_MAX_FORCE (800)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -166,29 +164,16 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
-			//double steer = STEER_MAX_ANGLE * input->leftThumbStickRL;
-			//if (steer) {
-			//	gVehicleSteering = steer;
-			//}
-			////DEBUGOUT("STEER %lf, ", gVehicleSteering);
-			//double force = ENGINE_MAX_FORCE * input->rightTrigger;
-			//if(force) {
-			//	gEngineForce = force;
-			//}
-			////DEBUGOUT("FORCE %lf\n", gEngineForce);
-			//double breakingForce = BRAKE_MAX_FORCE * input->leftTrigger;
-			//if(breakingForce)
-			//{
-			//	//gBreakingForce = breakingForce;
-			//	gBreakingForce = 0.0;
-			//	gEngineForce -= breakingForce;
-			//}
 
-			gBreakingForce = 0.0;	// Not using this yet, maybe for E-brake or something.
+			gBrakingForce = 0.0;	// Not using brakingforce yet, maybe for E-brake or something.
 			gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
-			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+			if(m_vehicle->getCurrentSpeedKmHour() < 10)
+				gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+			else
+				gEngineForce = 0;
 
-			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBreakingForce, gEngineForce, gVehicleSteering);
+			//DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+			//DEBUGOUT("Speed: %f\n", (float)m_vehicle->getCurrentSpeedKmHour());
 		}
 			break;
 		default:
@@ -204,8 +189,8 @@ void Simulation::step(double seconds)
 	// Apply braking and engine force to rear wheels
 	m_vehicle->applyEngineForce(gEngineForce, 2);
 	m_vehicle->applyEngineForce(gEngineForce, 3);
-	m_vehicle->setBrake(gBreakingForce, 2);
-	m_vehicle->setBrake(gBreakingForce, 3);
+	m_vehicle->setBrake(gBrakingForce, 2);
+	m_vehicle->setBrake(gBrakingForce, 3);
 
 	m_world->stepSimulation((btScalar)seconds, 10);
 

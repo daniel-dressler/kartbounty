@@ -197,9 +197,9 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
-	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ), 1, COS( GetState().fTime ), 3 );
+	perFrame.vLight[0] = Vector4( SIN( GetState().fTime ), 1, COS( GetState().fTime ), 6 );
 	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
-	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
+	perFrame.vLight[2] = Vector4( 0, 5, 10, 10);
 	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
 	perFrame.vLight[4] = Vector4( 0, 5, -10, 10 );
 	
