@@ -87,7 +87,7 @@ int main( int argc, char** argv )
 		}
 
 		// Components
-		if( fTime - fLastPhysTime > 0.02f )
+		if( fTime - fLastPhysTime > 0.01f )
 		{
 			simulation->step( fTime - fLastPhysTime );
 			fLastPhysTime = fTime;
