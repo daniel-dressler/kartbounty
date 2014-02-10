@@ -155,7 +155,7 @@ void Simulation::step(double seconds)
 
 #define STEER_MAX_ANGLE (40)
 #define ENGINE_MAX_FORCE (1000)
-#define BRAKE_MAX_FORCE (3000)
+#define BRAKE_MAX_FORCE (1000)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -233,9 +233,9 @@ void Simulation::UpdateGameState()
 
 	btQuaternion rot = car1.getRotation();
 	state->Karts[0].qOrient.x = (Real)rot.getX();
-	state->Karts[0].qOrient.y = (Real)-rot.getY();
+	state->Karts[0].qOrient.y = (Real)rot.getY();
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
-	state->Karts[0].qOrient.w = (Real)rot.getW();
+	state->Karts[0].qOrient.w = (Real)-rot.getW();
 }
 
 void Simulation::enableDebugView()

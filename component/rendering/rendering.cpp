@@ -110,7 +110,7 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena2.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Arena.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
