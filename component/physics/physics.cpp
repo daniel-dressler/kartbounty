@@ -155,85 +155,49 @@ void Simulation::step(double seconds)
 
 #define STEER_MAX_ANGLE (40)
 #define ENGINE_MAX_FORCE (1000)
-<<<<<<< HEAD
 #define BRAKE_MAX_FORCE (800)
-#define E_BRAKE_FORCE (300)
+#define E_BRAKE_FORCE (100)
 #define MAX_SPEED (10)
-=======
-#define BRAKE_MAX_FORCE (3000)
->>>>>>> 639e5dce51abaedf2ae0496c4bc9a348e2656f30
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		// Hack: Sorry
 		switch ( event->type )
 		{
-<<<<<<< HEAD
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
 			if(input->bPressed)	// E Brake turn
 			{
-				gEngineForce = 0;
+				//gEngineForce = 0;
 				gBrakingForce = E_BRAKE_FORCE;
 
 				// Could maybe apply a sideways force to the back of the car based on turning direction
 				// Set wheel friction super low
-
 			}
 			else
 			{
 				gBrakingForce = 0.0;
-				gVehicleSteering = -STEER_MAX_ANGLE * input->leftThumbStickRL;
+				gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
+
 				if(m_vehicle->getCurrentSpeedKmHour() < MAX_SPEED)
 					gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
 				else
 					gEngineForce = 0;
 			}
 
+			if( GetState().key_map['r'] )
+			{
+				btTransform trans;
+				trans.setOrigin( btVector3( 0, 5, 0 ) );
+				m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+				m_vehicle->getRigidBody()->setWorldTransform( trans );
+			}
+
 			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 			//DEBUGOUT("Speed: %f\n", (float)m_vehicle->getCurrentSpeedKmHour());
 		}
-=======
-			case Events::EventType::Input:
-			{
-				Events::InputEvent *input = (Events::InputEvent *)event;
-
-				//double steer = STEER_MAX_ANGLE * input->leftThumbStickRL;
-				//if (steer) {
-				//	gVehicleSteering = steer;
-				//}
-				////DEBUGOUT("STEER %lf, ", gVehicleSteering);
-				//double force = ENGINE_MAX_FORCE * input->rightTrigger;
-				//if(force) {
-				//	gEngineForce = force;
-				//}
-				////DEBUGOUT("FORCE %lf\n", gEngineForce);
-				//double breakingForce = BRAKE_MAX_FORCE * input->leftTrigger;
-				//if(breakingForce)
-				//{
-				//	//gBreakingForce = breakingForce;
-				//	gBreakingForce = 0.0;
-				//	gEngineForce -= breakingForce;
-				//}
-
-				gBrakingForce = 0.0;	// Not using this yet, maybe for E-brake or something.
-				gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
-				gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
-
-				DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
-
-				if( GetState().key_map['r'] )
-				{
-					btTransform trans;
-					trans.setOrigin( btVector3( 0, 5, 0 ) );
-					m_vehicle->getRigidBody()->setWorldTransform( trans );
-				}
-			}
->>>>>>> 639e5dce51abaedf2ae0496c4bc9a348e2656f30
-			break;
-
 		default:
 			break;
 		}
