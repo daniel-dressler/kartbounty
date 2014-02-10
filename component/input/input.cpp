@@ -28,6 +28,7 @@ Input::Input() {
 
 Input::~Input() {
 	SDL_JoystickClose(m_joystick1);
+	delete m_pPreviousInput;
 	delete m_pMailbox;
 }
 
@@ -193,39 +194,35 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 	// Used to scale joystick inputs to range of -1 to 1
 	Sint16 scaleFactor = 32767;
 
-	if( (event.value >= MIN_JOY_MOVEMENT_THRESHOLD ) || (event.value <= -MIN_JOY_MOVEMENT_THRESHOLD) )
+	float moveAmt = (float)event.value / (float)scaleFactor;
+	switch (event.axis)
 	{
-		float moveAmt = (float)event.value / (float)scaleFactor;
-		switch (event.axis)
+	case LEFT_STICK_LEFT_RIGHT_AXIS:
+		if(abs(moveAmt) < 0.08)
+			moveAmt = 0.0;
+		m_pCurrentInput->leftThumbStickRL = moveAmt;
+		break;
+	case LEFT_STICK_UP_DOWN_AXIS:
+		break;
+	case RIGHT_STICK_LEFT_RIGHT_AXIS:
+		break;
+	case RIGHT_STICK_UP_DOWN_AXIS:
+		break;
+	case LEFT_TRIGGER_AXIS:
 		{
-		case LEFT_STICK_LEFT_RIGHT_AXIS:
-			if(abs(moveAmt) < 0.08)
-				moveAmt = 0.0;
-			m_pCurrentInput->leftThumbStickRL = (m_pCurrentInput->leftThumbStickRL + moveAmt) - m_pCurrentInput->leftThumbStickRL;
-			break;
-		case LEFT_STICK_UP_DOWN_AXIS:
-			break;
-		case RIGHT_STICK_LEFT_RIGHT_AXIS:
-			break;
-		case RIGHT_STICK_UP_DOWN_AXIS:
-			break;
-		case LEFT_TRIGGER_AXIS:
-			{
-			double leftTriggerValue = (m_pCurrentInput->leftTrigger + moveAmt) - m_pCurrentInput->leftTrigger;
-			m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
-			break;
-			}
-		case RIGHT_TRIGGER_AXIS:
-			{
-			double rightTriggerValue = (m_pCurrentInput->rightTrigger + moveAmt) - m_pCurrentInput->rightTrigger;
-			m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
-			break;
-			}
-		default:
-			break;
+		double leftTriggerValue = moveAmt;
+		m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
+		break;
 		}
+	case RIGHT_TRIGGER_AXIS:
+		{
+		double rightTriggerValue = moveAmt;
+		m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
+		break;
+		}
+	default:
+		break;
 	}
-
 }
 
 void Input::OnJoystickButtonDown(SDL_JoyButtonEvent event){

@@ -183,24 +183,10 @@ void Simulation::step(double seconds)
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
-			if(input->bPressed)	// E Brake turn
-			{
-				//gEngineForce = 0;
-				gBrakingForce = E_BRAKE_FORCE;
-
-				// Could maybe apply a sideways force to the back of the car based on turning direction
-				// Set wheel friction super low
-			}
-			else
-			{
-				gBrakingForce = 0.0;
-				gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
-
-				if(m_vehicle->getCurrentSpeedKmHour() < MAX_SPEED)
-					gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
-				else
-					gEngineForce = 0;
-			}
+			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
+			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * input->leftThumbStickRL;
+			gEngineForce = m_vehicle->getCurrentSpeedKmHour() < MAX_SPEED ?
+				ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger : 0;
 
 			if( GetState().key_map['r'] )
 			{
