@@ -4,6 +4,11 @@
 #include "../rendering/SELib/SELib.h"
 #include <BulletCollision/CollisionShapes/btTriangleMesh.h>
 
+// HACK!
+// StateData is temporary. Everything in here
+// shall be replaced by events or the entity
+// inventory when such exists.
+// HACK!
 typedef struct StateData
 {
 	Real	fTime;
