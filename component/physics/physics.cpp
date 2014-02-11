@@ -187,6 +187,7 @@ void Simulation::step(double seconds)
 
 			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
 			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
+			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/3), 0.5);
 
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
@@ -280,9 +281,8 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Mixin car direction history
 	Real DIR_DROPOFF = (seconds * gVehicleSteering);
-	DIR_DROPOFF *= DIR_DROPOFF * 1000;
-	DIR_DROPOFF += 0.05;
-	DEBUGOUT("%lf\n",DIR_DROPOFF);
+	DIR_DROPOFF *= DIR_DROPOFF * 100;
+	DIR_DROPOFF += 0.1;
 	static btVector3 dir_history = camera;
 	dir_history *= (1.0 - DIR_DROPOFF);
 	dir_history += camera * DIR_DROPOFF;
@@ -303,8 +303,8 @@ void Simulation::UpdateGameState(double seconds)
 	diff *= diff;
 	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
-	Real DIFF_DROPOFF = 0.1;
-	static Real diff_history = diff * seconds;
+	Real DIFF_DROPOFF = 0.1 * seconds;
+	static Real diff_history = diff;
 	if (diff > 0.0) {
 		diff_history *= (1.0 - DIFF_DROPOFF);
 		diff_history += diff * DIFF_DROPOFF;
@@ -324,8 +324,8 @@ void Simulation::UpdateGameState(double seconds)
 	// Focus on car
 	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
 	chase.setY(0);
-	btVector3 focus = pos + chase * (1.5 + speed_history * 9 * diff);
-	Real FOCUS_DROPOFF = seconds * 9;
+	btVector3 focus = pos + chase * (1.5 + speed_history * 4 * diff);
+	Real FOCUS_DROPOFF = seconds * 8;
 	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
 	static btVector3 focus_history = focus;
 	focus_history *= (1 - FOCUS_DROPOFF);
