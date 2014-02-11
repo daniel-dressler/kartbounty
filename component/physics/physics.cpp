@@ -46,7 +46,7 @@ float	wheelFriction = 5;
 float	suspensionStiffness = 10;
 float	suspensionDamping = 0.5f;
 float	suspensionCompression = 0.3f;
-float	rollInfluence = 0.025f; // Keep low to prevent car flipping
+float	rollInfluence = 0.015f; // Keep low to prevent car flipping
 
 btScalar suspensionRestLength(0.1f);// Suspension Interval = rest +/- travel * 0.01
 float	suspensionTravelcm = 20;
@@ -174,7 +174,7 @@ void Simulation::step(double seconds)
 #define ENGINE_MAX_FORCE (1500)
 #define BRAKE_MAX_FORCE (1000)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (25)
+#define MAX_SPEED (25.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -237,10 +237,10 @@ void Simulation::step(double seconds)
 	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -1.0f )
 	{
 		btTransform trans;
-		trans.setOrigin( btVector3( 0, 1, 0 ) );
+		trans.setOrigin( btVector3( 0, 5, 0 ) );
 		trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_vehicle->getRigidBody()->setWorldTransform( trans );
-		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,5,0));
+		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 	}
 
 	UpdateGameState();
@@ -266,11 +266,19 @@ void Simulation::UpdateGameState()
 
 	// -- Chase Cam ----------------------------
 	// Focus on car
-	state->Camera.vFocus = state->Karts[0].vPos;
+	Vector3 focus = state->Karts[0].vPos;
+	Real FOCUS_DROPOFF = 0.5;
+	static Vector3 focus_history = focus;
+	focus_history *= (1 - FOCUS_DROPOFF);
+	focus_history = focus_history + focus * FOCUS_DROPOFF;
+	state->Camera.vFocus = focus_history;
 
 	// Get car direction
 	btVector3 camera =  m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
 	camera = camera.rotate(btVector3(0,1,0), DEGTORAD(90)); // forward vector points left, somehow
+	if (camera.getY() < 0.4) {
+		camera.setY(0.4);
+	}
 
 	// Mixin car direction history
 	Real DIR_DROPOFF = 0.05;
@@ -301,9 +309,9 @@ void Simulation::UpdateGameState()
 	diff = diff_history;
 	DEBUGOUT("diff = %lf\n", diff);
 
-	camera.setY((0.6 * (1 - diff * 2) + camera.getY()));
-	camera *= 2.0 - diff * 2;
-	state->Camera.fFOV = 60.0f * (1 - diff);
+	camera.setY((0.9 * (1 - MAX((diff * 3.7), 0.7)) + camera.getY()));
+	camera *= 3.0 - diff * 1;
+	state->Camera.fFOV = 60.0f * (1 - diff * 1.4);
 
 	// Add camera vector to kart position for camera position
 	state->Camera.vPos = state->Karts[0].vPos;
