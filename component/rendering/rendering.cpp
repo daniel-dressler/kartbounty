@@ -225,7 +225,7 @@ int Renderer::Update( float fElapseSec )
 	Vector3 vFocus = GetState().Camera.vFocus;
 	perFrame.vEyePos = GetState().Camera.vPos;
 	perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-	perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+	perFrame.matProj.Perspective( DEGTORAD( GetState().Camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 

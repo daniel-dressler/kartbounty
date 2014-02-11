@@ -287,6 +287,7 @@ void Simulation::UpdateGameState()
 	// HACK TILL CAMERA SPRINGS
 	// Hint: Camera should only change direction if a tire is on the ground, otherwise
 	//       it is prolly flipping in the air.
+	state->Camera.fFOV = 60.0f;
 	state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
 	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 }
