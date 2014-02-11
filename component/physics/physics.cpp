@@ -333,6 +333,21 @@ void Simulation::UpdateGameState(double seconds)
 	state->Camera.vPos.x += camera.getX() + (-pos.getX() + focus.getX());
 	state->Camera.vPos.y += camera.getY();
 	state->Camera.vPos.z += camera.getZ() + (-pos.getZ() + focus.getZ());
+
+
+	// STOP DELETING THE CAMERA HACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	static Int32 bUseHack = 1;
+	static Int32 bLast = 0;
+	Int32 bHackButton = state->key_map['c'];
+	if( bHackButton != bLast && bHackButton )
+		bUseHack = !bUseHack;
+	bLast = bHackButton;
+
+	if( bUseHack )
+	{
+		state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
+		state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
+	}
 }
 
 void Simulation::enableDebugView()
