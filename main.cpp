@@ -6,6 +6,8 @@
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
+#include "component/state/state.h"
+
 
 int main( int argc, char** argv )
 {
@@ -23,6 +25,8 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	// Input
 	Input *input = new Input();
+
+	GetState().Camera.oldVec = btVector3(0.f, 0.f, 0.f);
 
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())

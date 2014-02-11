@@ -217,10 +217,6 @@ int Renderer::Update( float fElapseSec )
 	glClearColor( 0, 0, 0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	// THIS IS TEMP HACK FOR CHASE CAM
-	GetState().Camera.vFocus = GetState().Karts[0].vPos + Vector3( 0, 0.5f, 0 );
-	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 1.5, 1.0f, 1.5f );
-
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
 	Int32 nWinWidth, nWinHeight;
@@ -229,7 +225,7 @@ int Renderer::Update( float fElapseSec )
 	Vector3 vFocus = GetState().Camera.vFocus;
 	perFrame.vEyePos = GetState().Camera.vPos;
 	perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-	perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+	perFrame.matProj.Perspective( DEGTORAD( GetState().Camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
