@@ -185,7 +185,7 @@ void Simulation::step(double seconds)
 			Events::InputEvent *input = (Events::InputEvent *)event;
 			Real speed = m_vehicle->getCurrentSpeedKmHour();
 
-			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( input->leftThumbStickRL >= 1.0f ? 1.0f : input->leftThumbStickRL );
+			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
 			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
 
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
