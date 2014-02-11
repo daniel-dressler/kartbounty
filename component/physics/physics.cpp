@@ -189,7 +189,12 @@ void Simulation::step(double seconds)
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * ( input->leftThumbStickRL < 0 ? -fTurnSqr : fTurnSqr );
 
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
-			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+
+			btVector3 forward = m_vehicle->getForwardVector();
+
+			// Add checking for speed to this to limit turning angle at high speeds @Kyle
+			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - m_vehicle->getCurrentSpeedKmHour() * 2;
+			//gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
 
 			if( GetState().key_map['r'] )
 			{
@@ -219,6 +224,7 @@ void Simulation::step(double seconds)
 	}
 	mb.emptyMail();
 
+	// Max Speed checking
 	if( ABS( m_vehicle->getCurrentSpeedKmHour() ) > MAX_SPEED )
 		gEngineForce = 0;
 
