@@ -243,11 +243,11 @@ void Simulation::step(double seconds)
 		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 	}
 
-	UpdateGameState();
+	UpdateGameState(seconds);
 }
 
 // Updates the car placement in the world state
-void Simulation::UpdateGameState()
+void Simulation::UpdateGameState(double seconds)
 {
 	// -- Kart position ------------------------
 	StateData *state = GetMutState();
@@ -265,30 +265,25 @@ void Simulation::UpdateGameState()
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
 	// -- Chase Cam ----------------------------
-	// Focus on car
-	Vector3 focus = state->Karts[0].vPos;
-	Real FOCUS_DROPOFF = 0.5;
-	static Vector3 focus_history = focus;
-	focus_history *= (1 - FOCUS_DROPOFF);
-	focus_history = focus_history + focus * FOCUS_DROPOFF;
-	state->Camera.vFocus = focus_history;
-
 	// Get car direction
-	btVector3 camera =  m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
-	camera = camera.rotate(btVector3(0,1,0), DEGTORAD(90)); // forward vector points left, somehow
+	btVector3 dir = m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
+	btVector3 camera = dir.rotate(btVector3(0,1,0), DEGTORAD(90)); // forward vector points left, somehow
+
+
 	if (camera.getY() < 0.4) {
 		camera.setY(0.4);
 	}
 
 	// Mixin car direction history
-	Real DIR_DROPOFF = 0.05;
+	Real DIR_DROPOFF = 3 * seconds;
 	static btVector3 dir_history = camera;
 	dir_history *= (1.0 - DIR_DROPOFF);
 	dir_history += camera * DIR_DROPOFF;
+
 	camera = dir_history;
 
 	// Mixin historic speeds
-	Real SPEED_DROPOFF = 0.001;
+	Real SPEED_DROPOFF = 0.01 * seconds;
 	Real speed = m_vehicle->getCurrentSpeedKmHour();
 	static Real speed_history = speed;
 	speed_history *= (1.0 - SPEED_DROPOFF);
@@ -301,7 +296,7 @@ void Simulation::UpdateGameState()
 	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
 	Real DIFF_DROPOFF = 0.1;
-	static Real diff_history = diff;
+	static Real diff_history = diff * seconds;
 	if (diff > 0.0) {
 		diff_history *= (1.0 - DIFF_DROPOFF);
 		diff_history += diff * DIFF_DROPOFF;
@@ -318,6 +313,18 @@ void Simulation::UpdateGameState()
 	state->Camera.vPos.x += camera.getX();
 	state->Camera.vPos.y += camera.getY();
 	state->Camera.vPos.z += camera.getZ();
+
+	// Focus on car
+	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
+	btVector3 focus = pos + chase * (2.0 + speed_history * 6 * (diff -0.1));
+	Real FOCUS_DROPOFF = 2.0 * seconds * 5;
+	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
+	static btVector3 focus_history = focus;
+	focus_history *= (1 - FOCUS_DROPOFF);
+	focus_history += focus * FOCUS_DROPOFF;
+	state->Camera.vFocus.x = focus_history.getX();
+	state->Camera.vFocus.y = focus_history.getY();
+	state->Camera.vFocus.z = focus_history.getZ();
 }
 
 void Simulation::enableDebugView()
