@@ -275,7 +275,7 @@ void Simulation::UpdateGameState(double seconds)
 	}
 
 	// Mixin car direction history
-	Real DIR_DROPOFF = 3 * seconds;
+	Real DIR_DROPOFF = 4 * seconds;
 	static btVector3 dir_history = camera;
 	dir_history *= (1.0 - DIR_DROPOFF);
 	dir_history += camera * DIR_DROPOFF;
@@ -316,8 +316,9 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Focus on car
 	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
+	chase.setY(0);
 	btVector3 focus = pos + chase * (2.0 + speed_history * 6 * (diff -0.1));
-	Real FOCUS_DROPOFF = 2.0 * seconds * 5;
+	Real FOCUS_DROPOFF = seconds * 4;
 	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
 	static btVector3 focus_history = focus;
 	focus_history *= (1 - FOCUS_DROPOFF);
