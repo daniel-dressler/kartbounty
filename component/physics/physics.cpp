@@ -46,7 +46,7 @@ float	wheelFriction = 5;
 float	suspensionStiffness = 10;
 float	suspensionDamping = 0.5f;
 float	suspensionCompression = 0.3f;
-float	rollInfluence = 0.05f; // Keep low to prevent car flipping
+float	rollInfluence = 0.025f; // Keep low to prevent car flipping
 
 btScalar suspensionRestLength(0.1f);// Suspension Interval = rest +/- travel * 0.01
 float	suspensionTravelcm = 20;
@@ -283,6 +283,12 @@ void Simulation::UpdateGameState()
 	state->Camera.vPos.x = state->Karts[0].vPos.x - normDir.getX();
 	state->Camera.vPos.y = HEIGHT_CAM_GROUND;
 	state->Camera.vPos.z = state->Karts[0].vPos.z - normDir.getZ();
+
+	// HACK TILL CAMERA SPRINGS
+	// Hint: Camera should only change direction if a tire is on the ground, otherwise
+	//       it is prolly flipping in the air.
+	state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
+	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 }
 
 void Simulation::enableDebugView()

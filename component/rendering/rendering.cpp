@@ -217,10 +217,6 @@ int Renderer::Update( float fElapseSec )
 	glClearColor( 0, 0, 0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	// THIS IS TEMP HACK FOR CHASE CAM
-	// moved to Physics input handling, updates as car pos updates. Also will include rotations.
-
-
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
 	Int32 nWinWidth, nWinHeight;
