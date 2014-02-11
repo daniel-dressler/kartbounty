@@ -194,7 +194,7 @@ void Simulation::step(double seconds)
 			if( GetState().key_map['r'] )
 			{
 				btTransform trans;
-				trans.setOrigin( btVector3( 0, 1, 0 ) );
+				trans.setOrigin( btVector3( 0, 5, 0 ) );
 				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 				m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
@@ -240,7 +240,7 @@ void Simulation::step(double seconds)
 		trans.setOrigin( btVector3( 0, 1, 0 ) );
 		trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_vehicle->getRigidBody()->setWorldTransform( trans );
-		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,5,0));
 	}
 
 	UpdateGameState();
@@ -249,6 +249,7 @@ void Simulation::step(double seconds)
 // Updates the car placement in the world state
 void Simulation::UpdateGameState()
 {
+	// -- Kart position ------------------------
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
 
@@ -257,39 +258,58 @@ void Simulation::UpdateGameState()
 	state->Karts[0].vPos.y = (Real)pos.getY();
 	state->Karts[0].vPos.z = (Real)pos.getZ();
 
-	// Focus updating, for now no spring.
-
-	state->Camera.vFocus.x=(Real)pos.getX();
-	state->Camera.vFocus.y=(Real)pos.getY();
-	state->Camera.vFocus.z=(Real)pos.getZ();
-
 	btQuaternion rot = car1.getRotation();
-
 	state->Karts[0].qOrient.x = (Real)rot.getX();
 	state->Karts[0].qOrient.y = (Real)rot.getY();
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
-	// Camera set up to follow car - you can play around with the parameters.
-	// Distance from car to camera on the x/z plain.
-	btScalar DIST_CAR_CAM = 2.f;
-	// hight of camera from ground.
-	btScalar HEIGHT_CAM_GROUND = 1.5f;
+	// -- Chase Cam ----------------------------
+	// Focus on car
+	state->Camera.vFocus = state->Karts[0].vPos;
 
-	btVector3 normDir =  m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
-	normDir = normDir * DIST_CAR_CAM;
-	normDir = normDir.rotate(btVector3(0,1,0), DEGTORAD(-90));
+	// Get car direction
+	btVector3 camera =  m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
+	camera = camera.rotate(btVector3(0,1,0), DEGTORAD(90)); // forward vector points left, somehow
 
-	state->Camera.vPos.x = state->Karts[0].vPos.x - normDir.getX();
-	state->Camera.vPos.y = HEIGHT_CAM_GROUND;
-	state->Camera.vPos.z = state->Karts[0].vPos.z - normDir.getZ();
+	// Mixin car direction history
+	Real DIR_DROPOFF = 0.05;
+	static btVector3 dir_history = camera;
+	dir_history *= (1.0 - DIR_DROPOFF);
+	dir_history += camera * DIR_DROPOFF;
+	camera = dir_history;
 
-	// HACK TILL CAMERA SPRINGS
-	// Hint: Camera should only change direction if a tire is on the ground, otherwise
-	//       it is prolly flipping in the air.
-	state->Camera.fFOV = 60.0f;
-	state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
-	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
+	// Mixin historic speeds
+	Real SPEED_DROPOFF = 0.001;
+	Real speed = m_vehicle->getCurrentSpeedKmHour();
+	static Real speed_history = speed;
+	speed_history *= (1.0 - SPEED_DROPOFF);
+	speed_history += speed * SPEED_DROPOFF;
+
+	// Make camera focus during acceleration
+	Real diff = (speed - speed_history) / MAX_SPEED;
+	diff = diff > 0.0 ? diff : 0;
+	diff *= diff;
+	diff = (pow(2, diff) - 1) / 1;
+	diff = MIN(diff, 0.3);
+	Real DIFF_DROPOFF = 0.1;
+	static Real diff_history = diff;
+	if (diff > 0.0) {
+		diff_history *= (1.0 - DIFF_DROPOFF);
+		diff_history += diff * DIFF_DROPOFF;
+	}
+	diff = diff_history;
+	DEBUGOUT("diff = %lf\n", diff);
+
+	camera.setY((0.6 * (1 - diff * 2) + camera.getY()));
+	camera *= 2.0 - diff * 2;
+	state->Camera.fFOV = 60.0f * (1 - diff);
+
+	// Add camera vector to kart position for camera position
+	state->Camera.vPos = state->Karts[0].vPos;
+	state->Camera.vPos.x += camera.getX();
+	state->Camera.vPos.y += camera.getY();
+	state->Camera.vPos.z += camera.getZ();
 }
 
 void Simulation::enableDebugView()
