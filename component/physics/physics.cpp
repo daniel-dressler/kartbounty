@@ -184,8 +184,11 @@ void Simulation::step(double seconds)
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
 			Real speed = m_vehicle->getCurrentSpeedKmHour();
-			Real fTurnSqr = pow(input->leftThumbStickRL, 8) * (1 - (speed / MAX_SPEED) * 0.8);
-			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * ( input->leftThumbStickRL < 0 ? -fTurnSqr : fTurnSqr );
+
+			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( input->leftThumbStickRL >= 1.0f ? 1.0f : input->leftThumbStickRL );
+			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
+
+			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
 			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
@@ -209,7 +212,7 @@ void Simulation::step(double seconds)
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 			}
 
-//			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 //			DEBUGOUT("Speed: %f\n", (float)ABS( m_vehicle->getCurrentSpeedKmHour() ) );
 		}
 		default:
