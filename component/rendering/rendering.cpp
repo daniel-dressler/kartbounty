@@ -212,6 +212,7 @@ int Renderer::Update( float fElapseSec )
 				break;
 			}
 		}
+		m_pMailbox->emptyMail();
 	}
 
 	glClearColor( 0, 0, 0, 1 );

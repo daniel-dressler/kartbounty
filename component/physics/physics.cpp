@@ -183,8 +183,8 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
-
-			Real fTurnSqr = pow(input->leftThumbStickRL, 8);
+			Real speed = m_vehicle->getCurrentSpeedKmHour();
+			Real fTurnSqr = pow(input->leftThumbStickRL, 8) * (1 - (speed / MAX_SPEED) * 0.8);
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * ( input->leftThumbStickRL < 0 ? -fTurnSqr : fTurnSqr );
 
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
@@ -277,7 +277,7 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Mixin car direction history
 	Real DIR_DROPOFF = (seconds * gVehicleSteering);
-	DIR_DROPOFF *= DIR_DROPOFF * 3000;
+	DIR_DROPOFF *= DIR_DROPOFF * 1000;
 	DIR_DROPOFF += 0.05;
 	DEBUGOUT("%lf\n",DIR_DROPOFF);
 	static btVector3 dir_history = camera;
@@ -296,7 +296,7 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Make camera focus during acceleration
 	Real diff = (speed - speed_history) / MAX_SPEED;
-	diff = diff > 0.0 ? diff : diff / 2;
+	diff = diff > 0.0 ? diff : 0;
 	diff *= diff;
 	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
