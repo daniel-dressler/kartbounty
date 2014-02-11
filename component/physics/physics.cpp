@@ -183,9 +183,13 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
+			Real speed = m_vehicle->getCurrentSpeedKmHour();
 
-			Real fTurnSqr = pow(input->leftThumbStickRL, 8);
-			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * ( input->leftThumbStickRL < 0 ? -fTurnSqr : fTurnSqr );
+			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
+			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
+			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/3), 0.5);
+
+			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
 
@@ -214,7 +218,7 @@ void Simulation::step(double seconds)
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 			}
 
-//			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 //			DEBUGOUT("Speed: %f\n", (float)ABS( m_vehicle->getCurrentSpeedKmHour() ) );
 		}
 		default:
@@ -282,7 +286,9 @@ void Simulation::UpdateGameState(double seconds)
 	}
 
 	// Mixin car direction history
-	Real DIR_DROPOFF = 3 * seconds;
+	Real DIR_DROPOFF = (seconds * gVehicleSteering);
+	DIR_DROPOFF *= DIR_DROPOFF * 100;
+	DIR_DROPOFF += 0.1;
 	static btVector3 dir_history = camera;
 	dir_history *= (1.0 - DIR_DROPOFF);
 	dir_history += camera * DIR_DROPOFF;
@@ -295,15 +301,16 @@ void Simulation::UpdateGameState(double seconds)
 	static Real speed_history = speed;
 	speed_history *= (1.0 - SPEED_DROPOFF);
 	speed_history += speed * SPEED_DROPOFF;
+	speed_history = abs(speed_history);
 
 	// Make camera focus during acceleration
 	Real diff = (speed - speed_history) / MAX_SPEED;
-	diff = diff > 0.0 ? diff : diff / 2;
+	diff = diff > 0.0 ? diff : 0;
 	diff *= diff;
 	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
-	Real DIFF_DROPOFF = 0.1;
-	static Real diff_history = diff * seconds;
+	Real DIFF_DROPOFF = 0.1 * seconds;
+	static Real diff_history = diff;
 	if (diff > 0.0) {
 		diff_history *= (1.0 - DIFF_DROPOFF);
 		diff_history += diff * DIFF_DROPOFF;
@@ -323,8 +330,8 @@ void Simulation::UpdateGameState(double seconds)
 	// Focus on car
 	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
 	chase.setY(0);
-	btVector3 focus = pos + chase * (1.5 + speed_history * 5 * diff);
-	Real FOCUS_DROPOFF = seconds * 3;
+	btVector3 focus = pos + chase * (1.5 + speed_history * 4 * diff);
+	Real FOCUS_DROPOFF = seconds * 8;
 	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
 	static btVector3 focus_history = focus;
 	focus_history *= (1 - FOCUS_DROPOFF);
