@@ -264,6 +264,8 @@ void Simulation::UpdateGameState(double seconds)
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
 	// -- Chase Cam ----------------------------
+	// Note: I cannot explain these numbers
+
 	// Get car direction
 	btVector3 dir = m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length();
 	btVector3 camera = dir.rotate(btVector3(0,1,0), DEGTORAD(90)); // forward vector points left, somehow
@@ -290,7 +292,7 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Make camera focus during acceleration
 	Real diff = (speed - speed_history) / MAX_SPEED;
-	diff = diff > 0.0 ? diff : 0;
+	diff = diff > 0.0 ? diff : diff / 2;
 	diff *= diff;
 	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
@@ -302,9 +304,9 @@ void Simulation::UpdateGameState(double seconds)
 	}
 	diff = diff_history;
 
-	camera.setY((0.9 * (1 - MAX((diff * 3.7), 0.7)) + camera.getY()));
+	camera.setY(0.1 * (1 - MIN(speed_history , 1)) + camera.getY());
 	camera *= 3.0 - diff * 1;
-	state->Camera.fFOV = 60.0f * (1 - diff * 1.4);
+	state->Camera.fFOV = 60.0f * (1 - diff * 1.1);
 
 	// Add camera vector to kart position for camera position
 	state->Camera.vPos = state->Karts[0].vPos;
@@ -315,7 +317,7 @@ void Simulation::UpdateGameState(double seconds)
 	// Focus on car
 	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
 	chase.setY(0);
-	btVector3 focus = pos + chase * (2.0 + speed_history * 6 * (diff -0.1));
+	btVector3 focus = pos + chase * (1.5 + speed_history * 5 * diff);
 	Real FOCUS_DROPOFF = seconds * 3;
 	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
 	static btVector3 focus_history = focus;
