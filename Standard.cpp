@@ -8,7 +8,11 @@
 #pragma comment( lib, "SDL2.lib" )
 #pragma comment( lib, "SDL2main.lib" )
 
+#ifndef _DEBUG
 #pragma comment( lib, "BulletPhysics.lib" )
+#else
+#pragma comment( lib, "BulletPhysicsD.lib" )
+#endif
 
 #pragma comment( lib, "winmm.lib" )
 #pragma comment( lib, "version.lib" )
