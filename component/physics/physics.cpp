@@ -187,6 +187,7 @@ void Simulation::step(double seconds)
 
 			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
 			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
+			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/3), 0.5);
 
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
@@ -280,9 +281,8 @@ void Simulation::UpdateGameState(double seconds)
 
 	// Mixin car direction history
 	Real DIR_DROPOFF = (seconds * gVehicleSteering);
-	DIR_DROPOFF *= DIR_DROPOFF * 1000;
-	DIR_DROPOFF += 0.05;
-	DEBUGOUT("%lf\n",DIR_DROPOFF);
+	DIR_DROPOFF *= DIR_DROPOFF * 100;
+	DIR_DROPOFF += 0.1;
 	static btVector3 dir_history = camera;
 	dir_history *= (1.0 - DIR_DROPOFF);
 	dir_history += camera * DIR_DROPOFF;
