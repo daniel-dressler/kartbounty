@@ -75,7 +75,7 @@ namespace SEG
 		SafeFree( m_aryBones );
 	}
 
-	Int32 Mesh::ReadData( Byte* pData, Int32 nSize, UInt32 uFlags, btTriangleMesh* pCollider )
+	Int32 Mesh::ReadData( Byte* pData, Int32 nSize, UInt32 uFlags, btTriangleMesh* pCollider, Vector3 vOfs )
 	{
 		SafeFree( m_aryIndices );
 		SafeFree( m_aryVertices );
@@ -174,10 +174,19 @@ namespace SEG
 					Int32 ia = m_aryIndices[i];
 					Int32 ib = m_aryIndices[i+1];
 					Int32 ic = m_aryIndices[i+2];
-					btVector3 a = btVector3( aryVertices[ia].x, aryVertices[ia].y, aryVertices[ia].z );
-					btVector3 b = btVector3( aryVertices[ib].x, aryVertices[ib].y, aryVertices[ib].z );
-					btVector3 c = btVector3( aryVertices[ic].x, aryVertices[ic].y, aryVertices[ic].z );
+					btVector3 a = btVector3( aryVertices[ia].x + vOfs.x, aryVertices[ia].y + vOfs.y, aryVertices[ia].z + vOfs.z );
+					btVector3 b = btVector3( aryVertices[ib].x + vOfs.x, aryVertices[ib].y + vOfs.y, aryVertices[ib].z + vOfs.z );
+					btVector3 c = btVector3( aryVertices[ic].x + vOfs.x, aryVertices[ic].y + vOfs.y, aryVertices[ic].z + vOfs.z );
+
 					pCollider->addTriangle( a, b, c, 1 );
+					
+					a.setX( -a.x() ); b.setX( -b.x() ); c.setX( -c.x() );
+					pCollider->addTriangle( c, b, a, 1 );
+					a.setZ( -a.z() ); b.setZ( -b.z() ); c.setZ( -c.z() );
+					pCollider->addTriangle( a, b, c, 1 );
+					a.setX( -a.x() ); b.setX( -b.x() ); c.setX( -c.x() );
+					pCollider->addTriangle( c, b, a, 1 );
+					
 				}
 			}
 			break;

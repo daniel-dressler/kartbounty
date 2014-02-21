@@ -98,7 +98,7 @@ namespace SEG
 		Int32 GetBoneCount() const			{ return m_nBoneCount; }
 		Bone* GetBoneList() const			{ return m_aryBones; }
 
-		Int32 ReadData( Byte* pData, Int32 nSize, UInt32 uFlags = 0, btTriangleMesh* pCollider = 0 );
+		Int32 ReadData( Byte* pData, Int32 nSize, UInt32 uFlags = 0, btTriangleMesh* pCollider = 0, Vector3 vOfs = Vector3( 0,0,0 ) );
 		Int32 UpdateTextures( Int16* aryDiffuse, Int16* aryEffects, Int32 nSize );
 		Int32 SetTextures( Int16 nDiffuse, Int16 nEffect, Int32 nSet = 0 );
 
