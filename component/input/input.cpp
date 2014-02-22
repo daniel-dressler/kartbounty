@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "input.h"
 #include "../../Standard.h"
-#include "../events/events.h"
 #include "../state/state.h"
 
 Input::Input() {
@@ -46,16 +45,6 @@ void Input::HandleEvents(){
 
 	m_pCurrentInput = NEWEVENT(Input);
 	memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-
-	// Inititialize input event with previous events values, except buttons
-	//m_pCurrentInput->rightTrigger = 0;
-	//m_pCurrentInput->leftTrigger = 0;
-	//m_pCurrentInput->leftThumbStickRL = 0;
-	//m_pCurrentInput->rightThumbStickRL = 0;
-	//m_pCurrentInput->aPressed = false;
-	//m_pCurrentInput->bPressed = false;
-	//m_pCurrentInput->xPressed = false;
-	//m_pCurrentInput->yPressed = false;
 
 	//20ms into the future, ensures the input loop doesn't last longer than 10ms
 	Uint32 timeout = SDL_GetTicks() + 20;   
@@ -156,6 +145,9 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_s:
 		m_pCurrentInput->leftTrigger = 1;
 		break;
+	case SDLK_SPACE:
+		m_pCurrentInput->bPressed = true;
+		break;
 	default:
 		break;
 	}
@@ -183,6 +175,9 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_RIGHT:
 		m_pCurrentInput->leftThumbStickRL = 0;
+		break;
+	case SDLK_SPACE:
+		m_pCurrentInput->bPressed = false;
 		break;
 	default:
 		break;

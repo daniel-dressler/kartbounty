@@ -241,7 +241,7 @@ void Simulation::step(double seconds)
 	m_vehicle->setBrake(gBrakingForce, 2);
 	m_vehicle->setBrake(gBrakingForce, 3);
 
-	m_world->stepSimulation((btScalar)seconds, 10);
+	m_world->stepSimulation((btScalar)seconds, 10, 0.016666f / 2.0f);
 
 	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -1.0f )
 	{

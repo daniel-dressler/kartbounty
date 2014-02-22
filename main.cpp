@@ -7,6 +7,7 @@
 #include "component/physics/physics.h"
 #include "component/input/input.h"
 #include "component/state/state.h"
+#include "component/audio/audio.h"
 
 
 int main( int argc, char** argv )
@@ -25,6 +26,10 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	// Input
 	Input *input = new Input();
+	// Audio
+	Audio *audio = new Audio();
+
+	//Mix_Init( MIX_INIT_FLAC | MIX_INIT_MP3 );
 
 	GetState().Camera.oldVec = btVector3(0.f, 0.f, 0.f);
 
@@ -43,6 +48,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
+	delete audio;
 	ShutdownRendering();
 
 	SDL_Quit();

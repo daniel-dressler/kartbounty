@@ -68,6 +68,9 @@
     <ClInclude Include="component\gameai\gameai.h">
       <Filter>component\gameai</Filter>
     </ClInclude>
+    <ClInclude Include="component\audio\audio.h">
+      <Filter>component\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -120,6 +123,9 @@
     <ClCompile Include="component\gameai\gameai.cpp">
       <Filter>component\gameai</Filter>
     </ClCompile>
+    <ClCompile Include="component\audio\audio.cpp">
+      <Filter>component\audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="component">
@@ -157,6 +163,9 @@
     </Filter>
     <Filter Include="component\gameai">
       <UniqueIdentifier>{a2dc28fc-638f-4e23-aa27-ffe520eb6892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\audio">
+      <UniqueIdentifier>{f5d0a495-60a6-4d83-bb09-161217ba4fef}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
