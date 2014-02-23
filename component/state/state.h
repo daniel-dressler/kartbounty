@@ -9,6 +9,9 @@
 // shall be replaced by events or the entity
 // inventory when such exists.
 // HACK!
+
+#define MAX_POWERUPS	12
+
 typedef struct StateData
 {
 	struct
@@ -17,6 +20,13 @@ typedef struct StateData
 		Quaternion	qOrient;
 
 	} Karts[4];
+
+	struct
+	{
+		Int32		bEnabled;
+		Int32		nType;
+		Vector3		vPos;
+	} Powerups[MAX_POWERUPS];
 
 	struct 
 	{

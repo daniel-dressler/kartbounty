@@ -16,7 +16,7 @@ Simulation::Simulation()
 	m_solver = new btSequentialImpulseConstraintSolver;
 	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
 
-	m_world->setGravity(btVector3(0,-5,0));
+	m_world->setGravity(btVector3(0,-6,0));
 
 	mb.request(Events::EventType::Input);
 }
@@ -183,10 +183,10 @@ int Simulation::loadWorld()
 void Simulation::step(double seconds)
 {
 #define STEER_MAX_ANGLE (25)
-#define ENGINE_MAX_FORCE (1500)
-#define BRAKE_MAX_FORCE (1000)
+#define ENGINE_MAX_FORCE (2000)
+#define BRAKE_MAX_FORCE (1500)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (25.0)
+#define MAX_SPEED (30.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -247,7 +247,7 @@ void Simulation::step(double seconds)
 	m_vehicle->setBrake(gBrakingForce, 2);
 	m_vehicle->setBrake(gBrakingForce, 3);
 
-	m_world->stepSimulation( (btScalar)seconds, 10, 0.0166666f * 0.5f );
+	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
 
 	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -10.0f )
 	{
@@ -314,7 +314,7 @@ void Simulation::UpdateGameState(double seconds)
 		state->Camera.vPos = Vector3::Lerp( state->Camera.vPos, vLastofs + state->Camera.vFocus, fLerpAmt );
 	}
 
-	state->Camera.fFOV = Lerp( state->Camera.fFOV, 80.0f - fMoveAmt * 200.0f, fLerpAmt );
+	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fMoveAmt * 150.0f, fLerpAmt );
 //	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 
 	DEBUGOUT( "%f\n", state->Camera.fFOV );
