@@ -18,7 +18,7 @@ private:
 	GLtex				m_texDiffuse;
 	GLtex				m_texNormal;
 
-	Vector3				m_vArenaScale;
+	Vector3				m_vArenaOfs;
 
 public:
 	int Init( SDL_Window* win );
@@ -79,12 +79,11 @@ int ShutdownRendering()
 
 Renderer::Renderer()
 {
-	m_vArenaScale = Vector3( 1, 1.0f, 1 );
-
-
 	m_bInitComplete = 0;
 	m_Window = 0;
 	m_pMailbox = 0;
+
+	m_vArenaOfs = Vector3( 10,0,-10 );
 }
 
 Renderer::~Renderer()
@@ -138,15 +137,13 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena4.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Arena5.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
 		GetMutState()->bttmArena = new btTriangleMesh();
-		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena ) )
+		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena, m_vArenaOfs ) )
 			return 0;
-
-		GetMutState()->bttmArena->setScaling( btVector3( m_vArenaScale.x, m_vArenaScale.y, m_vArenaScale.z ) );
 
 		free( pData );
 
@@ -252,7 +249,24 @@ int Renderer::Render()
 	glhEnableTexture( m_texDiffuse );
 	glhEnableTexture( m_texNormal, 1 );
 
-	perMesh.matWorld = Matrix::GetScale( m_vArenaScale );
+	glCullFace( GL_BACK );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, 1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( 1, 1, -1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+
+	glCullFace( GL_FRONT );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_mshArena );

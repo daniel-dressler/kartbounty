@@ -36,6 +36,9 @@ void main()
 	}
 	fPower = saturate( fPower );
 
+	// Temp light
+	fPower = clamp( fPower, 0.2f, 1.0f );
+
 	vec3 color = ps_color.rgb * texDiffuse.rgb * fPower;
 	out_color  = vec4( color, ps_color.a * texDiffuse.a );
 
