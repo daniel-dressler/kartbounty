@@ -97,6 +97,7 @@ Renderer::~Renderer()
 	glhDestroyBuffer( m_bufPerFrame );
 	glhUnloadEffect( m_eftMesh );
 	SDL_DestroyWindow( m_Window );
+	SDL_Quit();
 
 	if( m_pMailbox )
 		delete m_pMailbox;

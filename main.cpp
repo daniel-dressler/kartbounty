@@ -41,6 +41,5 @@ int main( int argc, char** argv )
 	delete gameai;
 	ShutdownRendering();
 
-	SDL_Quit();
 	return 0;
 }
