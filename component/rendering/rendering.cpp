@@ -8,17 +8,22 @@ private:
 	SDL_Window*			m_Window;
 	Events::Mailbox*	m_pMailbox;
 
+	Real				m_fTime;
+
 	GLeffect			m_eftMesh;
 	GLbuffer			m_bufPerMesh;
 	GLbuffer			m_bufPerFrame;
 
 	GLmesh				m_mshArena;
 	GLmesh				m_mshKart;
+	GLmesh				m_mshPowerRing1;
+	GLmesh				m_mshPowerRing2;
+	GLmesh				m_mshPowerSphere;
 
 	GLtex				m_texDiffuse;
 	GLtex				m_texNormal;
 
-	Vector3				m_vArenaScale;
+	Vector3				m_vArenaOfs;
 
 public:
 	int Init( SDL_Window* win );
@@ -79,12 +84,13 @@ int ShutdownRendering()
 
 Renderer::Renderer()
 {
-	m_vArenaScale = Vector3( 1, 1.0f, 1 );
-
-
 	m_bInitComplete = 0;
 	m_Window = 0;
 	m_pMailbox = 0;
+
+	m_fTime = 0;
+
+	m_vArenaOfs = Vector3( -10,0,10 );
 }
 
 Renderer::~Renderer()
@@ -101,6 +107,25 @@ Renderer::~Renderer()
 
 	if( m_pMailbox )
 		delete m_pMailbox;
+}
+
+int LoadMesh( GLmesh& mesh, char* strFilename )
+{
+	GLchar* pData;
+	Int32 nSize;
+	if( !glhReadFile( strFilename, pData, nSize ) )
+		return 0;
+
+	SEG::Mesh meshdata;
+	if( !meshdata.ReadData( (Byte*)pData, nSize ) )
+		return 0;
+
+	free( pData );
+
+	if( !glhCreateMesh( mesh, meshdata ) )
+		return 0;
+
+	return 1;
 }
 
 int Renderer::Init( SDL_Window* win )
@@ -139,15 +164,13 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena4.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/Arena6.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
 		GetMutState()->bttmArena = new btTriangleMesh();
-		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena ) )
+		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena, m_vArenaOfs ) )
 			return 0;
-
-		GetMutState()->bttmArena->setScaling( btVector3( m_vArenaScale.x, m_vArenaScale.y, m_vArenaScale.z ) );
 
 		free( pData );
 
@@ -155,21 +178,17 @@ int Renderer::Init( SDL_Window* win )
 			return 0;
 	}
 
-	{
-		GLchar* pData;
-		Int32 nSize;
-		if( !glhReadFile( "assets/Kart.msh", pData, nSize ) )
-			return 0;
-
-		SEG::Mesh meshdata;
-		if( !meshdata.ReadData( (Byte*)pData, nSize ) )
-			return 0;
-
-		free( pData );
-
-		if( !glhCreateMesh( m_mshKart, meshdata ) )
-			return 0;
-	}
+	if( !LoadMesh( m_mshKart, "assets/Kart.msh" ) )
+		return 0;
+	
+	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
+		return 0;
+	
+	if( !LoadMesh( m_mshPowerRing1, "assets/PowerRing1.msh" ) )
+		return 0;
+	
+	if( !LoadMesh( m_mshPowerRing2, "assets/PowerRing2.msh" ) )
+		return 0;
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
@@ -182,13 +201,17 @@ int Renderer::Init( SDL_Window* win )
 
 	m_bInitComplete = 1;
 
+	// TEMP CRAP
+
+	GetState().Powerups[0].bEnabled = 1;
+	GetState().Powerups[0].vPos = Vector3( 5, 0, 5 );
+
 	return 1;
 }
 
 int Renderer::Update( float fElapseSec )
 {
-	static Real fTime = 0;
-	fTime += fElapseSec;
+	m_fTime += fElapseSec;
 
 	if( !m_bInitComplete )
 		return 0;
@@ -213,14 +236,11 @@ int Renderer::Update( float fElapseSec )
 				break;
 			}
 		}
+		m_pMailbox->emptyMail();
 	}
 
 	glClearColor( 0, 0, 0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	// THIS IS TEMP HACK FOR CHASE CAM
-	GetState().Camera.vFocus = GetState().Karts[0].vPos + Vector3( 0, 0.5f, 0 );
-	GetState().Camera.vPos = GetState().Camera.vFocus + Vector3( 1.5, 1.0f, 1.5f );
 
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
@@ -230,16 +250,22 @@ int Renderer::Update( float fElapseSec )
 	Vector3 vFocus = GetState().Camera.vFocus;
 	perFrame.vEyePos = GetState().Camera.vPos;
 	perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-	perFrame.matProj.Perspective( DEGTORAD( 60.0f ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+	perFrame.matProj.Perspective( DEGTORAD( GetState().Camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
-	perFrame.vLight[0] = Vector4( SIN( fTime ) * 3, 2, COS( fTime ) * 3, 10 );
-	perFrame.vLight[1] = Vector4( 10, 5, 0, 10 );
-	perFrame.vLight[2] = Vector4( 0, 5, 10, 10 );
-	perFrame.vLight[3] = Vector4( -10, 5, 0, 10 );
-	perFrame.vLight[4] = Vector4( 0, 5, -10, 10 );
-	
+	MEMSET( perFrame.vLight, 0, sizeof(Vector4) * MAX_LIGHTS );
+	perFrame.vLight[0] = Vector4( SIN( m_fTime ) * 3, 2, COS( m_fTime ) * 3, 10 );
+	perFrame.vLight[1] = Vector4( 15, 5, 0, 15 );
+	perFrame.vLight[2] = Vector4( 0, 5, 15, 15 );
+	perFrame.vLight[3] = Vector4( -15, 5, 0, 15 );
+	perFrame.vLight[4] = Vector4( 0, 5, -15, 15 );
+	perFrame.vLight[5] = Vector4( 15, 5, 15, 15 );
+	perFrame.vLight[6] = Vector4( -15, 5, 15, 15 );
+	perFrame.vLight[7] = Vector4( 15, 5, -15, 15 );
+	perFrame.vLight[8] = Vector4( -15, 5, -15, 15 );
+	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * 3, 2, -COS( m_fTime ) * 3, 10 );
+
 	glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
 	return 1;
@@ -255,17 +281,71 @@ int Renderer::Render()
 
 	glhEnableTexture( m_texDiffuse );
 	glhEnableTexture( m_texNormal, 1 );
-
-	perMesh.matWorld = Matrix::GetScale( m_vArenaScale );
+	
+	glCullFace( GL_BACK );
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, 1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_mshArena );
 
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( 1, 1, -1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+	
+	glCullFace( GL_FRONT );
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshArena );
+
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
 	perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
 		Matrix::GetTranslate( GetState().Karts[0].vPos );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_mshKart );
+
+	for( Int32 i = 0; i < MAX_POWERUPS; i++ )
+	{
+		if( GetState().Powerups[i].bEnabled )
+		{
+			perMesh.vColor = Vector4( 1,0,0,1 );
+			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( GetState().Powerups[i].vPos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( GetState().Powerups[i].vPos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+			glEnable( GL_BLEND );
+			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+			perMesh.vColor = Vector4( 1,1,1,1 );
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+			glDisable( GL_BLEND );
+
+
+		}
+	}
 
 	SDL_GL_SwapWindow( m_Window );
 

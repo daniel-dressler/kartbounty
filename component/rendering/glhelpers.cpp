@@ -232,7 +232,7 @@ int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSiz
 		if( pBuffer->location == effect.blocks[i*2] )
 		{
 			pBuffer->base = i*2+1;
-			glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[i*2+1], pBuffer->buffer );
+//			glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[i*2+1], pBuffer->buffer );
 			break;
 		}
 	}
@@ -243,7 +243,8 @@ int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSiz
 int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer )
 {
 	glBindBuffer( GL_UNIFORM_BUFFER, buffer.buffer );
-	glBufferData( GL_UNIFORM_BUFFER, buffer.size, buffer.data, GL_DYNAMIC_DRAW );
+//	glBufferData( GL_UNIFORM_BUFFER, buffer.size, buffer.data, GL_DYNAMIC_DRAW );
+	glBufferSubData( GL_UNIFORM_BUFFER, 0, buffer.size, buffer.data );
 	glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[buffer.base], buffer.buffer );
 
 	return 1;

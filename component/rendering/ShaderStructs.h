@@ -1,12 +1,14 @@
 #ifndef __SHADER_STRUCTS__
 #define __SHADER_STRUCTS__
 
-#define MAX_LIGHTS	5
+#define MAX_LIGHTS	20
 
 struct cstPerMesh
 {
 	Matrix matWorld;
 	Matrix matWorldViewProj;
+	Vector4 vRenderParams;
+	Vector4 vColor;
 };
 
 struct cstPerFrame

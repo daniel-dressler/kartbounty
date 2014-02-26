@@ -16,7 +16,7 @@ Simulation::Simulation()
 	m_solver = new btSequentialImpulseConstraintSolver;
 	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
 
-	m_world->setGravity(btVector3(0,-6,0));
+	m_world->setGravity(btVector3(0,-5,0));
 
 	mb.request(Events::EventType::Input);
 }
@@ -97,7 +97,7 @@ int Simulation::loadWorld()
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,4,0));		// This sets where the car initially spawns
+	tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
 	m_carChassis = addRigidBody(CAR_MASS, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
@@ -165,28 +165,16 @@ int Simulation::loadWorld()
 		m_vehicle->updateWheelTransform(i,true);
 	}
 
-	btTransform car1 = m_vehicle->getChassisWorldTransform();
-	btVector3 pos = car1.getOrigin();
-	state->Karts[0].vPos.x = (Real)pos.getX();
-	state->Karts[0].vPos.y = (Real)pos.getY();
-	state->Karts[0].vPos.z = (Real)pos.getZ();
-
-	btQuaternion rot = car1.getRotation();
-	state->Karts[0].qOrient.x = (Real)rot.getX();
-	state->Karts[0].qOrient.y = (Real)rot.getY();
-	state->Karts[0].qOrient.z = (Real)rot.getZ();
-	state->Karts[0].qOrient.w = (Real)-rot.getW();
-
 	return 0;
 }
 
 void Simulation::step(double seconds)
 {
 #define STEER_MAX_ANGLE (25)
-#define ENGINE_MAX_FORCE (2000)
-#define BRAKE_MAX_FORCE (1500)
+#define ENGINE_MAX_FORCE (1500)
+#define BRAKE_MAX_FORCE (1000)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (30.0)
+#define MAX_SPEED (25.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -209,7 +197,7 @@ void Simulation::step(double seconds)
 			if( GetState().key_map['r'] )
 			{
 				btTransform trans;
-				trans.setOrigin( btVector3( 0, 1, 0 ) );
+				trans.setOrigin( btVector3( 0, 5, 0 ) );
 				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 				m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
@@ -225,7 +213,7 @@ void Simulation::step(double seconds)
 				m_vehicle->getRigidBody()->setWorldTransform( trans );
 			}
 
-//			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
+			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 //			DEBUGOUT("Speed: %f\n", (float)ABS( m_vehicle->getCurrentSpeedKmHour() ) );
 		}
 		default:
@@ -247,12 +235,12 @@ void Simulation::step(double seconds)
 	m_vehicle->setBrake(gBrakingForce, 2);
 	m_vehicle->setBrake(gBrakingForce, 3);
 
-	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
+	m_world->stepSimulation((btScalar)seconds, 10);
 
-	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -10.0f )
+	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -1.0f )
 	{
 		btTransform trans;
-		trans.setOrigin( btVector3( 0, 1, 0 ) );
+		trans.setOrigin( btVector3( 0, 5, 0 ) );
 		trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_vehicle->getRigidBody()->setWorldTransform( trans );
 		m_vehicle->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
@@ -268,11 +256,6 @@ void Simulation::UpdateGameState(double seconds)
 	StateData *state = GetMutState();
 	btTransform car1 = m_vehicle->getChassisWorldTransform();
 
-	Vector3 vPosOld = state->Karts[0].vPos;
-	Quaternion qOriOld = state->Karts[0].qOrient;
-	Quaternion qOriOldInv = qOriOld;
-	qOriOldInv.Invert();
-
 	btVector3 pos = car1.getOrigin();
 	state->Karts[0].vPos.x = (Real)pos.getX();
 	state->Karts[0].vPos.y = (Real)pos.getY();
@@ -284,42 +267,6 @@ void Simulation::UpdateGameState(double seconds)
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
-	Vector3 vPosNew = state->Karts[0].vPos;
-	Quaternion qOriNew = state->Karts[0].qOrient;
-
-	Vector3 vPosChange = vPosNew - vPosOld;
-	Real fMoveAmt = vPosChange.Length();
-
-	Quaternion qOriMod = qOriNew;
-	qOriMod.w = -qOriMod.w;
-	Matrix matOri = Matrix::GetRotateQuaternion( qOriMod );
-
-	Vector3 vUp = Vector3( 0, 1, 0 ).Transform( matOri );
-
-	Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
-	vCamOfs.y = 1.0f;
-
-	state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
-
-	Real fLerpAmt = seconds * 5.0f;
-
-	static Vector3 vLastofs = Vector3( 0, 1.0f, -1.5f );
-	if( vUp.y > 0.5f )
-	{
-		state->Camera.vPos = Vector3::Lerp( state->Camera.vPos, vCamOfs + state->Camera.vFocus, fLerpAmt );
-		vLastofs = vCamOfs;
-	}
-	else
-	{
-		state->Camera.vPos = Vector3::Lerp( state->Camera.vPos, vLastofs + state->Camera.vFocus, fLerpAmt );
-	}
-
-	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fMoveAmt * 150.0f, fLerpAmt );
-//	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
-
-	DEBUGOUT( "%f\n", state->Camera.fFOV );
-
-	/*
 	// -- Chase Cam ----------------------------
 	// Note: I cannot explain these numbers
 
@@ -343,7 +290,7 @@ void Simulation::UpdateGameState(double seconds)
 	camera = dir_history;
 
 	// Mixin historic speeds
-	Real SPEED_DROPOFF = 1 * seconds;
+	Real SPEED_DROPOFF = 0.1 * seconds;
 	Real speed = m_vehicle->getCurrentSpeedKmHour();
 	static Real speed_history = speed;
 	speed_history *= (1.0 - SPEED_DROPOFF);
@@ -353,29 +300,36 @@ void Simulation::UpdateGameState(double seconds)
 	// Make camera focus during acceleration
 	Real diff = (speed - speed_history) / MAX_SPEED;
 	diff = diff > 0.0 ? diff : 0;
-	diff = sqrt(sqrt(diff)) * 3;
+	diff *= diff;
+	diff = (pow(2, diff) - 1) / 1;
 	diff = MIN(diff, 0.3);
-	Real DIFF_DROPOFF = 0.9 * seconds;
+	Real DIFF_DROPOFF = 0.1 * seconds;
 	static Real diff_history = diff;
+	if (diff > 0.0) {
 		diff_history *= (1.0 - DIFF_DROPOFF);
 		diff_history += diff * DIFF_DROPOFF;
+	}
 	diff = diff_history;
-	DEBUGOUT("DIFF + %lf\n", diff);
 
-	camera.setY(-0.1 * (1 - MIN(diff, 1)) + 0.051 * (1 - speed_history/MAX_SPEED) + camera.getY());
-	camera *= 3.0 - diff * 2;
-	state->Camera.fFOV = 60.0f * (1 - diff * 2);
+	camera.setY(0.1 * (1 - MIN(speed_history , 1)) + camera.getY());
+	camera *= 3.0 - diff * 1;
+	state->Camera.fFOV = 60.0f * (1 - diff * 1.1);
+
+	// Add camera vector to kart position for camera position
+	state->Camera.vPos = state->Karts[0].vPos;
+	state->Camera.vPos.x += camera.getX();
+	state->Camera.vPos.y += camera.getY();
+	state->Camera.vPos.z += camera.getZ();
 
 	// Focus on car
 	btVector3 chase = dir.rotate(btVector3(0,1,0), DEGTORAD(-90)); // forward vector points left, somehow
 	chase.setY(0);
-	btVector3 focus = pos + chase * (1.0 + speed_history * 5);
+	btVector3 focus = pos + chase * (1.5 + speed_history * 4 * diff);
 	Real FOCUS_DROPOFF = seconds * 8;
 	FOCUS_DROPOFF = MIN(FOCUS_DROPOFF, 1);
 	static btVector3 focus_history = focus;
-	//focus_history *= (1 - FOCUS_DROPOFF);
-	//focus_history += focus * FOCUS_DROPOFF;
-	focus_history = focus;
+	focus_history *= (1 - FOCUS_DROPOFF);
+	focus_history += focus * FOCUS_DROPOFF;
 	state->Camera.vFocus.x = focus_history.getX();
 	state->Camera.vFocus.y = focus_history.getY();
 	state->Camera.vFocus.z = focus_history.getZ();
@@ -386,10 +340,9 @@ void Simulation::UpdateGameState(double seconds)
 	state->Camera.vPos.x += camera.getX() + (-pos.getX() + focus.getX());
 	state->Camera.vPos.y += camera.getY();
 	state->Camera.vPos.z += camera.getZ() + (-pos.getZ() + focus.getZ());
-	*/
+
 
 	// STOP DELETING THE CAMERA HACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	/*
 	static Int32 bUseHack = 1;
 	static Int32 bLast = 0;
 	Int32 bHackButton = state->key_map['c'];
@@ -403,7 +356,6 @@ void Simulation::UpdateGameState(double seconds)
 		state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
 		state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 	}
-	*/
 }
 
 void Simulation::enableDebugView()
