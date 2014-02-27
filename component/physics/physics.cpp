@@ -284,8 +284,6 @@ void Simulation::UpdateGameState(double seconds)
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
-	state->Karts[0].forDirection = (m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length()).rotate(btVector3(0,1,0), DEGTORAD(-90));
-
 	Vector3 vPosNew = state->Karts[0].vPos;
 	Quaternion qOriNew = state->Karts[0].qOrient;
 
@@ -316,10 +314,22 @@ void Simulation::UpdateGameState(double seconds)
 		state->Camera.vPos = Vector3::Lerp( state->Camera.vPos, vLastofs + state->Camera.vFocus, fLerpAmt );
 	}
 
-	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fMoveAmt * 150.0f, fLerpAmt );
+	static Real fLastSpeed = 0;
+	Real fSpeed = ABS( m_vehicle->getCurrentSpeedKmHour() );
+	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
+	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
+	if( fAdjFOV < 0.01f ) fAdjFOV = 0.01f;
+	if( fAdjFOV > 1.0f ) fAdjFOV = 1.0f;
+
+	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
+
+	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
+	state->Camera.fFOV = 90.0f;
 //	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 
-	//DEBUGOUT( "%f\n", state->Camera.fFOV );
+	fLastSpeed = fSpeed;
+
+//	DEBUGOUT( "%f %f %f %f\n", fSpeed, fAdjSpeed, fLerpAmt, fAdjFOV );
 
 	/*
 	// -- Chase Cam ----------------------------
