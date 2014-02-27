@@ -99,6 +99,10 @@
     <ClInclude Include="component\entities\entities.h" />
     <ClInclude Include="component\events\events.h" />
     <ClInclude Include="component\gameai\gameai.h" />
+    <ClInclude Include="component\gameai\graph\DistPair.h" />
+    <ClInclude Include="component\gameai\graph\Graph.h" />
+    <ClInclude Include="component\gameai\graph\Node.h" />
+    <ClInclude Include="component\gameai\util\Position.h" />
     <ClInclude Include="component\input\input.h" />
     <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />

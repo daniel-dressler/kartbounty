@@ -284,6 +284,8 @@ void Simulation::UpdateGameState(double seconds)
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
+	state->Karts[0].forDirection = (m_vehicle->getForwardVector() / m_vehicle->getForwardVector().length()).rotate(btVector3(0,1,0), DEGTORAD(-90));
+
 	Vector3 vPosNew = state->Karts[0].vPos;
 	Quaternion qOriNew = state->Karts[0].qOrient;
 
@@ -317,7 +319,7 @@ void Simulation::UpdateGameState(double seconds)
 	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fMoveAmt * 150.0f, fLerpAmt );
 //	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 
-	DEBUGOUT( "%f\n", state->Camera.fFOV );
+	//DEBUGOUT( "%f\n", state->Camera.fFOV );
 
 	/*
 	// -- Chase Cam ----------------------------

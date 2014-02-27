@@ -68,6 +68,18 @@
     <ClInclude Include="component\gameai\gameai.h">
       <Filter>component\gameai</Filter>
     </ClInclude>
+    <ClInclude Include="component\gameai\graph\DistPair.h">
+      <Filter>component\gameai\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\graph\Graph.h">
+      <Filter>component\gameai\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\graph\Node.h">
+      <Filter>component\gameai\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\util\Position.h">
+      <Filter>component\gameai\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -157,6 +169,12 @@
     </Filter>
     <Filter Include="component\gameai">
       <UniqueIdentifier>{a2dc28fc-638f-4e23-aa27-ffe520eb6892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\gameai\graph">
+      <UniqueIdentifier>{a7708a17-7d17-416d-bf1a-b645c91d777e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="component\gameai\util">
+      <UniqueIdentifier>{99ed12cb-8790-4db4-847d-753306636852}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

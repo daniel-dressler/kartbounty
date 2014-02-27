@@ -30,6 +30,7 @@ int main( int argc, char** argv )
 	{
 		Real elapsed_time = gameai->getElapsedTime();
 
+		gameai->update();
 		input->HandleEvents();
 		simulation->step(elapsed_time);
 		UpdateRendering(elapsed_time);
