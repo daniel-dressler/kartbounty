@@ -318,13 +318,10 @@ void Simulation::UpdateGameState(double seconds)
 	Real fSpeed = ABS( m_vehicle->getCurrentSpeedKmHour() );
 	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
 	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
-	if( fAdjFOV < 0.01f ) fAdjFOV = 0.01f;
-	if( fAdjFOV > 1.0f ) fAdjFOV = 1.0f;
-
 	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
 
 	state->Camera.fFOV = Lerp( state->Camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
-	state->Camera.fFOV = 90.0f;
+//	state->Camera.fFOV = 90.0f;
 //	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 
 	fLastSpeed = fSpeed;

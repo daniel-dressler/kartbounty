@@ -205,6 +205,16 @@ int Renderer::Init( SDL_Window* win )
 	GetState().Powerups[0].bEnabled = 1;
 	GetState().Powerups[0].vPos = Vector3( 5, 0, 5 );
 
+	for( Int32 i = 0; i < NUM_KARTS; i++ )
+		GetState().Karts[i].vColor = Vector4( 1,1,1,1 );
+
+	GetState().Karts[0].vColor = Vector4( 1,0,0,1 );
+	GetState().Karts[1].vColor = Vector4( 0,0,1,1 );
+	GetState().Karts[2].vColor = Vector4( 0,1,0,1 );
+
+	GetState().Karts[1].vPos = Vector3( 0,1,0 );							// These two lines are temporary
+	GetState().Karts[1].qOrient.Identity();
+
 	return 1;
 }
 
@@ -311,13 +321,16 @@ int Renderer::Render()
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 	glhDrawMesh( m_eftMesh, m_mshArena );
 
-	perMesh.vColor = Vector4( 1,1,1,1 );
-	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-	perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[0].qOrient ) *
-		Matrix::GetTranslate( GetState().Karts[0].vPos );
-	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_mshKart );
+	for( Int32 i = 0; i < NUM_KARTS; i++ )
+	{
+		perMesh.vColor = GetState().Karts[i].vColor;
+		perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+		perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[i].qOrient ) *
+			Matrix::GetTranslate( GetState().Karts[i].vPos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshKart );
+	}
 
 	for( Int32 i = 0; i < MAX_POWERUPS; i++ )
 	{
