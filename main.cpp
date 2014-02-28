@@ -31,8 +31,6 @@ int main( int argc, char** argv )
 
 	//Mix_Init( MIX_INIT_FLAC | MIX_INIT_MP3 );
 
-	GetState().Camera.oldVec = btVector3(0.f, 0.f, 0.f);
-
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
 	{
@@ -40,6 +38,7 @@ int main( int argc, char** argv )
 
 		input->HandleEvents();
 		simulation->step(elapsed_time);
+		audio->Update();
 		UpdateRendering(elapsed_time);
 		Render();
 	}

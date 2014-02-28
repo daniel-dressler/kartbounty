@@ -2,12 +2,14 @@
 #define saturate( x ) clamp( x, 0.0, 1.0 )
 #define _inst gl_InstanceID
 
-#define MAX_LIGHTS	5
+#define MAX_LIGHTS	20
 
 layout (shared,row_major) uniform cstPerMesh
 {
 	mat4	g_matWorld;
 	mat4	g_matWorldViewProj;
+	vec4	g_vRenderParams;
+	vec4	g_vColor;
 };
 
 layout (shared,row_major) uniform cstPerFrame

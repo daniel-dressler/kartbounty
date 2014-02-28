@@ -2,29 +2,34 @@
 
 #include "../../Standard.h"
 #include "../events/events.h"
+#include <fmod.hpp>
 
 class Audio {
 private:
-	Mix_Music *bgMusic;
-	Mix_Chunk *sfx1;
-	
-	enum SoundChunks
-	{
-		BOOM
-	};
-	std::map<SoundChunks, Mix_Chunk> sfxList;
+	FMOD::System *m_system;
+	Events::Mailbox *m_pMailbox;
 
-	// Audio Mixer Settings
-	const static int audio_rate = 44100;
-	const static Uint16 audio_format = AUDIO_S16; /* 16-bit stereo */
-	const static int audio_channels = 2;
-	const static int audio_buffers = 4096;		// Change this if sounds get too delayed
+	std::vector<FMOD::Sound *> m_SoundList;
+	std::vector<FMOD::Sound *> m_MusicList;
+
+	FMOD::ChannelGroup *channelMusic;
+	FMOD::ChannelGroup *channelEffects;
+
+	int LoadSound(char* file);
+	int LoadMusic(char* file);
+	void OutputMemUsage();
+
+	void UpdateListenerPos();
 
 public:
 	Audio();
 	~Audio();
 
-	void PlaySound(SoundChunks sound, Vector3 position);
+	int Music1;
+	
+	int SetupHardware();
+	void PlayMusic(int id);
+	void PlaySoundEffect(int id, Vector3 pos);
 
 	void Update();
 };

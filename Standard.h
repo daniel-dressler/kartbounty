@@ -61,7 +61,6 @@ long _filelength(int fd);
 #include <SDL.h>
 #include <SDL_syswm.h>
 #include <SDL_timer.h>
-#include <SDL_mixer.h>
 
 #include "component/rendering/SELib/SELib.h"
 

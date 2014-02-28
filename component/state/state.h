@@ -9,6 +9,9 @@
 // shall be replaced by events or the entity
 // inventory when such exists.
 // HACK!
+
+#define MAX_POWERUPS	12
+
 typedef struct StateData
 {
 	struct
@@ -18,12 +21,18 @@ typedef struct StateData
 
 	} Karts[4];
 
+	struct
+	{
+		Int32		bEnabled;
+		Int32		nType;
+		Vector3		vPos;
+	} Powerups[MAX_POWERUPS];
+
 	struct 
 	{
 		Real		fFOV;
 		Vector3		vFocus;
 		Vector3		vPos;
-		btVector3	oldVec;
 	} Camera;
 
 	btTriangleMesh	*bttmArena;

@@ -7,7 +7,6 @@
 class Input {
 
 private:
-
 	SDL_Joystick *m_joystick1;
 	Events::Mailbox *m_pMailbox;
 	Events::InputEvent *m_pCurrentInput;
