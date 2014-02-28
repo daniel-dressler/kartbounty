@@ -177,6 +177,9 @@ int Simulation::loadWorld()
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
 
+	// save forward vector	
+	state->Karts[0].forDirection = (m_vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+
 	return 0;
 }
 
@@ -283,6 +286,9 @@ void Simulation::UpdateGameState(double seconds)
 	state->Karts[0].qOrient.y = (Real)rot.getY();
 	state->Karts[0].qOrient.z = (Real)rot.getZ();
 	state->Karts[0].qOrient.w = (Real)-rot.getW();
+
+	// save forward vector
+	state->Karts[0].forDirection = (m_vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 
 	Vector3 vPosNew = state->Karts[0].vPos;
 	Quaternion qOriNew = state->Karts[0].qOrient;

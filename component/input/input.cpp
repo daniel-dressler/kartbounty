@@ -77,7 +77,8 @@ void Input::HandleEvents(){
 	m_pCurrentInput = NULL;
 }
 
-void Input::OnEvent(SDL_Event* Event) {
+void Input::OnEvent(SDL_Event* Event) 
+{
 	switch (Event->type)
 	{
 	case SDL_WINDOWEVENT:
