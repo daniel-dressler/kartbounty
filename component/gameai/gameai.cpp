@@ -4,9 +4,9 @@
 #include "gameai.h"
 #include "../state/state.h"
 
-#define LIMIT_FOR_STUCK 0.001f
-#define REVERSE_TRESHOLD 12
-#define RESET_TRESHOLD REVERSE_TRESHOLD*3
+#define LIMIT_FOR_STUCK 0.004f
+#define REVERSE_TRESHOLD 10
+#define RESET_TRESHOLD REVERSE_TRESHOLD*4
 
 GameAi::GameAi()
 {
@@ -24,6 +24,7 @@ GameAi::GameAi()
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
 
+	// Scripted path while there's no "brain". HACK. (will be replaced soon)
 	init_graph();
 
 	path[0] = 1;
@@ -107,18 +108,33 @@ void GameAi::update()
 	move_all();
 }
 
+bool UseAI = 0;
+bool Prev = 0;
+
 void GameAi::move_all()
 {
 	int index = 0;
 	//for (int index=0; i<NUM_KARTS; i++)
-	GameAi::move_kart(index);
+	StateData *state = GetMutState();
+
+	bool ButtonPressed = state->key_map['m'];
+
+	if( ButtonPressed != Prev && ButtonPressed )
+		UseAI = !UseAI;
+
+	Prev = ButtonPressed;
+
+	if (UseAI)
+		GameAi::move_kart(index);
 }
 
 float stuck_counter = 0;
+bool stuck = 0;
+bool resetBool = 0;
 void GameAi::move_kart(int index)
 {
 	int target_node_id = path[current_state];
-	DEBUGOUT("curr_state %d , node_id %d\n", target_node_id, current_state);
+	//DEBUGOUT("curr_state %d , node_id %d\n", current_state, target_node_id);
 	Node temp_node = graph.getNode(target_node_id);
 
 	Position target = Position (temp_node.getPosX(), temp_node.getPosY()) ;
@@ -126,58 +142,46 @@ void GameAi::move_kart(int index)
 	// Calculate the updated distance and the difference in angle.
 	StateData *state = GetMutState();
 
-	if (state->key_map['r'])
+	if (state->key_map['r'] && stuck)
 	{
 		current_state = 0;
 		stuck_counter = 0;
-		state->key_map['r'] = false;
+		stuck = false;
+		if (resetBool)
+			state->key_map['r'] = false;
 	}
 
 	btScalar diff_in_angles = getAngle(target, index) / PI;
-
 	btScalar distance_to_target = sqrtf( abs( pow( (state->Karts[index].vPos.x - target.posX) , 2 ) + pow((state->Karts[index].vPos.z - target.posY),2) ) );
 
-	if (distance_to_target < 1.0f)
+	if (distance_to_target < 1.0f) // Advance to the next target of the script. HACK
 	{
 		current_state++;
-		current_state = current_state % 12;
+		if (current_state > 11)
+			current_state = (current_state % 12) + 5;
 	}
 
-	bool stuck = (abs(state->Karts[index].vOldPos.x - state->Karts[index].vPos.x) < LIMIT_FOR_STUCK && 
-						abs(state->Karts[index].vOldPos.x - state->Karts[index].vPos.x) < LIMIT_FOR_STUCK);
+	stuck = (abs(state->Karts[index].vOldPos.x - state->Karts[index].vPos.x) < LIMIT_FOR_STUCK && 
+						abs(state->Karts[index].vOldPos.z - state->Karts[index].vPos.z) < LIMIT_FOR_STUCK);
 	// Supply this info to the driving input generator if the car is not stuck!
 	if (stuck)
 	{
 		stuck_counter += 0.1f;
 	}
-	/*
-
-	if (stuck_counter >= REVERSE_TRESHOLD)
-	{
-		DEBUGOUT("DRIVE BACKWARDS!");
-		drive_backwards(diff_in_angles, distance_to_target);
-		stuck_counter -= 0.03f;
-	}
-	else
-	{
-		DEBUGOUT("DRIVE FORWARD!!");
-		drive(diff_in_angles, distance_to_target);
-		if (!stuck)
-		{
-			stuck_counter = 0.f;
-		}
-	}
+	
+	drive(diff_in_angles, distance_to_target);
 
 	if (stuck_counter >= RESET_TRESHOLD)
 	{
 		GetMutState()->key_map['r'] = true;
+		resetBool = true;
 	}
-	*/
+	
 	DEBUGOUT("current stuck: %f\n", stuck_counter);
 
 	// update old pos
 	state->Karts[index].vOldPos = state->Karts[index].vPos;
-	DEBUGOUT("DIFF: %f, dist: %f tar_pos:%f,%f\n", diff_in_angles, distance_to_target, target.posX, target.posY);
+	DEBUGOUT("angle: %f, dist: %f\n", RADTODEG(diff_in_angles), distance_to_target);
 }
 
 btScalar GameAi::getAngle(Position target, int index)
@@ -187,16 +191,18 @@ btScalar GameAi::getAngle(Position target, int index)
 	
 	//Position location = Position(state->Karts[index].vPos.x, state->Karts[index].vPos.z);
 	
-	btVector3 toLocation = btVector3(target.posX - state->Karts[index].vPos.x, 0.f ,target.posY - state->Karts[index].vPos.y);
+	btVector3 toLocation = btVector3( target.posX - state->Karts[index].vPos.x, 0.f , target.posY - state->Karts[index].vPos.z);
+	toLocation.safeNormalize();
+	DEBUGOUT("target: %f %f\n",target.posX , target.posY)
 	btVector3 forward = (state->Karts[index].forDirection);
-	//btVector3 curr_pos = btVector3 (state->Karts[index].vPos.x, 0.f, state->Karts[index].vPos.z);
-	//forward.setY(0.f);
+	forward.setY(0.f);
 	
-	btVector3 norm = forward - toLocation;
+	btVector3 zAxis = forward.cross(toLocation);
+	btScalar angle = forward.angle(toLocation);
 
-	btScalar angle =  atan2( norm.getZ(), norm.getX() ) ;
+	if (zAxis.getY() < 0)
+		angle = -angle;
 
-	DEBUGOUT("angle: %f\n", RADTODEG(angle));
 	return angle;
 }
 
@@ -212,29 +218,56 @@ void GameAi::drive(btScalar diff_ang, btScalar dist)
 
 		// Change the previous event to suit situation.
 
-		m_pCurrentInput->rightTrigger = 0.8;
-		m_pCurrentInput->leftTrigger = 0;
-
-		btScalar turn_value = diff_ang ;
-	
-		if (abs(diff_ang) < 0.4f  && abs(diff_ang) > 0.01f )
+		if (stuck_counter >= REVERSE_TRESHOLD)
 		{
+			DEBUGOUT("DRIVE BACKWARDS!\n");
+			m_pCurrentInput->leftTrigger = 1;
+			m_pCurrentInput->rightTrigger = 0;
+			btScalar turn_value = diff_ang ;
+	
 			if (diff_ang > 0)
-				turn_value = diff_ang + 0.7f;
+				turn_value = -1.f;
 			else
-				turn_value = -diff_ang - 0.7f;
+				turn_value = 1.f;
+
+			m_pCurrentInput->leftThumbStickRL = turn_value;
+
+			stuck_counter -= 0.005f;
 		}
 		else
 		{
-			if (diff_ang > 0)
-				turn_value = diff_ang;
+			DEBUGOUT("DRIVE FORWARD!!\n");
+			
+			m_pCurrentInput->rightTrigger = 0.8;
+			m_pCurrentInput->leftTrigger = 0;
+
+			btScalar turn_value = diff_ang ;
+	
+			if (abs(diff_ang) < 0.7f  && abs(diff_ang) > 0.05f )
+			{
+				if (diff_ang > 0)
+					turn_value = diff_ang + 0.7f;
+				else
+					turn_value = -diff_ang - 0.7f;
+			}
 			else
-				turn_value = -diff_ang;
+			{
+				if (diff_ang > 0)
+					turn_value = diff_ang;
+				else
+					turn_value = -diff_ang;
+			}
+
+			m_pCurrentInput->leftThumbStickRL = turn_value;
+
+			if (!stuck)
+			{
+				stuck_counter = 0.f;
+			}
+
+			//DEBUGOUT("turn value: %f\n",turn_value);
 		}
 
-		DEBUGOUT("turn value: %f\n",turn_value);
-
-		m_pCurrentInput->leftThumbStickRL = turn_value;
 
 		if (m_pCurrentInput->leftThumbStickRL > 1)
 			m_pCurrentInput->leftThumbStickRL = 1;
@@ -266,16 +299,7 @@ void GameAi::drive_backwards(btScalar diff_ang, btScalar dist)
 
 		// Change the previous event to suit situation.
 
-		m_pCurrentInput->leftTrigger = 1;
-		m_pCurrentInput->rightTrigger = 0;
-		btScalar turn_value = diff_ang ;
-	
-		if (diff_ang > 0)
-			turn_value = 1.f;
-		else
-			turn_value = -1.f;
-
-		m_pCurrentInput->leftThumbStickRL = turn_value;
+		
 
 		// Send new event
 		std::vector<Events::Event *> inputEvents;
@@ -285,7 +309,7 @@ void GameAi::drive_backwards(btScalar diff_ang, btScalar dist)
 		// Update previous input event
 		memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
 
-		DEBUGOUT("speed: %f, turning: %f\n", m_pCurrentInput->leftTrigger, m_pCurrentInput->leftThumbStickRL);
+		//DEBUGOUT("speed: %f, turning: %f\n", m_pCurrentInput->leftTrigger, m_pCurrentInput->leftThumbStickRL);
 
 		// Now mailbox owns the object
 		m_pCurrentInput = NULL;
@@ -303,21 +327,21 @@ void GameAi::init_graph()
 	// Init nodes;
 	//Node n0 = Node(0, 0.f, 0.f);
 
-	Node n1 = Node(1, 0.f, 4.f);
-	Node n2 = Node(2, 0.f, 6.f);
-	Node n3 = Node(3, 1.f, 15.f);
+	Node n1 = Node(1, 0.f, 14.f);
+	Node n2 = Node(2, 1.f, 15.f);
+	Node n3 = Node(3, 4.f, 16.f);
 
-	Node n4 = Node(4, 5.f, 16.f);
-	Node n5 = Node(5, 1.5f, 17.3f);
-	Node n6 = Node(6, 4.f, 17.5f);
+	Node n4 = Node(4, 5.f, 16.8f);
+	Node n5 = Node(5, 13.5f, 16.8f);
+	Node n6 = Node(6, 17.f, 14.0f);
 
-	Node n7 = Node(7, 14.f, 17.f);
-	Node n8 = Node(8, 17.f, 0.f);
-	Node n9 = Node(9, -6.965f, -2.515f);
+	Node n7 = Node(7, 17.f, -14.f);
+	Node n8 = Node(8, 14.f, -17.f);
+	Node n9 = Node(9, -14.f, -17.f);
 
-	Node n10 = Node(10, -6.965f, 2.515f);
-	Node n11 = Node(11, -5.43f, 6.265f);
-	Node n12 = Node(12, -0.455f, 5.985f);
+	Node n10 = Node(10, -17.f, -14.f);
+	Node n11 = Node(11, -17.f, 14.f);
+	Node n12 = Node(12, -14.f, 17.f);
 
 	graph.addNode(n1);
 	graph.addNode(n2);
