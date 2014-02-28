@@ -11,15 +11,18 @@
 // HACK!
 
 #define MAX_POWERUPS	12
-
+#define NUM_KARTS	4
 typedef struct StateData
 {
 	struct
 	{
 		Vector3		vPos;
+		Vector3		vOldPos;
 		Quaternion	qOrient;
+		btVector3	forDirection;
+		Vector4		vColor;
 
-	} Karts[4];
+	} Karts[NUM_KARTS];
 
 	struct
 	{

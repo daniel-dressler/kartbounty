@@ -37,6 +37,7 @@ int main( int argc, char** argv )
 		Real elapsed_time = gameai->getElapsedTime();
 
 		input->HandleEvents();
+		gameai->update();
 		simulation->step(elapsed_time);
 		audio->Update();
 		UpdateRendering(elapsed_time);
