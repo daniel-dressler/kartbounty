@@ -10,7 +10,7 @@
 // inventory when such exists.
 // HACK!
 
-#define MAX_POWERUPS	12
+#define MAX_POWERUPS	2
 #define NUM_KARTS	4
 typedef struct StateData
 {
@@ -29,6 +29,7 @@ typedef struct StateData
 		Int32		bEnabled;
 		Int32		nType;
 		Vector3		vPos;
+		int			pointId;
 	} Powerups[MAX_POWERUPS];
 
 	struct 

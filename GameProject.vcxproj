@@ -79,6 +79,7 @@
     <ClCompile Include="component\entities\entities.cpp" />
     <ClCompile Include="component\events\events.cpp" />
     <ClCompile Include="component\gameai\gameai.cpp" />
+    <ClCompile Include="component\gameai\GameLogic.cpp" />
     <ClCompile Include="component\input\input.cpp" />
     <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
@@ -99,6 +100,7 @@
     <ClInclude Include="component\entities\entities.h" />
     <ClInclude Include="component\events\events.h" />
     <ClInclude Include="component\gameai\gameai.h" />
+    <ClInclude Include="component\gameai\GameLogic.h" />
     <ClInclude Include="component\gameai\graph\DistPair.h" />
     <ClInclude Include="component\gameai\graph\Graph.h" />
     <ClInclude Include="component\gameai\graph\Node.h" />

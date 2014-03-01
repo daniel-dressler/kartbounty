@@ -1,40 +1,32 @@
 #pragma once
 #include "../events/events.h"
 #include "../../Standard.h"
-#include "util/Position.h"
-#include "graph/Graph.h"
 #include <vector>
 
-class GameAi {
-public:
-	GameAi();
-	~GameAi();
-	int planFrame();
-	Real getElapsedTime();
-	void update();
+class GameAi 
+{
+	public:
+		GameAi();
+		~GameAi();
+		int planFrame();
+		Real getElapsedTime();
+		void update(Real elapsed_time);
 
-private:
-	Events::Mailbox* m_mb;
-	Timer frame_timer;
-	Timer fps_timer;
+	private:
+		Events::Mailbox* m_mb;
+		Timer frame_timer;
+		Timer fps_timer;
+		StateData *state;
 
-	// temp
-	int current_state;
-	int path[12];
+		// The event that will be sent to the physics.
+		Events::InputEvent *m_pCurrentInput[NUM_KARTS];
+		Events::InputEvent *m_pPreviousInput[NUM_KARTS];
 
-	// the graph of intersections.
-	Graph graph;
-
-	// The event that will be sent to the physics.
-	Events::InputEvent *m_pCurrentInput;
-	Events::InputEvent *m_pPreviousInput;
-
-	void GameAi::drive(btScalar ang, btScalar dist);
-	void GameAi::drive_backwards(btScalar diff_ang, btScalar dist);
-	void GameAi::move_kart(int index);
-	void GameAi::move_all();
-
-	void GameAi::init_graph();
-
-	btScalar GameAi::getAngle(Position target, int index);
+		void GameAi::move_all();
+		void GameAi::move_kart(int index);
+		void GameAi::drive(btScalar ang, btScalar dist, int index);
+		void GameAi::avoid_obs(btScalar diff_ang, btScalar dist, int index);
+	
+		void GameAi::init_graph();
+		btScalar GameAi::getAngle(Vector2 target, int index);
 };

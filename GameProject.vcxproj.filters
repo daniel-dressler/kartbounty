@@ -80,6 +80,9 @@
     <ClInclude Include="component\gameai\util\Position.h">
       <Filter>component\gameai\util</Filter>
     </ClInclude>
+    <ClInclude Include="component\gameai\GameLogic.h">
+      <Filter>component\gameai</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -130,6 +133,9 @@
       <Filter>component\rendering\lodepng</Filter>
     </ClCompile>
     <ClCompile Include="component\gameai\gameai.cpp">
+      <Filter>component\gameai</Filter>
+    </ClCompile>
+    <ClCompile Include="component\gameai\GameLogic.cpp">
       <Filter>component\gameai</Filter>
     </ClCompile>
   </ItemGroup>
