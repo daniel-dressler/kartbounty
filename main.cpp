@@ -45,7 +45,7 @@ int main( int argc, char** argv )
 		input->HandleEvents();
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
-		audio->Update();
+		audio->Update(elapsed_time);
 		UpdateRendering(elapsed_time);
 		Render();
 	}

@@ -21,9 +21,14 @@ private:
 	FMOD::ChannelGroup *m_channelEngineSound;
 
 	FMOD::DSP *m_pitchShift;
+	FMOD::DSP *m_lowfreqPitchShift;
+
+	Real enginePitch;
 
 	int LoadSound(char* file);
 	int LoadMusic(char* file);
+
+	void StartMusic();
 
 	void SetupEngineSounds();
 	void Setup3DEnvironment();
@@ -38,11 +43,12 @@ public:
 	struct Sounds
 	{
 		int PowerUp;
+		int LowFreqEngine;
 	} Sounds;
 	
 	int SetupHardware();
 	void PlayMusic(int id);
 	void PlaySoundEffect(int id, Vector3 pos);
 
-	void Update();
+	void Update(Real seconds);
 };

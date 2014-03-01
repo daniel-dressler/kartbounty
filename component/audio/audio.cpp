@@ -8,7 +8,7 @@
 
 #define PITCHSCALE 0.1
 #define MAX_PITCH 2
-#define ENGINE_SOUND_FILE "assets/audio/engineNoise1.wav"
+#define ENGINE_SOUND_FILE "assets/audio/engineNoise4.wav"
 
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
@@ -27,10 +27,23 @@ Audio::Audio() {
 	//ERRCHECK(m_system->createChannelGroup(NULL, &m_channelMusic));
 
 	// Load all the sound files
-	LoadMusic("assets/audio/music1.mp3");
+	LoadMusic("assets/audio/battlescene.wav");	
 
-	//Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
+	Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
+	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
 
+	FMOD::Channel *channel;
+	m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.LowFreqEngine], true, &channel);
+	//channel->setLoopPoints(3000, FMOD_TIMEUNIT_MS, 3300, FMOD_TIMEUNIT_MS);
+
+	ERRCHECK(m_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &m_lowfreqPitchShift));
+	ERRCHECK(channel->addDSP(m_lowfreqPitchShift, 0));
+
+	channel->setMode(FMOD_LOOP_NORMAL);
+	channel->setVolume(0.5);
+	channel->setPaused(false);
+
+	StartMusic();
 	//Setup3DEnvironment();
 	SetupEngineSounds();
 }
@@ -143,6 +156,8 @@ void Audio::SetupEngineSounds(){
 		ERRCHECK(channel->set3DAttributes(pos, 0));
 		ERRCHECK(channel->setMode(FMOD_LOOP_NORMAL));
 
+		enginePitch = 0;
+
 		m_EngineSoundList.push_back(newSound);
 		m_EngineChannelList.push_back(channel);
 		m_KartEngineDSPList.push_back(dsp);
@@ -185,7 +200,13 @@ int Audio::LoadSound(char* file){
 	return m_SoundList.size() - 1;
 }
 
+void Audio::StartMusic(){
+	FMOD::Channel *musicChannel;
+	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicChannel);
+}
+
 void Audio::UpdateListenerPos(){
+
 	FMOD_VECTOR position;
 	FMOD_VECTOR velocity;
 	FMOD_VECTOR forward;
@@ -212,11 +233,15 @@ void Audio::UpdateListenerPos(){
 	velocity.z = GetState().Karts[0].forDirection.z() * speed;
 
 	//DEBUGOUT("Kart Forward: %lf, %lf, %lf\n", forward.x, forward.y, forward.z);
+	//DEBUGOUT("Kart Up	  : %lf, %lf, %lf\n", up.x, up.y, up.z);
 
-	//ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, &forward, &up));
+	//double dotprod = forward.x * up.x + forward.y * up.y + forward.z * up.z;
+	//DEBUGOUT("Dot: %lf\n", dotprod);
+
+	//ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
 }
 
-void Audio::Update(){
+void Audio::Update(Real seconds){
 
 	// Check for input events
 	if( m_pMailbox )
@@ -228,14 +253,43 @@ void Audio::Update(){
 			{
 				// Handle all one-off sound effects
 				Events::InputEvent *input = (Events::InputEvent *)aryEvents[i];
-				if(input->aPressed)
+				if(input->bPressed)
 				{
 					// Play a sound effect
 					int x = 0;
 				}
 
+				Real lerpAmt = seconds * 2.0f;
+				Real newPitch = Lerp(enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+
+				DEBUGOUT("New pitch: %lf\n", newPitch);
+
+				enginePitch = newPitch;
+
 				// Update Kart Engine Sounds
-				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
+				//ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
+				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
+				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
+				ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
+				//lowfreqChannel->setVolume(1 - (newPitch / 2));
+			}
+			else if(aryEvents[i]->type = (Events::EventType::PowerupPickup))
+			{
+				Events::PowerupPickupEvent *event = (Events::PowerupPickupEvent *)aryEvents[i];
+				FMOD_VECTOR pos;
+				int KartID = *event->picker_kart_index;
+
+				pos.x = GetState().Karts[0].vPos.x;
+				pos.y = GetState().Karts[0].vPos.y;
+				pos.z = GetState().Karts[0].vPos.z;
+
+				FMOD::Channel *channel;
+
+				int PowerUp = Sounds.PowerUp;
+
+				ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[PowerUp], true, &channel));
+				channel->set3DAttributes(&pos, 0);
+				channel->setPaused(false);
 			}
 		}
 		m_pMailbox->emptyMail();
