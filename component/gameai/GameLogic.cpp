@@ -86,7 +86,7 @@ void GameLogic::handle_powerup(int power_up_index)
 		{
 			any_pickup_picked = true;
 			state->Powerups[power_up_index].bEnabled = false;
-			DEBUGOUT("PICKED UP!");
+			//DEBUGOUT("PICKED UP!");
 
 			is_point_occupied[state->Powerups[power_up_index].pointId] = false;
 
@@ -128,9 +128,9 @@ void GameLogic::respawn_pickup(int power_up_index)
 
 	is_point_occupied[rand] = true;
 
-	DEBUGOUT("Pickup Loc id: %d, Posiion : %f, %f \n", rand, pickup_locations.at(rand).x, pickup_locations.at(rand).z);
+	//DEBUGOUT("Pickup Loc id: %d, Posiion : %f, %f \n", rand, pickup_locations.at(rand).x, pickup_locations.at(rand).z);
 
-	DEBUGOUT("%d" , power_up_index);
+	//DEBUGOUT("%d" , power_up_index);
 	state->Powerups[power_up_index].bEnabled = true;
 	state->Powerups[power_up_index].vPos = pickup_locations.at(rand);
 	state->Powerups[power_up_index].pointId = rand;

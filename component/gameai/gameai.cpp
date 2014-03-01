@@ -119,7 +119,6 @@ void GameAi::move_kart(int index)
 	Vector3 target_3 = path.at(current_state);
 
 	Vector2 target = Vector2(target_3.x, target_3.z);
-	DEBUGOUT("!!!!");
 	// Calculate the updated distance and the difference in angle.
 
 	if (state->key_map['r'] && stuck)
@@ -176,7 +175,7 @@ btScalar GameAi::getAngle(Vector2 target, int index)
 	//Position location = Position(state->Karts[index].vPos.x, state->Karts[index].vPos.z);
 	btVector3 toLocation = btVector3( target.x - state->Karts[index].vPos.x, 0.f , target.y - state->Karts[index].vPos.z);
 	toLocation.safeNormalize();
-	DEBUGOUT("target: %f %f\n",target.x , target.y)
+	//DEBUGOUT("target: %f %f\n",target.x , target.y)
 	btVector3 forward = (state->Karts[index].forDirection);
 	forward.setY(0.f);
 	
@@ -210,7 +209,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 		if (stuck_counter >= REVERSE_TRESHOLD)
 		{
-			DEBUGOUT("DRIVE BACKWARDS!\n");
+			//DEBUGOUT("DRIVE BACKWARDS!\n");
 			m_pCurrentInput[index]->leftTrigger = 1;
 			m_pCurrentInput[index]->rightTrigger = 0;
 			btScalar turn_value = diff_ang ;
@@ -226,7 +225,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 		}
 		else
 		{
-			DEBUGOUT("DRIVE FORWARD!!\n");
+			//DEBUGOUT("DRIVE FORWARD!!\n");
 			
 			m_pCurrentInput[index]->rightTrigger = 0.8;
 			m_pCurrentInput[index]->leftTrigger = 0;
