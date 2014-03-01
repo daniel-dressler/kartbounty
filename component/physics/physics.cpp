@@ -97,7 +97,7 @@ int Simulation::loadWorld()
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,4,0));		// This sets where the car initially spawns
+	tr.setOrigin(btVector3(0,4,1));		// This sets where the car initially spawns
 	m_carChassis = addRigidBody(CAR_MASS, tr, compound);
 
 	m_vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
@@ -198,6 +198,9 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{
 			Events::InputEvent *input = (Events::InputEvent *)event;
+
+			int kart_index = input->kart_index;
+
 			Real speed = m_vehicle->getCurrentSpeedKmHour();
 
 			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );

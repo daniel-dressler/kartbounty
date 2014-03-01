@@ -3,6 +3,8 @@
 #include "../../Standard.h"
 #include "../state/state.h"
 
+#define PLAYER_KART_INDEX 0
+
 Input::Input() {
 	m_pMailbox = new Events::Mailbox();	
 	
@@ -24,6 +26,7 @@ Input::Input() {
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
 	m_pPreviousInput->kartID = 0;
+	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
 }
 
 Input::~Input() {

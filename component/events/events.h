@@ -16,6 +16,7 @@ namespace Events {
 		ArenaCollider,
 		StateUpdate,
 		Input,
+		PowerupPickup,
 		Quit
 	};
 
@@ -35,6 +36,11 @@ namespace Events {
 	EVENTSTRUCT(StateUpdate)
 	ENDEVENT;
 
+	EVENTSTRUCT(PowerupPickup)
+		int picker_kart_index[MAX_POWERUPS];
+	ENDEVENT;
+
+
 	EVENTSTRUCT(Input)
 		// Controller Buttons
 		bool xPressed;
@@ -53,6 +59,9 @@ namespace Events {
 		// ID of the kart this input event is targeted at
 		int kartID;
 
+		
+		// The kart producing this event
+		int kart_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)

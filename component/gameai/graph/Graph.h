@@ -28,8 +28,21 @@ class Graph
 			nodes.at(n2.getId()).addNeighbour(nodes.at(n.getId()));
 	};
 
+	public: int size()
+	{
+		return (nodes.size());
+	};
+
+
 	public: Node getNode(int i)
 	{
+		return nodes.at(i);
+	};
+
+	public: Node getRandomNode()
+	{
+		int i = (rand() % size());
+
 		return nodes.at(i);
 	};
 

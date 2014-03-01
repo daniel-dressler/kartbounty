@@ -6,19 +6,44 @@
 
 class Node
 {
+	
+
 	private:
+		int id_num;
 		float pos_x;
 		float pos_y;
+		float height;
 
 	public:
 		int id;
 		std::set<int> neighbours;
 
-	Node(int i, float x, float y) 
+	Node(float x, float y) 
 	{ 
-		id = i;
+		id = id_num++;
+
 		pos_x = x;
 		pos_y = y;
+		height = 0;
+	};
+
+	Node(float x, float y, float z) 
+	{ 
+		id = id_num++;
+
+		pos_x = x;
+		pos_y = z;
+		height = y;
+	};
+
+	btVector3 getBtVector()
+	{
+		return btVector3(pos_x,height,pos_y);
+	};
+
+	Vector3 getVector()
+	{
+		return Vector3(pos_x,height,pos_y);
 	};
 
 	// Get the actual distance between two points on the graph. Used as weights for the graph.

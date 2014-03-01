@@ -2,6 +2,7 @@
 #include "Standard.h"
 
 // Sub-System Components
+#include "component/gameai/gameLogic.h"
 #include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
@@ -19,8 +20,7 @@ int main( int argc, char** argv )
 	// Rendering
 	if( !InitRendering() )
 		return 1;
-	// GameAi
-	GameAi *gameai = new GameAi();
+	
 	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
@@ -31,13 +31,19 @@ int main( int argc, char** argv )
 
 	//Mix_Init( MIX_INIT_FLAC | MIX_INIT_MP3 );
 
+	// GameAi
+	GameAi *gameai = new GameAi();
+	// Logic
+	GameLogic *logic = new GameLogic();
+
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
 	{
 		Real elapsed_time = gameai->getElapsedTime();
 
+		logic->update(elapsed_time);
 		input->HandleEvents();
-		gameai->update();
+		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
 		audio->Update();
 		UpdateRendering(elapsed_time);
