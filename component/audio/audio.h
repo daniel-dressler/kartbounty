@@ -35,7 +35,10 @@ public:
 	Audio();
 	~Audio();
 
-	int Music1;
+	struct Sounds
+	{
+		int PowerUp;
+	} Sounds;
 	
 	int SetupHardware();
 	void PlayMusic(int id);

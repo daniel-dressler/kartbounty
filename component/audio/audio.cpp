@@ -18,7 +18,8 @@ Audio::Audio() {
 	
 	m_pMailbox = new Events::Mailbox();	
 	m_pMailbox->request( Events::EventType::Input );
-	
+	m_pMailbox->request( Events::EventType::PowerupPickup );
+
 	SetupHardware();
 
 	//// Setup music and sound effects channels
@@ -27,6 +28,8 @@ Audio::Audio() {
 
 	// Load all the sound files
 	LoadMusic("assets/audio/music1.mp3");
+
+	//Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
 
 	//Setup3DEnvironment();
 	SetupEngineSounds();
@@ -173,12 +176,9 @@ int Audio::LoadMusic(char* file){
 }
 
 int Audio::LoadSound(char* file){
-	FMOD_RESULT result;
 	FMOD::Sound *newSound;
 
-	//result = m_system->createSound(file, FMOD_3D, 0, &newSound);
-	result = m_system->createSound(file, FMOD_3D | FMOD_LOOP_NORMAL, 0, &newSound);
-	ERRCHECK(result);
+	ERRCHECK(m_system->createSound(file, FMOD_3D, 0, &newSound));
 
 	m_SoundList.push_back(newSound);
 
@@ -193,7 +193,7 @@ void Audio::UpdateListenerPos(){
 	float speed = GetState().Karts[0].vSpeed;
 
 	//DEBUGOUT("Forward magnitude: %lf\n", GetState().Karts[0].forDirection.length());
-	//DEBUGOUT("Up magnitude: %lf\n", GetState().Karts[0].vUp.Length());
+	//DEBUGOUT("Up      magnitude: %lf\n", GetState().Karts[0].vUp.Length());
 
 	position.x = GetState().Karts[0].vPos.x;
 	position.y = GetState().Karts[0].vPos.y;
@@ -213,7 +213,7 @@ void Audio::UpdateListenerPos(){
 
 	//DEBUGOUT("Kart Forward: %lf, %lf, %lf\n", forward.x, forward.y, forward.z);
 
-	ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, &forward, &up));
+	//ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, &forward, &up));
 }
 
 void Audio::Update(){
