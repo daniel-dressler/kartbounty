@@ -55,10 +55,6 @@ namespace Events {
 		float leftThumbStickUD;
 		float rightThumbStickRL;
 		float rightThumbStickUD;
-
-		// ID of the kart this input event is targeted at
-		int kartID;
-
 		
 		// The kart producing this event
 		int kart_index;
