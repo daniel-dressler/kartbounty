@@ -23,6 +23,7 @@ Input::Input() {
 	m_pPreviousInput->bPressed = false;
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
+	m_pPreviousInput->kartID = 0;
 }
 
 Input::~Input() {

@@ -9,14 +9,24 @@ private:
 	FMOD::System *m_system;
 	Events::Mailbox *m_pMailbox;
 
-	std::vector<FMOD::Sound *> m_SoundList;
-	std::vector<FMOD::Sound *> m_MusicList;
+	std::vector<FMOD::Sound *>		m_SoundList;
+	std::vector<FMOD::Sound *>		m_MusicList;
 
-	FMOD::ChannelGroup *channelMusic;
-	FMOD::ChannelGroup *channelEffects;
+	std::vector<FMOD::Channel *>	m_EngineChannelList;
+	std::vector<FMOD::Sound *>		m_EngineSoundList;
+	std::vector<FMOD::DSP *>		m_KartEngineDSPList;
+
+	FMOD::ChannelGroup *m_channelMusic;
+	FMOD::ChannelGroup *m_channelEffects;
+	FMOD::ChannelGroup *m_channelEngineSound;
+
+	FMOD::DSP *m_pitchShift;
 
 	int LoadSound(char* file);
 	int LoadMusic(char* file);
+
+	void SetupEngineSounds();
+	void Setup3DEnvironment();
 	void OutputMemUsage();
 
 	void UpdateListenerPos();

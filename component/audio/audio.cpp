@@ -6,6 +6,14 @@
 	DEBUGOUT("FMOD error! (%d) %s\n", res, FMOD_ErrorString(res));\
     exit(-1);}
 
+#define PITCHSCALE 0.1
+#define MAX_PITCH 2
+#define ENGINE_SOUND_FILE "assets/audio/engineNoise1.wav"
+
+#define DOPPLER_SCALE 1.0f
+#define DISTANCE_FACTOR 1.0f
+#define ROLL_OFF_SCALE 1.0f
+
 Audio::Audio() {
 	
 	m_pMailbox = new Events::Mailbox();	
@@ -13,112 +21,23 @@ Audio::Audio() {
 	
 	SetupHardware();
 
-	// Setup music and sound effects channels
-	ERRCHECK(m_system->createChannelGroup(NULL, &channelEffects));
-	ERRCHECK(m_system->createChannelGroup(NULL, &channelMusic));
+	//// Setup music and sound effects channels
+	//ERRCHECK(m_system->createChannelGroup(NULL, &m_channelEffects));
+	//ERRCHECK(m_system->createChannelGroup(NULL, &m_channelMusic));
 
 	// Load all the sound files
 	LoadMusic("assets/audio/music1.mp3");
-	LoadSound("assets/audio/DescendingCrash.wav");
 
-	FMOD::Channel *channel;
-	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &channel);
+	//Setup3DEnvironment();
+	SetupEngineSounds();
 }
 
 Audio::~Audio() {
 
 	m_system->release();
 
-	if(m_MusicList.size() > 0)
-	{
-		for(int i = m_MusicList.size()-1; i <= 0; i--)
-		{
-			FMOD::Sound music = *m_MusicList[i];
-			music.release();
-		}
-	}
-
-	if(m_SoundList.size() > 0)
-	{
-		for(int i = m_SoundList.size()-1; i <= 0; i--)
-		{
-			FMOD::Sound sound = *m_MusicList[i];
-			sound.release();
-		}
-	}
-
 	if(m_pMailbox)
 		delete m_pMailbox;
-}
-
-void Audio::OutputMemUsage(){
-	float stream;
-	float update;
-	float total;
-
-	m_system->getCPUUsage(0, &stream, 0, &update, &total);
-
-	DEBUGOUT("Audio CPU usage:  Stream: %lf | Update: %lf | Total: %lf\n", stream, update, total);
-}
-
-int Audio::LoadMusic(char* file){
-	FMOD_RESULT result;
-	FMOD::Sound *newMusic;
-	
-	result = m_system->createStream(file, FMOD_DEFAULT, 0, &newMusic);
-	ERRCHECK(result);
-
-	m_MusicList.push_back(newMusic);
-
-	return m_MusicList.size() - 1;
-}
-
-int Audio::LoadSound(char* file){
-	FMOD_RESULT result;
-	FMOD::Sound *newSound;
-
-	result = m_system->createSound(file, FMOD_3D, 0, &newSound);
-	ERRCHECK(result);
-
-	m_SoundList.push_back(newSound);
-
-	return m_SoundList.size() - 1;
-}
-
-void Audio::UpdateListenerPos(){
-	FMOD_VECTOR *position;
-	FMOD_VECTOR *velocity;
-	FMOD_VECTOR *forward;
-	FMOD_VECTOR *up;
-
-	//GetState().Karts
-
-	//m_system->set3DListenerAttributes(0, 
-	FMOD_CHANNELGROUP *group;
-}
-
-void Audio::Update(){
-
-	// Check for input events
-	if( m_pMailbox )
-	{
-		const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
-		for( unsigned int i = 0; i < aryEvents.size(); i++ )
-		{
-			if(aryEvents[i]->type == Events::EventType::Input)
-			{
-				Events::InputEvent *input = (Events::InputEvent *)aryEvents[i];
-				if(input->aPressed)
-				{
-					// Play a sound effect
-
-				}
-			}
-		}
-		m_pMailbox->emptyMail();
-	}
-	m_system->update();
-	OutputMemUsage();
 }
 
 int Audio::SetupHardware(){
@@ -197,6 +116,124 @@ int Audio::SetupHardware(){
 		*/
 		result = m_system->init(100, FMOD_INIT_NORMAL, 0);
 	}
+}
+
+void Audio::SetupEngineSounds(){
+
+	for(int i = 0; i < 1; i++)
+	{
+		FMOD::Sound *newSound;
+		FMOD::Channel *channel;
+		FMOD::DSP *dsp;
+
+		ERRCHECK(m_system->createSound(ENGINE_SOUND_FILE, FMOD_3D, 0, &newSound));
+
+		ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, newSound, true, &channel));
+
+		ERRCHECK(m_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp));
+		ERRCHECK(channel->addDSP(dsp, 0));
+		ERRCHECK(channel->setPaused(false));
+		FMOD_VECTOR *pos = new FMOD_VECTOR();
+		pos->x = 0;
+		pos->y = 0;
+		pos->z = 0;
+		ERRCHECK(channel->set3DAttributes(pos, 0));
+		ERRCHECK(channel->setMode(FMOD_LOOP_NORMAL));
+
+		m_EngineSoundList.push_back(newSound);
+		m_EngineChannelList.push_back(channel);
+		m_KartEngineDSPList.push_back(dsp);
+	}
+}
+
+void Audio::Setup3DEnvironment() {
+	ERRCHECK(m_system->set3DSettings(DOPPLER_SCALE, DISTANCE_FACTOR, ROLL_OFF_SCALE));
+}
+
+void Audio::OutputMemUsage(){
+	float stream;
+	float update;
+	float total;
+
+	m_system->getCPUUsage(0, &stream, 0, &update, &total);
+
+	DEBUGOUT("Audio CPU usage:  Stream: %lf | Update: %lf | Total: %lf\n", stream, update, total);
+}
+
+int Audio::LoadMusic(char* file){
+	FMOD_RESULT result;
+	FMOD::Sound *newMusic;
+	
+	result = m_system->createStream(file, FMOD_DEFAULT, 0, &newMusic);
+	ERRCHECK(result);
+
+	m_MusicList.push_back(newMusic);
+
+	return m_MusicList.size() - 1;
+}
+
+int Audio::LoadSound(char* file){
+	FMOD_RESULT result;
+	FMOD::Sound *newSound;
+
+	//result = m_system->createSound(file, FMOD_3D, 0, &newSound);
+	result = m_system->createSound(file, FMOD_3D | FMOD_LOOP_NORMAL, 0, &newSound);
+	ERRCHECK(result);
+
+	m_SoundList.push_back(newSound);
+
+	return m_SoundList.size() - 1;
+}
+
+void Audio::UpdateListenerPos(){
+	FMOD_VECTOR position;
+	FMOD_VECTOR *velocity = new FMOD_VECTOR();
+	FMOD_VECTOR *forward = new FMOD_VECTOR();
+	forward->z = 1;
+
+	FMOD_VECTOR *up = new FMOD_VECTOR();
+	up->y  = 1;
+
+	position.x = GetState().Karts[0].vPos.x;
+	position.y = GetState().Karts[0].vPos.y;
+	position.z = GetState().Karts[0].vPos.z;
+
+	DEBUGOUT("Kart Pos: %lf, %lf, %lf\n", position.x, position.y, position.z);
+
+	ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, forward, up));
+
+	delete forward;
+}
+
+void Audio::Update(){
+
+	// Check for input events
+	if( m_pMailbox )
+	{
+		const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
+		for( unsigned int i = 0; i < aryEvents.size(); i++ )
+		{
+			if(aryEvents[i]->type == Events::EventType::Input)
+			{
+				// Handle all one-off sound effects
+				Events::InputEvent *input = (Events::InputEvent *)aryEvents[i];
+				if(input->aPressed)
+				{
+					// Play a sound effect
+					int x = 0;
+				}
+
+				// Update Kart Engine Sounds
+				ERRCHECK(m_KartEngineDSPList[input->kartID]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
+			}
+		}
+		m_pMailbox->emptyMail();
+	}
+
+	UpdateListenerPos();
+	ERRCHECK(m_system->update());
+
+	//OutputMemUsage();
 }
 
 

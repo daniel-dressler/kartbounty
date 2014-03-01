@@ -189,7 +189,7 @@ void Simulation::step(double seconds)
 #define ENGINE_MAX_FORCE (2000)
 #define BRAKE_MAX_FORCE (1500)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (30.0)
+#define MAX_SPEED (25.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -258,7 +258,7 @@ void Simulation::step(double seconds)
 
 //	m_world->stepSimulation((btScalar)seconds, 10, 0.016666f / 2.0f);
 	m_world->stepSimulation( (btScalar)seconds, 10, 0.0166666f * 0.5f );
-	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
+//	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
 
 	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -10.0f )
 	{
@@ -340,6 +340,7 @@ void Simulation::UpdateGameState(double seconds)
 
 	//DEBUGOUT( "%f\n", state->Camera.fFOV );
 	fLastSpeed = fSpeed;
+	state->Karts[0].vSpeed = fSpeed;
 
 //	DEBUGOUT( "%f %f %f %f\n", fSpeed, fAdjSpeed, fLerpAmt, fAdjFOV );
 

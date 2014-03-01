@@ -21,6 +21,7 @@ typedef struct StateData
 		Quaternion	qOrient;
 		btVector3	forDirection;
 		Vector4		vColor;
+		float	vSpeed;
 
 	} Karts[NUM_KARTS];
 

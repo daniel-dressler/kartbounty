@@ -70,6 +70,7 @@
     </ClInclude>
     <ClInclude Include="component\audio\audio.h">
       <Filter>component\audio</Filter>
+	</ClInclude>
     <ClInclude Include="component\gameai\graph\DistPair.h">
       <Filter>component\gameai\graph</Filter>
     </ClInclude>
@@ -177,6 +178,7 @@
     </Filter>
     <Filter Include="component\audio">
       <UniqueIdentifier>{f5d0a495-60a6-4d83-bb09-161217ba4fef}</UniqueIdentifier>
+	</Filter>
     <Filter Include="component\gameai\graph">
       <UniqueIdentifier>{a7708a17-7d17-416d-bf1a-b645c91d777e}</UniqueIdentifier>
     </Filter>

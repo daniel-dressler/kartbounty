@@ -50,6 +50,9 @@ namespace Events {
 		float rightThumbStickRL;
 		float rightThumbStickUD;
 
+		// ID of the kart this input event is targeted at
+		int kartID;
+
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)
