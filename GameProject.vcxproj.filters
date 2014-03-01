@@ -140,6 +140,7 @@
     </ClCompile>
     <ClCompile Include="component\audio\audio.cpp">
       <Filter>component\audio</Filter>
+	</ClCompile>
     <ClCompile Include="component\gameai\GameLogic.cpp">
       <Filter>component\gameai</Filter>
     </ClCompile>
