@@ -313,6 +313,8 @@ void Simulation::UpdateGameState(double seconds)
 
 	Vector3 vUp = Vector3( 0, 1, 0 ).Transform( matOri );
 
+	state->Karts[0].vUp = vUp;
+
 	Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
 	vCamOfs.y = 1.0f;
 

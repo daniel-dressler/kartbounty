@@ -187,22 +187,33 @@ int Audio::LoadSound(char* file){
 
 void Audio::UpdateListenerPos(){
 	FMOD_VECTOR position;
-	FMOD_VECTOR *velocity = new FMOD_VECTOR();
-	FMOD_VECTOR *forward = new FMOD_VECTOR();
-	forward->z = 1;
+	FMOD_VECTOR velocity;
+	FMOD_VECTOR forward;
+	FMOD_VECTOR up;
+	float speed = GetState().Karts[0].vSpeed;
 
-	FMOD_VECTOR *up = new FMOD_VECTOR();
-	up->y  = 1;
+	//DEBUGOUT("Forward magnitude: %lf\n", GetState().Karts[0].forDirection.length());
+	//DEBUGOUT("Up magnitude: %lf\n", GetState().Karts[0].vUp.Length());
 
 	position.x = GetState().Karts[0].vPos.x;
 	position.y = GetState().Karts[0].vPos.y;
 	position.z = GetState().Karts[0].vPos.z;
+	
+	forward.x = GetState().Karts[0].forDirection.x();
+	forward.y = GetState().Karts[0].forDirection.y();
+	forward.z = GetState().Karts[0].forDirection.z();
 
-	DEBUGOUT("Kart Pos: %lf, %lf, %lf\n", position.x, position.y, position.z);
+	up.x = GetState().Karts[0].vUp.x;
+	up.y = GetState().Karts[0].vUp.y;
+	up.z = GetState().Karts[0].vUp.z;
 
-	ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, forward, up));
+	velocity.x = GetState().Karts[0].forDirection.x() * speed;
+	velocity.y = GetState().Karts[0].forDirection.y() * speed;
+	velocity.z = GetState().Karts[0].forDirection.z() * speed;
 
-	delete forward;
+	//DEBUGOUT("Kart Forward: %lf, %lf, %lf\n", forward.x, forward.y, forward.z);
+
+	ERRCHECK(m_system->set3DListenerAttributes(0, &position, 0, &forward, &up));
 }
 
 void Audio::Update(){
@@ -224,7 +235,7 @@ void Audio::Update(){
 				}
 
 				// Update Kart Engine Sounds
-				ERRCHECK(m_KartEngineDSPList[input->kartID]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
+				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
 			}
 		}
 		m_pMailbox->emptyMail();
