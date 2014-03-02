@@ -83,6 +83,15 @@
     <ClInclude Include="component\gameai\GameLogic.h">
       <Filter>component\gameai</Filter>
     </ClInclude>
+    <ClInclude Include="component\gameai\util\Ray.h">
+      <Filter>component\gameai\util</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\util\Sphere.h">
+      <Filter>component\gameai\util</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\util\Square.h">
+      <Filter>component\gameai\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

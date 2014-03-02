@@ -105,6 +105,9 @@
     <ClInclude Include="component\gameai\graph\Graph.h" />
     <ClInclude Include="component\gameai\graph\Node.h" />
     <ClInclude Include="component\gameai\util\Position.h" />
+    <ClInclude Include="component\gameai\util\Ray.h" />
+    <ClInclude Include="component\gameai\util\Sphere.h" />
+    <ClInclude Include="component\gameai\util\Square.h" />
     <ClInclude Include="component\input\input.h" />
     <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />
