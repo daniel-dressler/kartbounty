@@ -14,6 +14,9 @@
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
+#define MUSIC_VOLUME 0.15
+#define LOW_ENGINE_NOISE_VOLUME 0.5
+
 Audio::Audio() {
 	
 	m_pMailbox = new Events::Mailbox();	
@@ -31,6 +34,7 @@ Audio::Audio() {
 
 	Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
+	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
 
 	FMOD::Channel *channel;
 	m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.LowFreqEngine], true, &channel);
@@ -40,7 +44,7 @@ Audio::Audio() {
 	ERRCHECK(channel->addDSP(m_lowfreqPitchShift, 0));
 
 	channel->setMode(FMOD_LOOP_NORMAL);
-	channel->setVolume(0.5);
+	channel->setVolume(LOW_ENGINE_NOISE_VOLUME);
 	channel->setPaused(false);
 
 	StartMusic();
@@ -136,7 +140,7 @@ int Audio::SetupHardware(){
 
 void Audio::SetupEngineSounds(){
 
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < NUM_KARTS; i++)
 	{
 		FMOD::Sound *newSound;
 		FMOD::Channel *channel;
@@ -150,9 +154,9 @@ void Audio::SetupEngineSounds(){
 		ERRCHECK(channel->addDSP(dsp, 0));
 		ERRCHECK(channel->setPaused(false));
 		FMOD_VECTOR *pos = new FMOD_VECTOR();
-		pos->x = 0;
-		pos->y = 0;
-		pos->z = 0;
+		pos->x = GetState().Karts[i].vPos.x;
+		pos->y = GetState().Karts[i].vPos.y;
+		pos->z = GetState().Karts[i].vPos.z;
 		ERRCHECK(channel->set3DAttributes(pos, 0));
 		ERRCHECK(channel->setMode(FMOD_LOOP_NORMAL));
 
@@ -192,10 +196,12 @@ int Audio::LoadMusic(char* file){
 
 int Audio::LoadSound(char* file){
 	FMOD::Sound *newSound;
+	FMOD::Channel *newChannel;
 
 	ERRCHECK(m_system->createSound(file, FMOD_3D, 0, &newSound));
 
 	m_SoundList.push_back(newSound);
+	m_SoundsChannelList.push_back(newChannel);
 
 	return m_SoundList.size() - 1;
 }
@@ -203,6 +209,7 @@ int Audio::LoadSound(char* file){
 void Audio::StartMusic(){
 	FMOD::Channel *musicChannel;
 	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicChannel);
+	musicChannel->setVolume(MUSIC_VOLUME);
 }
 
 void Audio::UpdateListenerPos(){
@@ -212,9 +219,6 @@ void Audio::UpdateListenerPos(){
 	FMOD_VECTOR forward;
 	FMOD_VECTOR up;
 	float speed = GetState().Karts[0].vSpeed;
-
-	//DEBUGOUT("Forward magnitude: %lf\n", GetState().Karts[0].forDirection.length());
-	//DEBUGOUT("Up      magnitude: %lf\n", GetState().Karts[0].vUp.Length());
 
 	position.x = GetState().Karts[0].vPos.x;
 	position.y = GetState().Karts[0].vPos.y;
@@ -232,13 +236,32 @@ void Audio::UpdateListenerPos(){
 	velocity.y = GetState().Karts[0].forDirection.y() * speed;
 	velocity.z = GetState().Karts[0].forDirection.z() * speed;
 
+	forward.x = 1;
+	forward.y = 0;
+	forward.z = 0;
+	up.x = 0;
+	up.y = 1;
+	up.z = 0;
+
+	//DEBUGOUT("Kart Position: %lf, %lf, %lf\n", position.x, position.y, position.z);
 	//DEBUGOUT("Kart Forward: %lf, %lf, %lf\n", forward.x, forward.y, forward.z);
 	//DEBUGOUT("Kart Up	  : %lf, %lf, %lf\n", up.x, up.y, up.z);
 
 	//double dotprod = forward.x * up.x + forward.y * up.y + forward.z * up.z;
 	//DEBUGOUT("Dot: %lf\n", dotprod);
 
-	//ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
+	ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
+}
+
+void Audio::UpdateKartsPos(){
+	for(int i = 0; i < NUM_KARTS; i++)
+	{
+		FMOD_VECTOR *pos = new FMOD_VECTOR();
+		pos->x = GetState().Karts[i].vPos.x;
+		pos->y = GetState().Karts[i].vPos.y;
+		pos->z = GetState().Karts[i].vPos.z;
+		ERRCHECK(m_EngineChannelList[i]->set3DAttributes(pos, 0));
+	}
 }
 
 void Audio::Update(Real seconds){
@@ -253,6 +276,25 @@ void Audio::Update(Real seconds){
 			{
 				// Handle all one-off sound effects
 				Events::InputEvent *input = (Events::InputEvent *)aryEvents[i];
+				if(input->aPressed)
+				{
+					FMOD_VECTOR pos;
+					int KartID = input->kart_index;
+
+					pos.x = GetState().Karts[KartID].vPos.x;
+					pos.y = GetState().Karts[KartID].vPos.y;
+					pos.z = GetState().Karts[KartID].vPos.z;
+
+					bool isPlaying = false;
+					m_SoundsChannelList[KartID]->isPlaying(&isPlaying);
+
+					if(!isPlaying)
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun], true, &m_SoundsChannelList[KartID]));
+						m_SoundsChannelList[KartID]->set3DAttributes(&pos, 0);
+						m_SoundsChannelList[KartID]->setPaused(false);
+					}
+				}
 				if(input->bPressed)
 				{
 					// Play a sound effect
@@ -262,7 +304,7 @@ void Audio::Update(Real seconds){
 				Real lerpAmt = seconds * 2.0f;
 				Real newPitch = Lerp(enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
 
-				DEBUGOUT("New pitch: %lf\n", newPitch);
+				//DEBUGOUT("New pitch: %lf\n", newPitch);
 
 				enginePitch = newPitch;
 

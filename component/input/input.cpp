@@ -29,6 +29,7 @@ Input::Input() {
 }
 
 Input::~Input() {
+	SDL_HapticClose(m_joy1Haptic);
 	SDL_JoystickClose(m_joystick1);
 	delete m_pPreviousInput;
 	delete m_pMailbox;
@@ -40,6 +41,7 @@ void Input::OpenJoysticks(){
 	int number_of_buttons;
 	number_of_buttons = SDL_JoystickNumButtons(m_joystick1);
 	DEBUGOUT("Joystick %i opened with %i buttons\n", m_joystick1, number_of_buttons);
+	DEBUGOUT("Number of haptic devices: %d\n", SDL_NumHaptics());
 }
 
 void Input::HandleEvents(){

@@ -15,6 +15,7 @@ private:
 	std::vector<FMOD::Channel *>	m_EngineChannelList;
 	std::vector<FMOD::Sound *>		m_EngineSoundList;
 	std::vector<FMOD::DSP *>		m_KartEngineDSPList;
+	std::vector<FMOD::Channel *>	m_SoundsChannelList;
 
 	FMOD::ChannelGroup *m_channelMusic;
 	FMOD::ChannelGroup *m_channelEffects;
@@ -35,6 +36,7 @@ private:
 	void OutputMemUsage();
 
 	void UpdateListenerPos();
+	void UpdateKartsPos();
 
 public:
 	Audio();
@@ -44,6 +46,7 @@ public:
 	{
 		int PowerUp;
 		int LowFreqEngine;
+		int MachineGun;
 	} Sounds;
 	
 	int SetupHardware();
