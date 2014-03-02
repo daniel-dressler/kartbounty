@@ -19,8 +19,10 @@ typedef struct StateData
 		Vector3		vPos;
 		Vector3		vOldPos;
 		Quaternion	qOrient;
+		Vector3		vUp;
 		btVector3	forDirection;
 		Vector4		vColor;
+		float		vSpeed;
 
 	} Karts[NUM_KARTS];
 

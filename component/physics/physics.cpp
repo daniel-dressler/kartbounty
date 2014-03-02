@@ -189,7 +189,7 @@ void Simulation::step(double seconds)
 #define ENGINE_MAX_FORCE (2000)
 #define BRAKE_MAX_FORCE (1500)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (30.0)
+#define MAX_SPEED (25.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -210,7 +210,12 @@ void Simulation::step(double seconds)
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
 			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
-			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
+
+			btVector3 forward = m_vehicle->getForwardVector();
+
+			// Add checking for speed to this to limit turning angle at high speeds @Kyle
+			gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - m_vehicle->getCurrentSpeedKmHour() * 2;
+			//gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
 
 			if( GetState().key_map['r'] )
 			{
@@ -240,6 +245,7 @@ void Simulation::step(double seconds)
 	}
 	mb.emptyMail();
 
+	// Max Speed checking
 	if( ABS( m_vehicle->getCurrentSpeedKmHour() ) > MAX_SPEED )
 		gEngineForce = 0;
 
@@ -253,7 +259,9 @@ void Simulation::step(double seconds)
 	m_vehicle->setBrake(gBrakingForce, 2);
 	m_vehicle->setBrake(gBrakingForce, 3);
 
-	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
+//	m_world->stepSimulation((btScalar)seconds, 10, 0.016666f / 2.0f);
+	m_world->stepSimulation( (btScalar)seconds, 10, 0.0166666f * 0.5f );
+//	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
 
 	if( m_vehicle->getRigidBody()->getWorldTransform().getOrigin().y() < -10.0f )
 	{
@@ -305,6 +313,8 @@ void Simulation::UpdateGameState(double seconds)
 
 	Vector3 vUp = Vector3( 0, 1, 0 ).Transform( matOri );
 
+	state->Karts[0].vUp = vUp;
+
 	Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
 	vCamOfs.y = 1.0f;
 
@@ -333,7 +343,9 @@ void Simulation::UpdateGameState(double seconds)
 //	state->Camera.fFOV = 90.0f;
 //	state->Camera.vPos = state->Camera.vFocus + Vector3( 1.5f, 1.0f, 1.5f );
 
+	//DEBUGOUT( "%f\n", state->Camera.fFOV );
 	fLastSpeed = fSpeed;
+	state->Karts[0].vSpeed = fSpeed;
 
 //	DEBUGOUT( "%f %f %f %f\n", fSpeed, fAdjSpeed, fLerpAmt, fAdjFOV );
 

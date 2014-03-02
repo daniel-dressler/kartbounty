@@ -7,6 +7,8 @@
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
+#include "component/state/state.h"
+#include "component/audio/audio.h"
 
 
 int main( int argc, char** argv )
@@ -24,6 +26,10 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	// Input
 	Input *input = new Input();
+	// Audio
+	Audio *audio = new Audio();
+
+	//Mix_Init( MIX_INIT_FLAC | MIX_INIT_MP3 );
 
 	// GameAi
 	GameAi *gameai = new GameAi();
@@ -39,6 +45,7 @@ int main( int argc, char** argv )
 		input->HandleEvents();
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
+		audio->Update(elapsed_time);
 		UpdateRendering(elapsed_time);
 		Render();
 	}
@@ -47,6 +54,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
+	delete audio;
 	ShutdownRendering();
 
 	SDL_Quit();
