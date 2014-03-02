@@ -33,6 +33,7 @@ GameAi::GameAi()
 		m_pPreviousInput[i]->bPressed = false;
 		m_pPreviousInput[i]->xPressed = false;
 		m_pPreviousInput[i]->yPressed = false;
+		m_pPreviousInput[i]->kart_index = 0;
 	}
 
 	// Scripted path while there's no "brain". HACK. (will be replaced soon)
