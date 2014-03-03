@@ -13,23 +13,28 @@ private:
 	std::vector<FMOD::Sound *>		m_MusicList;
 
 	std::vector<FMOD::Channel *>	m_EngineChannelList;
+	std::vector<FMOD::Channel *>	m_IdleNoiseChannelList;
 	std::vector<FMOD::Sound *>		m_EngineSoundList;
 	std::vector<FMOD::DSP *>		m_KartEngineDSPList;
 	std::vector<FMOD::Channel *>	m_SoundsChannelList;
 
-	FMOD::ChannelGroup *m_channelMusic;
-	FMOD::ChannelGroup *m_channelEffects;
-	FMOD::ChannelGroup *m_channelEngineSound;
+	FMOD::ChannelGroup *m_channelGroupMusic;
+	FMOD::ChannelGroup *m_channelGroupEffects;
+	FMOD::ChannelGroup *m_channelGroupEngineSound;
 
 	FMOD::DSP *m_pitchShift;
 	FMOD::DSP *m_lowfreqPitchShift;
 
-	Real enginePitch;
+	Real enginePitch[NUM_KARTS];
 
 	int LoadSound(char* file);
 	int LoadMusic(char* file);
 
+	float musicVol;
+	float sfxVol;
+
 	void StartMusic();
+	void ToggleMusic();
 
 	void SetupEngineSounds();
 	void Setup3DEnvironment();

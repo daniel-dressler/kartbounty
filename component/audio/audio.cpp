@@ -8,14 +8,15 @@
 
 #define PITCHSCALE 0.1
 #define MAX_PITCH 2
-#define ENGINE_SOUND_FILE "assets/audio/engineNoise4.wav"
+#define ENGINE_SOUND_FILE "assets/audio/engineNoise3.wav"
 
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
 #define MUSIC_VOLUME 0.15
-#define LOW_ENGINE_NOISE_VOLUME 0.5
+#define SOUND_EFFECTS_VOLUME 0.5
+#define LOW_ENGINE_NOISE_VOLUME 1
 
 Audio::Audio() {
 	
@@ -26,8 +27,14 @@ Audio::Audio() {
 	SetupHardware();
 
 	//// Setup music and sound effects channels
-	//ERRCHECK(m_system->createChannelGroup(NULL, &m_channelEffects));
-	//ERRCHECK(m_system->createChannelGroup(NULL, &m_channelMusic));
+	ERRCHECK(m_system->createChannelGroup("Effects", &m_channelGroupEffects));
+	ERRCHECK(m_system->createChannelGroup("Music", &m_channelGroupMusic));
+
+	musicVol = MUSIC_VOLUME;
+	sfxVol = SOUND_EFFECTS_VOLUME;
+
+	m_channelGroupMusic->setVolume(musicVol);
+	m_channelGroupEffects->setVolume(sfxVol);
 
 	// Load all the sound files
 	LoadMusic("assets/audio/battlescene.wav");	
@@ -36,20 +43,11 @@ Audio::Audio() {
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
 	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
 
-	FMOD::Channel *channel;
-	m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.LowFreqEngine], true, &channel);
-	//channel->setLoopPoints(3000, FMOD_TIMEUNIT_MS, 3300, FMOD_TIMEUNIT_MS);
-
-	ERRCHECK(m_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &m_lowfreqPitchShift));
-	ERRCHECK(channel->addDSP(m_lowfreqPitchShift, 0));
-
-	channel->setMode(FMOD_LOOP_NORMAL);
-	channel->setVolume(LOW_ENGINE_NOISE_VOLUME);
-	channel->setPaused(false);
-
 	StartMusic();
 	//Setup3DEnvironment();
 	SetupEngineSounds();
+
+
 }
 
 Audio::~Audio() {
@@ -142,29 +140,44 @@ void Audio::SetupEngineSounds(){
 
 	for(int i = 0; i < NUM_KARTS; i++)
 	{
-		FMOD::Sound *newSound;
-		FMOD::Channel *channel;
+		FMOD::Sound *engineSound;
+		FMOD::Channel *engineNoisechannel;
+		FMOD::Channel *idelNoiseChannel;
 		FMOD::DSP *dsp;
 
-		ERRCHECK(m_system->createSound(ENGINE_SOUND_FILE, FMOD_3D, 0, &newSound));
+		ERRCHECK(m_system->createSound(ENGINE_SOUND_FILE, FMOD_3D, 0, &engineSound));
 
-		ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, newSound, true, &channel));
+		ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, engineSound, true, &engineNoisechannel));
+		ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.LowFreqEngine], true, &idelNoiseChannel));
 
 		ERRCHECK(m_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp));
-		ERRCHECK(channel->addDSP(dsp, 0));
-		ERRCHECK(channel->setPaused(false));
+		ERRCHECK(engineNoisechannel->addDSP(dsp, 0));
+		ERRCHECK(idelNoiseChannel->addDSP(dsp, 0));
+
 		FMOD_VECTOR *pos = new FMOD_VECTOR();
 		pos->x = GetState().Karts[i].vPos.x;
 		pos->y = GetState().Karts[i].vPos.y;
 		pos->z = GetState().Karts[i].vPos.z;
-		ERRCHECK(channel->set3DAttributes(pos, 0));
-		ERRCHECK(channel->setMode(FMOD_LOOP_NORMAL));
 
-		enginePitch = 0;
+		ERRCHECK(engineNoisechannel->set3DAttributes(pos, 0));
+		ERRCHECK(idelNoiseChannel->set3DAttributes(pos, 0));
+		ERRCHECK(engineNoisechannel->setMode(FMOD_LOOP_NORMAL));
+		ERRCHECK(idelNoiseChannel->setMode(FMOD_LOOP_NORMAL));
 
-		m_EngineSoundList.push_back(newSound);
-		m_EngineChannelList.push_back(channel);
+		idelNoiseChannel->setVolume(LOW_ENGINE_NOISE_VOLUME);
+
+		enginePitch[i] = 0;
+
+		m_EngineSoundList.push_back(engineSound);
+		m_EngineChannelList.push_back(engineNoisechannel);
+		m_IdleNoiseChannelList.push_back(idelNoiseChannel);
 		m_KartEngineDSPList.push_back(dsp);
+
+		ERRCHECK(engineNoisechannel->setChannelGroup(m_channelGroupEngineSound));
+		ERRCHECK(idelNoiseChannel->setChannelGroup(m_channelGroupEngineSound));
+
+		ERRCHECK(engineNoisechannel->setPaused(false));
+		ERRCHECK(idelNoiseChannel->setPaused(false));
 	}
 }
 
@@ -209,7 +222,15 @@ int Audio::LoadSound(char* file){
 void Audio::StartMusic(){
 	FMOD::Channel *musicChannel;
 	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicChannel);
-	musicChannel->setVolume(MUSIC_VOLUME);
+	musicChannel->setChannelGroup(m_channelGroupMusic);
+	m_channelGroupMusic->setVolume(MUSIC_VOLUME);
+}
+
+void Audio::ToggleMusic(){
+	bool *toggle;
+	toggle = false;
+	m_channelGroupMusic->getPaused(toggle);
+	m_channelGroupMusic->setPaused(!toggle);
 }
 
 void Audio::UpdateListenerPos(){
@@ -223,32 +244,23 @@ void Audio::UpdateListenerPos(){
 	position.x = GetState().Karts[0].vPos.x;
 	position.y = GetState().Karts[0].vPos.y;
 	position.z = GetState().Karts[0].vPos.z;
-	
-	forward.x = GetState().Karts[0].forDirection.x();
-	forward.y = GetState().Karts[0].forDirection.y();
-	forward.z = GetState().Karts[0].forDirection.z();
 
-	up.x = GetState().Karts[0].vUp.x;
-	up.y = GetState().Karts[0].vUp.y;
-	up.z = GetState().Karts[0].vUp.z;
+	// Get the Kart's forward vector and remove the y component and then normalize to get unit vector length
+	btVector3 temp = GetState().Karts[0].forDirection;
+	temp.setY(0);
+	temp.normalize();
 
 	velocity.x = GetState().Karts[0].forDirection.x() * speed;
 	velocity.y = GetState().Karts[0].forDirection.y() * speed;
 	velocity.z = GetState().Karts[0].forDirection.z() * speed;
 
-	forward.x = 1;
-	forward.y = 0;
-	forward.z = 0;
+	forward.x = temp.getX();
+	forward.y = temp.getY();
+	forward.z = temp.getZ();
+
 	up.x = 0;
 	up.y = 1;
 	up.z = 0;
-
-	//DEBUGOUT("Kart Position: %lf, %lf, %lf\n", position.x, position.y, position.z);
-	//DEBUGOUT("Kart Forward: %lf, %lf, %lf\n", forward.x, forward.y, forward.z);
-	//DEBUGOUT("Kart Up	  : %lf, %lf, %lf\n", up.x, up.y, up.z);
-
-	//double dotprod = forward.x * up.x + forward.y * up.y + forward.z * up.z;
-	//DEBUGOUT("Dot: %lf\n", dotprod);
 
 	ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
 }
@@ -261,10 +273,20 @@ void Audio::UpdateKartsPos(){
 		pos->y = GetState().Karts[i].vPos.y;
 		pos->z = GetState().Karts[i].vPos.z;
 		ERRCHECK(m_EngineChannelList[i]->set3DAttributes(pos, 0));
+		ERRCHECK(m_IdleNoiseChannelList[i]->set3DAttributes(pos, 0));
 	}
 }
 
 void Audio::Update(Real seconds){
+
+	// Check for keyboard events
+	if (GetState().key_map['p']){
+		ToggleMusic();
+	}
+	if (GetState().key_map['-']){
+		sfxVol -= Clamp(sfxVol - 0.1);
+		ERRCHECK(m_channelGroupEffects->setVolume(sfxVol));		
+	}
 
 	// Check for input events
 	if( m_pMailbox )
@@ -276,7 +298,7 @@ void Audio::Update(Real seconds){
 			{
 				// Handle all one-off sound effects
 				Events::InputEvent *input = (Events::InputEvent *)aryEvents[i];
-				if(input->aPressed)
+				if(input->aPressed)  // Weapon fired
 				{
 					FMOD_VECTOR pos;
 					int KartID = input->kart_index;
@@ -292,6 +314,7 @@ void Audio::Update(Real seconds){
 					{
 						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun], true, &m_SoundsChannelList[KartID]));
 						m_SoundsChannelList[KartID]->set3DAttributes(&pos, 0);
+						m_SoundsChannelList[KartID]->setChannelGroup(m_channelGroupEffects);
 						m_SoundsChannelList[KartID]->setPaused(false);
 					}
 				}
@@ -302,17 +325,17 @@ void Audio::Update(Real seconds){
 				}
 
 				Real lerpAmt = seconds * 2.0f;
-				Real newPitch = Lerp(enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+				Real newPitch = Lerp(enginePitch[input->kart_index], input->rightTrigger * MAX_PITCH, lerpAmt);
+
+				enginePitch[input->kart_index] = newPitch;
 
 				//DEBUGOUT("New pitch: %lf\n", newPitch);
-
-				enginePitch = newPitch;
 
 				// Update Kart Engine Sounds
 				//ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
 				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
-				ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
+				//ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
 				//lowfreqChannel->setVolume(1 - (newPitch / 2));
 			}
 			else if(aryEvents[i]->type = (Events::EventType::PowerupPickup))
@@ -330,6 +353,7 @@ void Audio::Update(Real seconds){
 				int PowerUp = Sounds.PowerUp;
 
 				ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[PowerUp], true, &channel));
+				channel->setChannelGroup(m_channelGroupEffects);
 				channel->set3DAttributes(&pos, 0);
 				channel->setPaused(false);
 			}
@@ -337,6 +361,7 @@ void Audio::Update(Real seconds){
 		m_pMailbox->emptyMail();
 	}
 
+	UpdateKartsPos();
 	UpdateListenerPos();
 	ERRCHECK(m_system->update());
 
