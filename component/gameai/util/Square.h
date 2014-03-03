@@ -11,8 +11,11 @@ class Square
 	Vector3 topLeft, topRight, bottomRight, bottomLeft;
 
 public:
-	Square (Vector3 centerValue, Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl) 
+	Square (Vector3 centerValue, Vector3 tl, Vector3 br) 
 	{
+		Vector3 tr = Vector3(tl.z, tl.y, br.x);
+		Vector3 bl = Vector3(tl.x, tl.y, br.z);
+
 		center = centerValue;
 		topLeft = tl; 
 		topRight = tr;

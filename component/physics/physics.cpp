@@ -90,6 +90,8 @@ int Simulation::loadWorld()
 	m_collisionShapes.push_back(chassisShape);
 	m_collisionShapes.push_back(compound);
 
+	// Start of car stuff
+
 	btTransform localTrans;
 	localTrans.setIdentity();
 	localTrans.setOrigin(btVector3(0,0.05f, 0));

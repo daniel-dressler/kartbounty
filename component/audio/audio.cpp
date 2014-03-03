@@ -311,8 +311,10 @@ void Audio::Update(Real seconds){
 				// Update Kart Engine Sounds
 				//ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
 				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
+
 				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
 				ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
+
 				//lowfreqChannel->setVolume(1 - (newPitch / 2));
 			}
 			else if(aryEvents[i]->type = (Events::EventType::PowerupPickup))
@@ -336,8 +338,9 @@ void Audio::Update(Real seconds){
 		}
 		m_pMailbox->emptyMail();
 	}
-
+		
 	UpdateListenerPos();
+
 	ERRCHECK(m_system->update());
 
 	//OutputMemUsage();
