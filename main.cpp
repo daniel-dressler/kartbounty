@@ -43,7 +43,7 @@ int main( int argc, char** argv )
 		input->HandleEvents();
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
-		audio->Update(elapsed_time);
+		//audio->Update(elapsed_time);
 		UpdateRendering(elapsed_time);
 		Render();
 	}
@@ -52,7 +52,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
-	delete audio;
+	//delete audio;
 	ShutdownRendering();
 
 	SDL_Quit();

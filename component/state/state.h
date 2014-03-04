@@ -10,7 +10,7 @@
 // inventory when such exists.
 // HACK!
 
-#define MAX_POWERUPS	4
+#define MAX_POWERUPS	2
 #define NUM_KARTS	3
 #define PLAYER_KART 0
 
