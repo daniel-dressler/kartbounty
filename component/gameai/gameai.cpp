@@ -529,8 +529,8 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 			m_pCurrentInput[index]->leftThumbStickRL = turn_value;
 
 		// float dist_to_center = abs(GameAi::get_distance(state->Karts[index].vPos, obs_sqr.at(old_index[most_threat]).getCenter()));
-		DEBUGOUT("Threat index: %d\n", old_index[most_threat])
-		DEBUGOUT("CORRECTION ANGLE WAS: %f, Turn value was: %f\n", RADTODEG(steer_correction_angle), turn_value);
+		//DEBUGOUT("Threat index: %d\n", old_index[most_threat])
+		//DEBUGOUT("CORRECTION ANGLE WAS: %f, Turn value was: %f\n", RADTODEG(steer_correction_angle), turn_value);
 	}
 }
 
