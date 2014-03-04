@@ -20,14 +20,15 @@ int main( int argc, char** argv )
 	// Rendering
 	if( !InitRendering() )
 		return 1;
-	
+
 	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
+
 	// Input
 	Input *input = new Input();
 	// Audio
-	Audio *audio = new Audio();
+	//Audio *audio = new Audio();
 
 	//Mix_Init( MIX_INIT_FLAC | MIX_INIT_MP3 );
 
@@ -40,12 +41,11 @@ int main( int argc, char** argv )
 	while (gameai->planFrame())
 	{
 		Real elapsed_time = gameai->getElapsedTime();
-
 		logic->update(elapsed_time);
 		input->HandleEvents();
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
-		audio->Update(elapsed_time);
+		//audio->Update(elapsed_time);
 		UpdateRendering(elapsed_time);
 		Render();
 	}
@@ -54,7 +54,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
-	delete audio;
+	//delete audio;
 	ShutdownRendering();
 
 	SDL_Quit();

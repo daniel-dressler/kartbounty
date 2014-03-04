@@ -6,20 +6,24 @@
 #include "util/Square.h"
 
 #define LIMIT_FOR_STUCK 0.004f
-#define REVERSE_TRESHOLD 10
+#define REVERSE_TRESHOLD 6
 #define RESET_TRESHOLD REVERSE_TRESHOLD*4
 
 // temp
 int current_state;
-std::map<int, Vector3> path;
-std::map<int, Sphere> obs;
-std::map<int, Square> obs_sqr;
+std::vector<Vector3> path;
+std::vector<Square> obs_sqr;
 
 GameAi::GameAi()
 {
+	// seed random
+	srand((unsigned int)time(NULL));
 	state = GetMutState();
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
+
+	// Possible points for the car to wander about.
+	init_graph();
 
 	// Setup previous input event struct
 	for (int i = 0; i<NUM_KARTS; i++)
@@ -33,11 +37,16 @@ GameAi::GameAi()
 		m_pPreviousInput[i]->bPressed = false;
 		m_pPreviousInput[i]->xPressed = false;
 		m_pPreviousInput[i]->yPressed = false;
+		// Kart id
 		m_pPreviousInput[i]->kart_index = 0;
+
+		// if (i == PLAYER_KART)
+		state->Karts[i].isPlayer = false;
+
+		state->Karts[i].target_to_move = think_of_target(i);
 	}
 
-	// Scripted path while there's no "brain". HACK. (will be replaced soon)
-	init_graph();
+
 	GameAi::init_obs_sqr();
 	current_state = 0;
 }
@@ -45,6 +54,24 @@ GameAi::GameAi()
 GameAi::~GameAi()
 {
 
+}
+
+Vector3 GameAi::think_of_target(int index)
+{
+	state->Karts[index].TimeStartedTarget = 0;
+	return get_target_roaming();
+}
+
+Vector3 GameAi::get_target_roaming()
+{
+	int rand = (std::rand() % path.size());
+	if (rand == current_state)
+		rand = (std::rand() % path.size());
+
+	Vector3 answer = path.at(rand);
+	current_state = rand;
+
+	return answer;
 }
 
 int GameAi::planFrame()
@@ -62,9 +89,9 @@ int GameAi::planFrame()
 	m_mb->emptyMail();
 
 	// Yield until next frame
-	Real timeForLastFrame = frame_timer.CalcSeconds();
-	Real sleepPeriod = 0.016 - timeForLastFrame;
-	if (sleepPeriod > 0.0) {
+	Real timeForLastFrame = (Real)frame_timer.CalcSeconds();
+	Real sleepPeriod = 0.016f - timeForLastFrame;
+	if (sleepPeriod > 0.0f) {
 		std::chrono::milliseconds timespan( (int)( sleepPeriod * 1000.0f ) );
 		std::this_thread::sleep_for(timespan);
 	}
@@ -77,7 +104,7 @@ int GameAi::planFrame()
 		//DEBUGOUT( "FPS: %d\n", frames);
 		frames = 0;
 	}
-	timeAtLastFrame = fps_timer.CalcSeconds();
+	timeAtLastFrame = (Real)fps_timer.CalcSeconds();
 
 	return 1;
 }
@@ -94,14 +121,13 @@ void GameAi::update(Real elapsed_time)
 
 		DEBUGOUT("Pos: %f, %f, %f\n", x_pos, y_pos, z_pos);
 	}
-
-	move_all();
+	move_all(elapsed_time);
 }
 
 bool UseAI = 0;
 bool Prev = 0;
 
-void GameAi::move_all()
+void GameAi::move_all(Real elapsed_time)
 {
 	int index = 0;
 	//for (int index=0; i<NUM_KARTS; i++)
@@ -115,24 +141,31 @@ void GameAi::move_all()
 
 	avoid_obs_sqr(0,false);
 
+	// CURRENTLY player_kart doesn't really do anything.
 	if (UseAI)
-		GameAi::move_kart(index);
+	{
+		if (index != PLAYER_KART)
+			GameAi::move_kart(index, elapsed_time);
+	}
 }
 
 float stuck_counter = 0;
 bool stuck = 0;
 bool resetBool = 0;
 
-void GameAi::move_kart(int index)
+void GameAi::move_kart(int index, Real elapsed_time)
 {
-	Vector3 target_3 = path.at(current_state);
+	// increment it's timer by time
+	state->Karts[index].TimeStartedTarget += elapsed_time;
 
+	DEBUGOUT("Time : %f", state->Karts[index].TimeStartedTarget)
+
+	Vector3 target_3 = state->Karts[index].target_to_move;
 	Vector2 target = Vector2(target_3.x, target_3.z);
 	// Calculate the updated distance and the difference in angle.
 
 	if (state->key_map['r'] && stuck)
 	{
-		current_state = 0;
 		stuck_counter = 0;
 		stuck = false;
 		if (resetBool)
@@ -143,11 +176,9 @@ void GameAi::move_kart(int index)
 	btScalar distance_to_target = sqrtf( pow((state->Karts[index].vPos.x - target.x) , 2) 
 											+ pow((state->Karts[index].vPos.z - target.y),2) );
 
-	if (distance_to_target < 1.0f) // Advance to the next target of the script. HACK
+	if (distance_to_target < 1.0f) 
 	{
-		current_state++;
-		if (current_state > path.size()-1)
-			current_state = (current_state % path.size()) + 6;
+		state->Karts[index].target_to_move = get_target_roaming();
 	}
 
 	// check if car stuck, increase stuck timer if stuck.
@@ -218,13 +249,13 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 			m_pCurrentInput[index]->leftThumbStickRL = turn_value;
 
-			stuck_counter -= 0.005f;
+			stuck_counter -= 0.0075f;
 		}
 		else
 		{
 			//DEBUGOUT("DRIVE FORWARD!!\n");
 			
-			m_pCurrentInput[index]->rightTrigger = 0.8;
+			m_pCurrentInput[index]->rightTrigger = 0.7f;
 			m_pCurrentInput[index]->leftTrigger = 0;
 
 			btScalar turn_value = diff_ang ;
@@ -276,91 +307,141 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 Real GameAi::getElapsedTime()
 {
-	Real period = frame_timer.CalcSeconds();
+	Real period = (Real)frame_timer.CalcSeconds();
 	frame_timer.ResetClock();
 	return period;
 }
 
 void GameAi::init_graph()
 {
-	// Init nodes;
-
-	/* good round path.
-	Vector3 n0 = Vector3(0.f, 0.f, 13.f);
-	Vector3 n1 = Vector3(0.f, 0.f, 14.f);
-	Vector3 n2 = Vector3(1.f, 0.f, 15.f);
-	Vector3 n3 = Vector3(4.f, 0.f, 16.f);
-
-	Vector3 n4 = Vector3(5.f,  0.f, 16.8f);
-	Vector3 n5 = Vector3(13.5f,  0.f, 16.8f);
-	Vector3 n6 = Vector3(17.f,  0.f, 14.0f);
-
-	Vector3 n7 = Vector3(17.f,  0.f, -14.f);
-	Vector3 n8 = Vector3(14.f,  0.f, -17.f);
-	Vector3 n9 = Vector3(-14.f,  0.f, -17.f);
-
-	Vector3 n10 = Vector3(-17.f,  0.f, -14.f);
-	Vector3 n11 = Vector3(-17.f,  0.f, 14.f);
-	Vector3 n12 = Vector3(-14.f,  0.f, 17.f);
-	*/
-
-	Vector3 n0 = Vector3(0.f, 0.f, 15.f);
-	Vector3 n1 = Vector3(0.f, 0.f, 15.f);
-	Vector3 n2 = Vector3(1.f, 0.f, 15.f);
-	Vector3 n3 = Vector3(4.f, 0.f, 16.f);
-	Vector3 n4 = Vector3(5.f,  0.f, 16.8f);
-	Vector3 n5 = Vector3(13.5f,  0.f, 16.8f);
-	Vector3 n6 = Vector3(17.f,  0.f, 14.0f);
-	Vector3 n7 = Vector3(17.f,  0.f, -14.f);
-	Vector3 n8 = Vector3(14.f,  0.f, -17.f);
-	Vector3 n9 = Vector3(-14.f,  0.f, -17.f);
-	Vector3 n10 = Vector3(-17.f,  0.f, -14.f);
-	Vector3 n11 = Vector3(-17.f,  0.f, 14.f);
-	Vector3 n12 = Vector3(-14.f,  0.f, 17.f);
-
-
-	path.insert(std::pair<int,Vector3>(0,n0));
-	path.insert(std::pair<int,Vector3>(1,n1));
-	path.insert(std::pair<int,Vector3>(2,n2));
-	path.insert(std::pair<int,Vector3>(3,n3));
-	path.insert(std::pair<int,Vector3>(4,n4));
-	path.insert(std::pair<int,Vector3>(5,n5));
-	path.insert(std::pair<int,Vector3>(6,n6));
-	path.insert(std::pair<int,Vector3>(7,n7));
-	path.insert(std::pair<int,Vector3>(8,n8));
-	path.insert(std::pair<int,Vector3>(9,n9));
-	path.insert(std::pair<int,Vector3>(10,n10));
-	path.insert(std::pair<int,Vector3>(11,n11));
-	path.insert(std::pair<int,Vector3>(12,n12));
+	path.push_back(Vector3(15.5f, 0.f, 15.5f));
+	path.push_back(Vector3(-15.5f, 0.f, 15.5f));
+	path.push_back(Vector3(15.5f, 0.f, -15.5f));
+	path.push_back(Vector3(-15.5f, 0.f, -15.5f));
+	path.push_back(Vector3(0.f, 0.f, 0.f));
 }
 
+// This maps the obsticles to square obsticles.
 void GameAi::init_obs_sqr()
 {
-	// ORDER OF CORNERS MATTERS!!!!
+	Vector3 center;
+	Vector3 top_left;
+	Vector3 bot_right;
+	/// ============= First quarter of the map X > 0 , Z > 0================
+	// 21-20-22-23 - left part
+	center = Vector3(4.f, 0, 14.f); top_left = Vector3(1.28f, 0, 15.544f); bot_right = Vector3(3.87f, 0, 12.695f);
+	Square s0 = Square(center, top_left, bot_right);
 
-	// Square (Vector3 centerValue, Vector3 top-left, Vector3 top-right, Vector3 bot-right, Vector3 bot-left) 
-	Square sqr_1 = Square(Vector3(0,0,0), Vector3(-1,0,1), Vector3(1,0,1), Vector3(1,0,-1), Vector3(-1,0,-1)); 
-	obs_sqr.insert(std::pair<int,Square>(0,sqr_1));
+	// 21-20-22-23 - right part
+	center = Vector3(4.f, 0, 14.f); top_left = Vector3(3.88f, 0, 15.544f); bot_right = Vector3(6.07f, 0, 12.695f);
+	Square s1 = Square(center, top_left, bot_right);
+
+
+	// 14-13-15-12 suqare
+	center = Vector3(11.f,0,14.f);	top_left = Vector3(9.571f,0,15.462f);  bot_right = Vector3(12.77f,0,12.695f);
+	Square s2 = Square(center, top_left, bot_right);
+	// 12-16-11-17 square
+	center = Vector3(14.f, 0, 12.f); top_left = Vector3(12.77f, 0, 12.69f); bot_right = Vector3(15.37f, 0, 9.65f);
+	Square s3 = Square(center, top_left, bot_right);
+	// 12 square corner inside (center slightly moved higher on the z)
+	center = Vector3(12.77f, 0, 13.00f); top_left = Vector3(11.45f, 0, 11.45f); bot_right = Vector3(11.77f, 0, 13.77f);
+	Square s4 = Square(center, top_left, bot_right);
+
+	// 19-18 - top half
+	center = Vector3(14.f, 0, 0.f); top_left = Vector3(12.77f, 0, 5.5f); bot_right = Vector3(15.37f, 0, 2.f);
+	Square s5 = Square(center, top_left, bot_right);
+	center = Vector3(14.f, 0, 0.f); top_left = Vector3(12.77f, 0, 2.f); bot_right = Vector3(15.37f, 0, 0.f);
+	Square s6 = Square(center, top_left, bot_right);
+
+	// 7-8-5-6 suqare
+	center = Vector3(6.f,0,9.f);	top_left = Vector3(4.571f,0,10.462f);  bot_right = Vector3(7.77f,0,7.695f);
+	Square s7 = Square(center, top_left, bot_right);
+	// 5-9-10-4 square
+	center = Vector3(9.f, 0, 7.f); top_left = Vector3(7.77f, 0, 7.69f); bot_right = Vector3(10.37f, 0, 4.65f);
+	Square s8 = Square(center, top_left, bot_right);
+	// 5 square corner inside (center slightly moved higher on the z)
+	center = Vector3(7.77f, 0.F, 8.00f); top_left = Vector3(6.45f, 0, 6.45f); bot_right = Vector3(6.77f, 0, 8.77f);
+	Square s9 = Square(center, top_left, bot_right);
+
+	// 1-2-3 - center offseted to be 1
+	center = Vector3(2.71f, 0, 2.63f); top_left = Vector3(2.71f, 0,5.46f); bot_right = Vector3(5.58f, 0, 2.63f);
+	Square s10 = Square(center, top_left, bot_right);
+
+	// q1 no flip , X > 0, Z > 0
+	obs_sqr.push_back(s0);
+	obs_sqr.push_back(s1);
+	obs_sqr.push_back(s2);
+	obs_sqr.push_back(s3);
+	obs_sqr.push_back(s4);
+	obs_sqr.push_back(s5);
+	obs_sqr.push_back(s6);
+	obs_sqr.push_back(s7);
+	obs_sqr.push_back(s8);
+	obs_sqr.push_back(s9);
+	obs_sqr.push_back(s10);
+
+	// q2 flip on the Z axis. X < 0, Z > 0
+	obs_sqr.push_back(s0.flip_z_axis());
+	obs_sqr.push_back(s1.flip_z_axis());
+	obs_sqr.push_back(s2.flip_z_axis());
+	obs_sqr.push_back(s3.flip_z_axis());
+	obs_sqr.push_back(s4.flip_z_axis());
+	obs_sqr.push_back(s5.flip_z_axis());
+	obs_sqr.push_back(s6.flip_z_axis());
+	obs_sqr.push_back(s7.flip_z_axis());
+	obs_sqr.push_back(s8.flip_z_axis());
+	obs_sqr.push_back(s9.flip_z_axis());
+	obs_sqr.push_back(s10.flip_z_axis());
+
+	// q3 flip on the Z axis and the X axis. X < 0, Z < 0
+	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s1.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s2.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s3.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s4.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s5.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s6.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s7.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s8.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s9.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s10.flip_z_axis().flip_x_axis());
+
+	// q4 flip on the  X axis. X > 0, Z < 0
+	obs_sqr.push_back(s0.flip_x_axis());
+	obs_sqr.push_back(s1.flip_x_axis());
+	obs_sqr.push_back(s2.flip_x_axis());
+	obs_sqr.push_back(s3.flip_x_axis());
+	obs_sqr.push_back(s4.flip_x_axis());
+	obs_sqr.push_back(s5.flip_x_axis());
+	obs_sqr.push_back(s6.flip_x_axis());
+	obs_sqr.push_back(s7.flip_x_axis());
+	obs_sqr.push_back(s8.flip_x_axis());
+	obs_sqr.push_back(s9.flip_x_axis());
+	obs_sqr.push_back(s10.flip_x_axis());
+
+	// TODO need to add 4 corner squares for 2nd inner loop.
+	// TODO need to add 4 outer walls.
 }
 
-#define LENGTH_OF_RAY 3
-#define SENSOR_ANGLE 5
-#define IN_FRONT_ANGLE 45
+#define LENGTH_OF_RAY 3.75
+#define LENGTH_OF_RAY_FORWARD 3.5
+#define SENSOR_ANGLE 10
+
+#define IN_FRONT_ANGLE 140
+#define FAR_AWAY 6
 
 void GameAi::avoid_obs_sqr(int index, bool send)
 {
-	std::map<int, Square> danger_sqr;
+	std::vector<Square> danger_sqr;
 	std::vector<int> old_index;
 
-	
-
-	for(int i = 0; i<obs_sqr.size(); i++)
+	for(unsigned int i = 0; i<obs_sqr.size(); i++)
 	{
 		Square square = obs_sqr.at(i);
 
 		float angle = GameAi::getAngle(Vector2(square.getCenter().x, square.getCenter().z), index);
-
-		if (abs(angle) < IN_FRONT_ANGLE )
+		//float dist_to_obs = GameAi::get_distance(state->Karts[i].vPos, square.getCenter());
+		if ( abs(RADTODEG(angle)) < IN_FRONT_ANGLE )
 		{
 			btVector3 left_ray = state->Karts[index].forDirection.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
 			btVector3 right_ray = state->Karts[index].forDirection.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
@@ -371,14 +452,16 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 			Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
 			Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
 
-			int intersections_forward = square.LineIntersectsSquare(state->Karts[index].vPos, direction, LENGTH_OF_RAY);
+			int intersections_forward = square.LineIntersectsSquare(state->Karts[index].vPos, direction, LENGTH_OF_RAY_FORWARD);
 			int intersections_left = square.LineIntersectsSquare(state->Karts[index].vPos, left_sensor, LENGTH_OF_RAY);
 			int intersections_right = square.LineIntersectsSquare(state->Karts[index].vPos, right_sensor, LENGTH_OF_RAY);
 
 			if (intersections_forward + intersections_left + intersections_right > 0)
 			{
-				danger_sqr.insert(std::pair<int,Square>(i, square));
+				danger_sqr.push_back(square);
 				old_index.push_back(i);
+
+				/*
 				if (intersections_forward > 0)
 					DEBUGOUT("Intersects forward with %d %f times!\n" , i, intersections_forward);
 
@@ -387,6 +470,7 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 
 				if (intersections_right > 0)
 					DEBUGOUT("Intersects right with %d %f times!\n" , i, intersections_right);
+				*/
 			}
 		}
 		
@@ -395,7 +479,7 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 	int most_threat = -1;
 	float most_threat_dist = 10000000.f;
 
-	for (int i = 0; i<danger_sqr.size(); i++)
+	for (unsigned int i = 0; i<danger_sqr.size(); i++)
 	{
 		Square square = danger_sqr.at(i);
 		Vector3 center = square.getCenter();
@@ -413,10 +497,10 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 	{
 		Square most_threat_sqr = danger_sqr.at(most_threat);
 		Vector3 center_threat = most_threat_sqr.getCenter();
-		Vector2 sphere_center = Vector2(center_threat.x, center_threat.z);
+		Vector2 sqr_center = Vector2(center_threat.x, center_threat.z);
 
 		// get angle between car and the most threatening obsticle.
-		float steer_correction_angle = getAngle(sphere_center, index);
+		float steer_correction_angle = getAngle(sqr_center, index);
 
 		float turn_value = 0;
 		if (steer_correction_angle > 0)
@@ -437,8 +521,8 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 		if (send)
 			m_pCurrentInput[index]->leftThumbStickRL = turn_value;
 
-		//float dist_to_center = abs(GameAi::get_distance(state->Karts[index].vPos, obs_sqr.at(old_index[most_threat]).getCenter()));
-		DEBUGOUT("Threat index: %d", old_index[most_threat])
+		// float dist_to_center = abs(GameAi::get_distance(state->Karts[index].vPos, obs_sqr.at(old_index[most_threat]).getCenter()));
+		DEBUGOUT("Threat index: %d\n", old_index[most_threat])
 		DEBUGOUT("CORRECTION ANGLE WAS: %f, Turn value was: %f\n", RADTODEG(steer_correction_angle), turn_value);
 	}
 }
@@ -448,9 +532,11 @@ float GameAi::get_distance(Vector3 a, Vector3 b)
 {
 	return sqrtf( pow( ((float)a.x - (float)b.x) , 2 ) + pow(((float)a.z - (float)b.z),2) );
 }
+
 /*
 SPHERE STUFF - Not needed ?  (Still testing...)
 
+std::map<int, Sphere> obs;
 
 // This is somewhat based by the line-sphere intersection article on wikipedia.
 Vector3 GameAi::findIntersection(Sphere s, Vector3 rayDirection, Vector3 rayOrigin)

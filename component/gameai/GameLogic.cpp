@@ -21,7 +21,7 @@ GameLogic::GameLogic()
 		respawn_pickup(i);
 
 	// seed random
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 }
 
 void GameLogic::add_pickup_points()

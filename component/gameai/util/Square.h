@@ -11,8 +11,20 @@ class Square
 	Vector3 topLeft, topRight, bottomRight, bottomLeft;
 
 public:
-	Square (Vector3 centerValue, Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl) 
+	Square (Vector3 centerValue, Vector3 tl, Vector3 tr, Vector3 br, Vector3 bl)
 	{
+		center = centerValue;
+		topLeft = tl; 
+		topRight = tr;
+		bottomRight = br; 
+		bottomLeft = bl;
+	}
+
+	Square (Vector3 centerValue, Vector3 tl, Vector3 br) 
+	{
+		Vector3 tr = Vector3(tl.x, tl.y, br.z);
+		Vector3 bl = Vector3(br.x, tl.y, tl.z);
+
 		center = centerValue;
 		topLeft = tl; 
 		topRight = tr;
@@ -32,6 +44,28 @@ public:
 	{
 		float x;
 		float y;
+	};
+
+	Square flip_x_axis()
+	{
+		Vector3 new_center = Vector3(getCenter().x, getCenter().y, -getCenter().z);
+		Vector3 new_tl = Vector3(getTopLeft().x, getTopLeft().y, -getTopLeft().z);
+		Vector3 new_tr = Vector3(getTopRight().x, getTopRight().y, -getTopRight().z);
+		Vector3 new_bl = Vector3(getBottomLeft().x, getBottomLeft().y, -getBottomLeft().z);
+		Vector3 new_br = Vector3(getBottomRight().x, getBottomRight().y, -getBottomRight().z);
+
+		return Square(new_center, new_tl, new_tr, new_bl, new_br);
+	};
+
+	Square flip_z_axis()
+	{
+		Vector3 new_center = Vector3(-getCenter().x, getCenter().y, getCenter().z);
+		Vector3 new_tl = Vector3(-getTopLeft().x, getTopLeft().y, getTopLeft().z);
+		Vector3 new_tr = Vector3(-getTopRight().x, getTopRight().y, getTopRight().z);
+		Vector3 new_bl = Vector3(-getBottomLeft().x, getBottomLeft().y, getBottomLeft().z);
+		Vector3 new_br = Vector3(-getBottomRight().x, getBottomRight().y, getBottomRight().z);
+
+		return Square(new_center, new_tl, new_tr, new_bl, new_br);
 	};
 
 	// Given three colinear points p, q, r, the function checks if
