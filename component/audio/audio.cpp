@@ -6,17 +6,17 @@
 	DEBUGOUT("FMOD error! (%d) %s\n", res, FMOD_ErrorString(res));\
     exit(-1);}
 
-#define PITCHSCALE 0.1
-#define MAX_PITCH 2
+#define PITCHSCALE 0.1f
+#define MAX_PITCH 2.0f
 #define ENGINE_SOUND_FILE "assets/audio/engineNoise3.wav"
 
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
-#define MUSIC_VOLUME 0.03
-#define SOUND_EFFECTS_VOLUME 0.1
-#define LOW_ENGINE_NOISE_VOLUME 1
+#define MUSIC_VOLUME 0.03f
+#define SOUND_EFFECTS_VOLUME 0.1f
+#define LOW_ENGINE_NOISE_VOLUME 1.0f
 
 Audio::Audio() {
 	
@@ -133,6 +133,7 @@ int Audio::SetupHardware(){
 		*/
 		result = m_system->init(100, FMOD_INIT_NORMAL, 0);
 	}
+	return 1;
 }
 
 void Audio::SetupEngineSounds(){

@@ -191,7 +191,7 @@ void Simulation::step(double seconds)
 #define ENGINE_MAX_FORCE (2000)
 #define BRAKE_MAX_FORCE (1500)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (30.0)
+#define MAX_SPEED (30)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -207,11 +207,11 @@ void Simulation::step(double seconds)
 
 			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
 			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
-			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/3), 0.5);
+			fTurnPower *= MIN((1.0f - (speed / MAX_SPEED)/3), 0.5f);
 
 			gVehicleSteering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
-			gBrakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
+			gBrakingForce = (Real)( input->bPressed ? E_BRAKE_FORCE : 0 );
 
 			btVector3 forward = m_vehicle->getForwardVector();
 
@@ -322,7 +322,7 @@ void Simulation::UpdateGameState(double seconds)
 
 	state->Camera.vFocus = state->Karts[0].vPos + Vector3( 0, 0.5f, 0 );
 
-	Real fLerpAmt = seconds * 5.0f;
+	Real fLerpAmt = (Real)seconds * 5.0f;
 
 	static Vector3 vLastofs = Vector3( 0, 1.0f, -1.5f );
 	if( vUp.y > 0.5f )

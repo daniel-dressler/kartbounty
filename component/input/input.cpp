@@ -211,13 +211,13 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		break;
 	case LEFT_TRIGGER_AXIS:
 		{
-		double leftTriggerValue = moveAmt;
+		float leftTriggerValue = moveAmt;
 		m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
 		break;
 		}
 	case RIGHT_TRIGGER_AXIS:
 		{
-		double rightTriggerValue = moveAmt;
+		float rightTriggerValue = moveAmt;
 		m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
 		break;
 		}

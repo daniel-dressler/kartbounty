@@ -17,7 +17,7 @@ std::vector<Square> obs_sqr;
 GameAi::GameAi()
 {
 	// seed random
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	state = GetMutState();
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
@@ -37,8 +37,6 @@ GameAi::GameAi()
 		m_pPreviousInput[i]->bPressed = false;
 		m_pPreviousInput[i]->xPressed = false;
 		m_pPreviousInput[i]->yPressed = false;
-<<<<<<< HEAD
-
 		// Kart id
 		m_pPreviousInput[i]->kart_index = 0;
 
@@ -46,9 +44,6 @@ GameAi::GameAi()
 		state->Karts[i].isPlayer = false;
 
 		state->Karts[i].target_to_move = think_of_target(i);
-=======
-		m_pPreviousInput[i]->kart_index = 0;
->>>>>>> fd5f92f4fe1c2efce769eab23cce44d6313f9c66
 	}
 
 
@@ -94,9 +89,9 @@ int GameAi::planFrame()
 	m_mb->emptyMail();
 
 	// Yield until next frame
-	Real timeForLastFrame = frame_timer.CalcSeconds();
-	Real sleepPeriod = 0.016 - timeForLastFrame;
-	if (sleepPeriod > 0.0) {
+	Real timeForLastFrame = (Real)frame_timer.CalcSeconds();
+	Real sleepPeriod = 0.016f - timeForLastFrame;
+	if (sleepPeriod > 0.0f) {
 		std::chrono::milliseconds timespan( (int)( sleepPeriod * 1000.0f ) );
 		std::this_thread::sleep_for(timespan);
 	}
@@ -109,7 +104,7 @@ int GameAi::planFrame()
 		//DEBUGOUT( "FPS: %d\n", frames);
 		frames = 0;
 	}
-	timeAtLastFrame = fps_timer.CalcSeconds();
+	timeAtLastFrame = (Real)fps_timer.CalcSeconds();
 
 	return 1;
 }
@@ -260,7 +255,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 		{
 			//DEBUGOUT("DRIVE FORWARD!!\n");
 			
-			m_pCurrentInput[index]->rightTrigger = 0.7;
+			m_pCurrentInput[index]->rightTrigger = 0.7f;
 			m_pCurrentInput[index]->leftTrigger = 0;
 
 			btScalar turn_value = diff_ang ;
@@ -312,7 +307,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 Real GameAi::getElapsedTime()
 {
-	Real period = frame_timer.CalcSeconds();
+	Real period = (Real)frame_timer.CalcSeconds();
 	frame_timer.ResetClock();
 	return period;
 }
@@ -440,7 +435,7 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 	std::vector<Square> danger_sqr;
 	std::vector<int> old_index;
 
-	for(int i = 0; i<obs_sqr.size(); i++)
+	for(unsigned int i = 0; i<obs_sqr.size(); i++)
 	{
 		Square square = obs_sqr.at(i);
 
@@ -484,7 +479,7 @@ void GameAi::avoid_obs_sqr(int index, bool send)
 	int most_threat = -1;
 	float most_threat_dist = 10000000.f;
 
-	for (int i = 0; i<danger_sqr.size(); i++)
+	for (unsigned int i = 0; i<danger_sqr.size(); i++)
 	{
 		Square square = danger_sqr.at(i);
 		Vector3 center = square.getCenter();
