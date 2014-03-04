@@ -155,6 +155,9 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_SPACE:
 		m_pCurrentInput->bPressed = true;
 		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = true;
+		break;
 	default:
 		break;
 	}
@@ -186,6 +189,9 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_SPACE:
 		m_pCurrentInput->bPressed = false;
 		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = false;
+		break;
 	default:
 		break;
 	}
@@ -212,13 +218,13 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		break;
 	case LEFT_TRIGGER_AXIS:
 		{
-		double leftTriggerValue = moveAmt;
+		float leftTriggerValue = moveAmt;
 		m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
 		break;
 		}
 	case RIGHT_TRIGGER_AXIS:
 		{
-		double rightTriggerValue = moveAmt;
+		float rightTriggerValue = moveAmt;
 		m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
 		break;
 		}

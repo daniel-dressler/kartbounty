@@ -6,17 +6,17 @@
 	DEBUGOUT("FMOD error! (%d) %s\n", res, FMOD_ErrorString(res));\
     exit(-1);}
 
-#define PITCHSCALE 0.1
-#define MAX_PITCH 2
+#define PITCHSCALE 0.1f
+#define MAX_PITCH 2.0f
 #define ENGINE_SOUND_FILE "assets/audio/engineNoise3.wav"
 
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
-#define MUSIC_VOLUME 0.03
-#define SOUND_EFFECTS_VOLUME 0.1
-#define LOW_ENGINE_NOISE_VOLUME 1
+#define MUSIC_VOLUME 0.03f
+#define SOUND_EFFECTS_VOLUME 0.1f
+#define LOW_ENGINE_NOISE_VOLUME 1.0f
 
 Audio::Audio() {
 	
@@ -133,6 +133,7 @@ int Audio::SetupHardware(){
 		*/
 		result = m_system->init(100, FMOD_INIT_NORMAL, 0);
 	}
+	return 1;
 }
 
 void Audio::SetupEngineSounds(){
@@ -188,10 +189,14 @@ void Audio::OutputMemUsage(){
 	float stream;
 	float update;
 	float total;
+	//uint32_t memUsage;
+
 
 	m_system->getCPUUsage(0, &stream, 0, &update, &total);
+	//m_system->getMemoryInfo(FMOD_MEMBITS_ALL, FMOD_EVENT_MEMBITS_ALL, &memUsage, 0);
 
 	DEBUGOUT("Audio CPU usage:  Stream: %lf | Update: %lf | Total: %lf\n", stream, update, total);
+	//DEBUGOUT("Audio MEM usage:  %d\n", memUsage);
 }
 
 int Audio::LoadMusic(char* file){
@@ -280,10 +285,6 @@ void Audio::Update(Real seconds){
 	if (GetState().key_map['p']){
 		ToggleMusic();
 	}
-	if (GetState().key_map['-']){
-		sfxVol -= Clamp(sfxVol - 0.1f);
-		ERRCHECK(m_channelGroupEffects->setVolume(sfxVol));		
-	}
 
 	// Check for input events
 	if( m_pMailbox )
@@ -329,8 +330,9 @@ void Audio::Update(Real seconds){
 				// Update Kart Engine Sounds
 				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 
-				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
-				ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
+				//m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
+				
+				//ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
 
 				//lowfreqChannel->setVolume(1 - (newPitch / 2));
 
@@ -358,6 +360,7 @@ void Audio::Update(Real seconds){
 		m_pMailbox->emptyMail();
 	}
 
+	UpdateKartsPos();
 	UpdateListenerPos();
 
 	ERRCHECK(m_system->update());
