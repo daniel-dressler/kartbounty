@@ -37,6 +37,7 @@ GameAi::GameAi()
 		m_pPreviousInput[i]->bPressed = false;
 		m_pPreviousInput[i]->xPressed = false;
 		m_pPreviousInput[i]->yPressed = false;
+<<<<<<< HEAD
 
 		// Kart id
 		m_pPreviousInput[i]->kart_index = 0;
@@ -45,6 +46,9 @@ GameAi::GameAi()
 		state->Karts[i].isPlayer = false;
 
 		state->Karts[i].target_to_move = think_of_target(i);
+=======
+		m_pPreviousInput[i]->kart_index = 0;
+>>>>>>> fd5f92f4fe1c2efce769eab23cce44d6313f9c66
 	}
 
 

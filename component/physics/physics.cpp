@@ -191,7 +191,7 @@ void Simulation::step(double seconds)
 #define ENGINE_MAX_FORCE (2000)
 #define BRAKE_MAX_FORCE (1500)
 #define E_BRAKE_FORCE (200)
-#define MAX_SPEED (25.0)
+#define MAX_SPEED (30.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
