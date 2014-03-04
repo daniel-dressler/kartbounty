@@ -14,8 +14,8 @@
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
-#define MUSIC_VOLUME 0.15
-#define SOUND_EFFECTS_VOLUME 0.5
+#define MUSIC_VOLUME 0.03
+#define SOUND_EFFECTS_VOLUME 0.1
 #define LOW_ENGINE_NOISE_VOLUME 1
 
 Audio::Audio() {
@@ -37,7 +37,8 @@ Audio::Audio() {
 	m_channelGroupEffects->setVolume(sfxVol);
 
 	// Load all the sound files
-	LoadMusic("assets/audio/battlescene.wav");	
+	LoadMusic("assets/audio/BrainDead.mp3");
+	playMusic = true;
 
 	Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
@@ -46,8 +47,6 @@ Audio::Audio() {
 	StartMusic();
 	//Setup3DEnvironment();
 	SetupEngineSounds();
-
-
 }
 
 Audio::~Audio() {
@@ -227,10 +226,8 @@ void Audio::StartMusic(){
 }
 
 void Audio::ToggleMusic(){
-	bool *toggle;
-	toggle = false;
-	m_channelGroupMusic->getPaused(toggle);
-	m_channelGroupMusic->setPaused(!toggle);
+	playMusic = !playMusic;
+	m_channelGroupMusic->setPaused(playMusic);
 }
 
 void Audio::UpdateListenerPos(){
@@ -284,7 +281,7 @@ void Audio::Update(Real seconds){
 		ToggleMusic();
 	}
 	if (GetState().key_map['-']){
-		sfxVol -= Clamp(sfxVol - 0.1);
+		sfxVol -= Clamp(sfxVol - 0.1f);
 		ERRCHECK(m_channelGroupEffects->setVolume(sfxVol));		
 	}
 

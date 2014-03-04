@@ -30,6 +30,8 @@ private:
 	int LoadSound(char* file);
 	int LoadMusic(char* file);
 
+	bool playMusic;
+
 	float musicVol;
 	float sfxVol;
 
