@@ -285,10 +285,6 @@ void Audio::Update(Real seconds){
 	if (GetState().key_map['p']){
 		ToggleMusic();
 	}
-	if (GetState().key_map['-']){
-		sfxVol -= Clamp(sfxVol - 0.1f);
-		ERRCHECK(m_channelGroupEffects->setVolume(sfxVol));		
-	}
 
 	// Check for input events
 	if( m_pMailbox )
@@ -334,8 +330,9 @@ void Audio::Update(Real seconds){
 				// Update Kart Engine Sounds
 				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 
-				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
-				ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
+				//m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
+				
+				//ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
 
 				//lowfreqChannel->setVolume(1 - (newPitch / 2));
 
@@ -363,6 +360,7 @@ void Audio::Update(Real seconds){
 		m_pMailbox->emptyMail();
 	}
 
+	UpdateKartsPos();
 	UpdateListenerPos();
 
 	ERRCHECK(m_system->update());

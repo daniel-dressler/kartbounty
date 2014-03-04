@@ -154,6 +154,9 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_SPACE:
 		m_pCurrentInput->bPressed = true;
 		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = true;
+		break;
 	default:
 		break;
 	}
@@ -184,6 +187,9 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_SPACE:
 		m_pCurrentInput->bPressed = false;
+		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = false;
 		break;
 	default:
 		break;

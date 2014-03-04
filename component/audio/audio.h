@@ -23,7 +23,6 @@ private:
 	FMOD::ChannelGroup *m_channelGroupEngineSound;
 
 	FMOD::DSP *m_pitchShift;
-	FMOD::DSP *m_lowfreqPitchShift;
 
 	Real enginePitch[NUM_KARTS];
 
