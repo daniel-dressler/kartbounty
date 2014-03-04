@@ -322,6 +322,10 @@ void GameAi::init_graph()
 	path.push_back(Vector3(15.5f, 0.f, -15.5f));
 	path.push_back(Vector3(-15.5f, 0.f, -15.5f));
 	path.push_back(Vector3(0.f, 0.f, 0.f));
+	path.push_back(Vector3(11.5f, 0.f, 0.f));
+	path.push_back(Vector3(-11.5f, 0.f, 0.f));
+	path.push_back(Vector3(0.f, 0.f, 11.5f));
+	path.push_back(Vector3(0.f, 0.f, -11.5f));
 }
 
 // This maps the obsticles to square obsticles.
