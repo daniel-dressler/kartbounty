@@ -10,9 +10,9 @@
 // inventory when such exists.
 // HACK!
 
-#define MAX_POWERUPS	2
-#define NUM_KARTS	2
-#define PLAYER_KART 10
+#define MAX_POWERUPS	4
+#define NUM_KARTS	3
+#define PLAYER_KART 0
 
 typedef struct StateData
 {
@@ -29,7 +29,19 @@ typedef struct StateData
 		// This is where the AI is planning to go
 		bool		isPlayer;
 		Vector3		target_to_move;
-		Real		TimeStartedTarget;
+		int			TimeStartedTarget;
+
+		// physics info
+		float	gVehicleSteering;
+		float	gEngineForce;
+		float	gBrakingForce ;
+
+		float	wheelFriction ;
+		float	suspensionStiffness ;
+		float	suspensionDamping ;
+		float	suspensionCompression ;
+		float	rollInfluence ; // Keep low to prevent car flipping
+		float	suspensionTravelcm ;
 
 	} Karts[NUM_KARTS];
 

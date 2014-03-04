@@ -37,18 +37,12 @@ GameAi::GameAi()
 		m_pPreviousInput[i]->bPressed = false;
 		m_pPreviousInput[i]->xPressed = false;
 		m_pPreviousInput[i]->yPressed = false;
-<<<<<<< HEAD
 
 		// Kart id
-		m_pPreviousInput[i]->kart_index = 0;
-
-		// if (i == PLAYER_KART)
-		state->Karts[i].isPlayer = false;
+		m_pPreviousInput[i]->kart_index = i;
 
 		state->Karts[i].target_to_move = think_of_target(i);
-=======
-		m_pPreviousInput[i]->kart_index = 0;
->>>>>>> fd5f92f4fe1c2efce769eab23cce44d6313f9c66
+
 	}
 
 
@@ -126,15 +120,16 @@ void GameAi::update(Real elapsed_time)
 
 		DEBUGOUT("Pos: %f, %f, %f\n", x_pos, y_pos, z_pos);
 	}
+
 	move_all(elapsed_time);
 }
 
-bool UseAI = 0;
+bool UseAI = 1;
 bool Prev = 0;
 
 void GameAi::move_all(Real elapsed_time)
 {
-	int index = 0;
+	//int index = 0;
 	//for (int index=0; i<NUM_KARTS; i++)
 
 	bool ButtonPressed = state->key_map['m'];
@@ -149,8 +144,11 @@ void GameAi::move_all(Real elapsed_time)
 	// CURRENTLY player_kart doesn't really do anything.
 	if (UseAI)
 	{
-		if (index != PLAYER_KART)
-			GameAi::move_kart(index, elapsed_time);
+		for (int index = 0; index<NUM_KARTS; index++)
+		{
+			if (index != PLAYER_KART)
+				GameAi::move_kart(index, elapsed_time);
+		}
 	}
 }
 

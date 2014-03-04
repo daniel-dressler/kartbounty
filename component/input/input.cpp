@@ -25,6 +25,7 @@ Input::Input() {
 	m_pPreviousInput->bPressed = false;
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
+
 	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
 }
 

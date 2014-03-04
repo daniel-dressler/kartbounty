@@ -36,7 +36,7 @@ int main( int argc, char** argv )
 	GameAi *gameai = new GameAi();
 	// Logic
 	GameLogic *logic = new GameLogic();
-
+	Real elapsed_time = 0;
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
 	{

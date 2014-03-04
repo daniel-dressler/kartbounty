@@ -17,6 +17,7 @@ namespace Events {
 		StateUpdate,
 		Input,
 		PowerupPickup,
+		Reset,
 		Quit
 	};
 
@@ -40,6 +41,9 @@ namespace Events {
 		int picker_kart_index[MAX_POWERUPS];
 	ENDEVENT;
 
+	EVENTSTRUCT(Reset)
+		bool kart_to_reset[NUM_KARTS];
+	ENDEVENT;
 
 	EVENTSTRUCT(Input)
 		// Controller Buttons
