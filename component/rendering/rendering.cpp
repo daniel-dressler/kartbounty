@@ -14,16 +14,38 @@ private:
 	GLbuffer			m_bufPerMesh;
 	GLbuffer			m_bufPerFrame;
 
-	GLmesh				m_mshArena;
+
+	// Arena
+	GLmesh				m_mshArenaCldr;
+
+	GLmesh				m_mshArenaWalls;
+	GLtex				m_difArenaWalls;
+	GLtex				m_nrmArenaWalls;
+
+	GLmesh				m_mshArenaFlags;
+	GLtex				m_difArenaFlags;
+	GLtex				m_nrmArenaFlags;
+
+	GLmesh				m_mshArenaTops;
+	GLtex				m_difArenaTops;
+	GLtex				m_nrmArenaTops;
+
+	GLmesh				m_mshArenaFloor;
+	GLtex				m_difArenaFloor;
+	GLtex				m_nrmArenaFloor;
+
 	GLmesh				m_mshKart;
+
+	// Power ups
 	GLmesh				m_mshPowerRing1;
 	GLmesh				m_mshPowerRing2;
 	GLmesh				m_mshPowerSphere;
 
-	GLtex				m_texDiffuse;
-	GLtex				m_texNormal;
 
 	Vector3				m_vArenaOfs;
+
+	void _DrawArena();
+	void _DrawArenaQuad( Vector3 vColor );
 
 public:
 	int Init( SDL_Window* win );
@@ -95,10 +117,31 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-	glhDestroyTexture( m_texDiffuse );
-	glhDestroyTexture( m_texNormal );
-	glhDestroyMesh( m_mshArena );
+
+	glhDestroyMesh( m_mshArenaCldr );
+
+	glhDestroyMesh( m_mshArenaWalls );
+	glhDestroyTexture( m_difArenaWalls );
+	glhDestroyTexture( m_nrmArenaWalls );
+
+	glhDestroyMesh( m_mshArenaFlags );
+	glhDestroyTexture( m_difArenaFlags );
+	glhDestroyTexture( m_nrmArenaFlags );
+
+	glhDestroyMesh( m_mshArenaTops );
+	glhDestroyTexture( m_difArenaTops );
+	glhDestroyTexture( m_nrmArenaTops );
+
+	glhDestroyMesh( m_mshArenaFloor );
+	glhDestroyTexture( m_difArenaFloor );
+	glhDestroyTexture( m_nrmArenaFloor );
+
 	glhDestroyMesh( m_mshKart );
+
+	glhDestroyMesh( m_mshPowerRing1 );
+	glhDestroyMesh( m_mshPowerRing2 );
+	glhDestroyMesh( m_mshPowerSphere );
+
 	glhDestroyBuffer( m_bufPerMesh );
 	glhDestroyBuffer( m_bufPerFrame );
 	glhUnloadEffect( m_eftMesh );
@@ -163,7 +206,7 @@ int Renderer::Init( SDL_Window* win )
 	{
 		GLchar* pData;
 		Int32 nSize;
-		if( !glhReadFile( "assets/Arena6.msh", pData, nSize ) )
+		if( !glhReadFile( "assets/arena_cldr.msh", pData, nSize ) )
 			return 0;
 
 		SEG::Mesh meshdata;
@@ -173,9 +216,38 @@ int Renderer::Init( SDL_Window* win )
 
 		free( pData );
 
-		if( !glhCreateMesh( m_mshArena, meshdata ) )
+		if( !glhCreateMesh( m_mshArenaCldr, meshdata ) )
 			return 0;
 	}
+
+	if( !LoadMesh( m_mshArenaWalls, "assets/arena_walls.msh" ) )
+		return 0;
+	if( !glhLoadTexture( m_difArenaWalls, "assets/arena_walls_diff.png" ) )
+		return 0;
+	if( !glhLoadTexture( m_nrmArenaWalls, "assets/arena_walls_norm.png" ) )
+		return 0;
+
+	if( !LoadMesh( m_mshArenaFlags, "assets/arena_flags.msh" ) )
+		return 0;
+	if( !glhLoadTexture( m_difArenaFlags, "assets/arena_flags_diff.png" ) )
+		return 0;
+	if( !glhLoadTexture( m_nrmArenaFlags, "assets/arena_flags_norm.png" ) )
+		return 0;
+
+	if( !LoadMesh( m_mshArenaFloor, "assets/arena_floor.msh" ) )
+		return 0;
+	if( !glhLoadTexture( m_difArenaFloor, "assets/arena_floor_diff.png" ) )
+		return 0;
+	if( !glhLoadTexture( m_nrmArenaFloor, "assets/blank_norm.png" ) )
+		return 0;
+
+	if( !LoadMesh( m_mshArenaTops, "assets/arena_tops.msh" ) )
+		return 0;
+	if( !glhLoadTexture( m_difArenaTops, "assets/blank.png" ) )
+		return 0;
+	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
+		return 0;
+
 
 	if( !LoadMesh( m_mshKart, "assets/Kart.msh" ) )
 		return 0;
@@ -191,12 +263,6 @@ int Renderer::Init( SDL_Window* win )
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
-
-	if( !glhLoadTexture( m_texDiffuse, "assets/brick_diff.png" ) )
-		return 0;
-
-	if( !glhLoadTexture( m_texNormal, "assets/brick_norm.png" ) )
-		return 0;
 
 	m_bInitComplete = 1;
 
@@ -267,17 +333,21 @@ int Renderer::Update( float fElapseSec )
 	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 
+	Real fLightDist = 17.0f;
+	Real fLightHeight = 5.0f;
+	Real fLightPower = 25.0f;
+	Real fSpinRadius = 4.0f;
 	MEMSET( perFrame.vLight, 0, sizeof(Vector4) * MAX_LIGHTS );
-	perFrame.vLight[0] = Vector4( SIN( m_fTime ) * 3, 2, COS( m_fTime ) * 3, 10 );
-	perFrame.vLight[1] = Vector4( 15, 5, 0, 15 );
-	perFrame.vLight[2] = Vector4( 0, 5, 15, 15 );
-	perFrame.vLight[3] = Vector4( -15, 5, 0, 15 );
-	perFrame.vLight[4] = Vector4( 0, 5, -15, 15 );
-	perFrame.vLight[5] = Vector4( 15, 5, 15, 15 );
-	perFrame.vLight[6] = Vector4( -15, 5, 15, 15 );
-	perFrame.vLight[7] = Vector4( 15, 5, -15, 15 );
-	perFrame.vLight[8] = Vector4( -15, 5, -15, 15 );
-	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * 3, 2, -COS( m_fTime ) * 3, 10 );
+	perFrame.vLight[0] = Vector4( SIN( m_fTime ) * fSpinRadius, 2, COS( m_fTime ) * fSpinRadius, fLightPower );
+	perFrame.vLight[1] = Vector4( fLightDist, fLightHeight, 0, fLightPower );
+	perFrame.vLight[2] = Vector4( 0, fLightHeight, fLightDist, fLightPower );
+	perFrame.vLight[3] = Vector4( -fLightDist, fLightHeight, 0, fLightPower );
+	perFrame.vLight[4] = Vector4( 0, fLightHeight, -fLightDist, fLightPower );
+	perFrame.vLight[5] = Vector4( fLightDist, fLightHeight, fLightDist, fLightPower );
+	perFrame.vLight[6] = Vector4( -fLightDist, fLightHeight, fLightDist, fLightPower );
+	perFrame.vLight[7] = Vector4( fLightDist, fLightHeight, -fLightDist, fLightPower );
+	perFrame.vLight[8] = Vector4( -fLightDist, fLightHeight, -fLightDist, fLightPower );
+	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * fSpinRadius, 2, -COS( m_fTime ) * fSpinRadius, fLightPower );
 
 	glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
@@ -292,38 +362,10 @@ int Renderer::Render()
 	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
-	glhEnableTexture( m_texDiffuse );
-	glhEnableTexture( m_texNormal, 1 );
-	
-	glCullFace( GL_BACK );
-	perMesh.vColor = Vector4( 1,1,1,1 );
-	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
-	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, 1 );
-	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_mshArena );
+	_DrawArena();
 
-	perMesh.vColor = Vector4( 1,1,1,1 );
-	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( 1, 1, -1 );
-	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_mshArena );
-	
-	glCullFace( GL_FRONT );
-	perMesh.vColor = Vector4( 1,1,1,1 );
-	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs );
-	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_mshArena );
-
-	perMesh.vColor = Vector4( 1,1,1,1 );
-	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
-	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
-	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-	glhDrawMesh( m_eftMesh, m_mshArena );
+	glhEnableTexture( m_difArenaTops );
+	glhEnableTexture( m_nrmArenaTops, 1 );
 
 	for( Int32 i = 0; i < NUM_KARTS; i++ )
 	{
@@ -366,4 +408,67 @@ int Renderer::Render()
 	SDL_GL_SwapWindow( m_Window );
 
 	return 1;
+}
+
+void Renderer::_DrawArena()
+{
+	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
+	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
+
+	// QUAD A
+	glCullFace( GL_BACK );
+	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, 1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	_DrawArenaQuad( Vector3( 1, 0, 0 ) );
+
+	// QUAD B
+	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( 1, 1, -1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	_DrawArenaQuad( Vector3( 0, 1, 0 ) );
+	
+	// QUAD C
+	glCullFace( GL_FRONT );
+	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	_DrawArenaQuad( Vector3( 1, 1, 0 ) );
+
+	// QUAD D
+	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	_DrawArenaQuad( Vector3( 0, 0, 1 ) );
+}
+
+void Renderer::_DrawArenaQuad( Vector3 vColor )
+{
+	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
+	perMesh.vColor = Vector4( 1,1,1,1 );
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+	glhEnableTexture( m_difArenaWalls );
+	glhEnableTexture( m_nrmArenaWalls, 1 );
+	glhDrawMesh( m_eftMesh, m_mshArenaWalls );
+
+	glhEnableTexture( m_difArenaFloor );
+	glhEnableTexture( m_nrmArenaFloor, 1 );
+	glhDrawMesh( m_eftMesh, m_mshArenaFloor );
+
+	perMesh.vColor = Vector4( vColor,1 );
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+	glhEnableTexture( m_difArenaTops );
+	glhEnableTexture( m_nrmArenaTops, 1 );
+	glhDrawMesh( m_eftMesh, m_mshArenaTops );
+
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+	glhEnableTexture( m_difArenaFlags );
+	glhEnableTexture( m_nrmArenaFlags, 1 );
+	glhDrawMesh( m_eftMesh, m_mshArenaFlags );
+
+	glDisable( GL_BLEND );
 }

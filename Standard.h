@@ -21,7 +21,8 @@
 #include <Windows.h>
 
 #include <crtdbg.h>
-#define DEBUGOUT( str, ... ) { char out[4096]; sprintf_s( out, 4096, str, ##__VA_ARGS__ ); OutputDebugString( out ); }
+//#define DEBUGOUT( str, ... ) { char out[4096]; sprintf_s( out, 4096, str, ##__VA_ARGS__ ); OutputDebugString( out ); }
+#define DEBUGOUT( str, ... ) {}
 
 #ifdef _DEBUG
 #define INIT_PLATFORM() \
