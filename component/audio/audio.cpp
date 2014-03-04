@@ -188,10 +188,14 @@ void Audio::OutputMemUsage(){
 	float stream;
 	float update;
 	float total;
+	//uint32_t memUsage;
+
 
 	m_system->getCPUUsage(0, &stream, 0, &update, &total);
+	//m_system->getMemoryInfo(FMOD_MEMBITS_ALL, FMOD_EVENT_MEMBITS_ALL, &memUsage, 0);
 
 	DEBUGOUT("Audio CPU usage:  Stream: %lf | Update: %lf | Total: %lf\n", stream, update, total);
+	//DEBUGOUT("Audio MEM usage:  %d\n", memUsage);
 }
 
 int Audio::LoadMusic(char* file){
