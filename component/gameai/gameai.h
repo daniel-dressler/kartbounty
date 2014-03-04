@@ -23,9 +23,13 @@ private:
 	Events::InputEvent *m_pCurrentInput[NUM_KARTS];
 	Events::InputEvent *m_pPreviousInput[NUM_KARTS];
 
-	void GameAi::move_all();
+	void GameAi::move_all(Real time);
 	Vector3 think_of_target(int index);
-	void GameAi::move_kart(int index);
+	Vector3 GameAi::get_target_roaming();
+	Vector3 GameAi::get_target_aggressive();
+	Vector3 GameAi::get_target_pickups();
+
+	void GameAi::move_kart(int index, Real time);
 	void GameAi::drive(btScalar ang, btScalar dist, int index);
 	void GameAi::avoid_obs(int index, bool send);
 	void avoid_obs_sqr(int index, bool send);

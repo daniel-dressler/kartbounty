@@ -11,7 +11,7 @@
 // HACK!
 
 #define MAX_POWERUPS	2
-#define NUM_KARTS	4
+#define NUM_KARTS	2
 #define PLAYER_KART 10
 
 typedef struct StateData
@@ -29,6 +29,7 @@ typedef struct StateData
 		// This is where the AI is planning to go
 		bool		isPlayer;
 		Vector3		target_to_move;
+		Real		TimeStartedTarget;
 
 	} Karts[NUM_KARTS];
 

@@ -20,10 +20,11 @@ int main( int argc, char** argv )
 	// Rendering
 	if( !InitRendering() )
 		return 1;
-	
+
 	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
 	simulation->loadWorld();
+
 	// Input
 	Input *input = new Input();
 	// Audio
