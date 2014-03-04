@@ -40,7 +40,7 @@ Audio::Audio() {
 	LoadMusic("assets/audio/BrainDead.mp3");
 	playMusic = true;
 
-	Sounds.PowerUp = LoadSound("assets/audio/powerup1.wav");
+	Sounds.PowerUp = LoadSound("assets/audio/powerup2.wav");
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
 	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
 
@@ -326,14 +326,10 @@ void Audio::Update(Real seconds){
 
 				enginePitch[input->kart_index] = newPitch;
 
-				//DEBUGOUT("New pitch: %lf\n", newPitch);
-
 				// Update Kart Engine Sounds
-				//ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, input->rightTrigger * MAX_PITCH));
 				ERRCHECK(m_KartEngineDSPList[input->kart_index]->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
-				m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
-				//ERRCHECK(m_lowfreqPitchShift->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, GetState().Karts[0].vSpeed / 25 * MAX_PITCH));
-				//lowfreqChannel->setVolume(1 - (newPitch / 2));
+				//m_EngineChannelList[input->kart_index]->setVolume(newPitch / 2);
+				//m_IdleNoiseChannelList[input->kart_index]->setVolume(1 - (newPitch / 2));
 			}
 			else if(aryEvents[i]->type = (Events::EventType::PowerupPickup))
 			{
