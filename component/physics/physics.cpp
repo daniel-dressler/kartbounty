@@ -105,8 +105,8 @@ int Simulation::loadWorld()
 
 		btTransform tr;
 		tr.setIdentity();
-		switch(kart_index)
-		tr.setOrigin(btVector3(0,4,1));		// This sets where the car initially spawns
+		tr.setOrigin(btVector3(0,3,0));		// This sets where the car initially spawns
+		
 		m_carChassis[kart_index] = addRigidBody(CAR_MASS, tr, compound);
 
 		m_vehicleRayCaster[kart_index] = new btDefaultVehicleRaycaster(m_world);
@@ -169,6 +169,7 @@ int Simulation::loadWorld()
 			//synchronize the wheels with the (interpolated) chassis worldtransform
 			m_vehicle[kart_index]->updateWheelTransform(i,true);
 		}
+
 
 		btTransform car1 = m_vehicle[kart_index]->getChassisWorldTransform();
 		btVector3 pos = car1.getOrigin();
@@ -273,7 +274,7 @@ void Simulation::step(double seconds)
 		m_vehicle[kart_index]->setBrake(state->Karts[kart_index].gBrakingForce, 3);
 
 	//	m_world->stepSimulation((btScalar)seconds, 10, 0.016666f / 2.0f);
-		m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f * 0.5f );
+		m_world->stepSimulation( (btScalar)seconds, 2, 0.0166666f * 0.5f );
 	//	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
 
 		if( m_vehicle[kart_index]->getRigidBody()->getWorldTransform().getOrigin().y() < -10.0f )
