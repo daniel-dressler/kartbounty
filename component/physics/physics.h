@@ -27,10 +27,10 @@ namespace Physics {
 		Events::Mailbox mb;
 
 		btDiscreteDynamicsWorld *m_world;
-		btVehicleRaycaster*	m_vehicleRayCaster;
-		btRaycastVehicle*	m_vehicle;
-		btRaycastVehicle::btVehicleTuning	m_tuning;
-		btRigidBody* m_carChassis;
+		btVehicleRaycaster*	m_vehicleRayCaster[NUM_KARTS];
+		btRaycastVehicle*	m_vehicle[NUM_KARTS];
+		btRaycastVehicle::btVehicleTuning	m_tuning[NUM_KARTS];
+		btRigidBody* m_carChassis[NUM_KARTS];
 		btRigidBody* m_arena;
 		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 
@@ -40,6 +40,6 @@ namespace Physics {
 		class btDefaultCollisionConfiguration* m_collisionConfiguration;
 
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
-		void UpdateGameState(double);
+		void UpdateGameState(double,int);
 	};
 };

@@ -10,22 +10,47 @@
 // inventory when such exists.
 // HACK!
 
-#define MAX_POWERUPS	12
+#define MAX_POWERUPS	2
+#define NUM_KARTS	4
+#define PLAYER_KART 0
 
 typedef struct StateData
 {
 	struct
 	{
 		Vector3		vPos;
+		Vector3		vOldPos;
 		Quaternion	qOrient;
+		Vector3		vUp;
+		btVector3	forDirection;
+		Vector4		vColor;
+		float		vSpeed;
 
-	} Karts[4];
+		// This is where the AI is planning to go
+		bool		isPlayer;
+		Vector3		target_to_move;
+		int			TimeStartedTarget;
+
+		// physics info
+		float	gVehicleSteering;
+		float	gEngineForce;
+		float	gBrakingForce ;
+
+		float	wheelFriction ;
+		float	suspensionStiffness ;
+		float	suspensionDamping ;
+		float	suspensionCompression ;
+		float	rollInfluence ; // Keep low to prevent car flipping
+		float	suspensionTravelcm ;
+
+	} Karts[NUM_KARTS];
 
 	struct
 	{
 		Int32		bEnabled;
 		Int32		nType;
 		Vector3		vPos;
+		int			pointId;
 	} Powerups[MAX_POWERUPS];
 
 	struct 

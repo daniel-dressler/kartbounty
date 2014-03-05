@@ -37,8 +37,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>.\lib\bullet\src;C:\Libraries\glew-1.10.0\include;C:\Libraries\SDL2-2.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\lib\bullet\lib;C:\Libraries\glew-1.10.0\lib\Release\Win32;C:\Libraries\SDL2-2.0.1\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\lib\bullet\src;C:\Libraries\glew-1.10.0\include;C:\Libraries\SDL2-2.0.1\include;c:\Libraries\fMod-4.44.31\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>.\lib\bullet\lib;C:\Libraries\glew-1.10.0\lib\Release\Win32;C:\Libraries\SDL2-2.0.1\lib\x86;c:\Libraries\fMod-4.44.31\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>.\lib\bullet\src;C:\Libraries\glew-1.10.0\include;C:\Libraries\SDL2-2.0.1\include;$(IncludePath)</IncludePath>
@@ -76,9 +76,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="component\audio\audio.cpp" />
     <ClCompile Include="component\entities\entities.cpp" />
     <ClCompile Include="component\events\events.cpp" />
     <ClCompile Include="component\gameai\gameai.cpp" />
+    <ClCompile Include="component\gameai\GameLogic.cpp" />
     <ClCompile Include="component\input\input.cpp" />
     <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
@@ -96,9 +98,18 @@
     <ClCompile Include="Standard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="component\audio\audio.h" />
     <ClInclude Include="component\entities\entities.h" />
     <ClInclude Include="component\events\events.h" />
     <ClInclude Include="component\gameai\gameai.h" />
+    <ClInclude Include="component\gameai\GameLogic.h" />
+    <ClInclude Include="component\gameai\graph\DistPair.h" />
+    <ClInclude Include="component\gameai\graph\Graph.h" />
+    <ClInclude Include="component\gameai\graph\Node.h" />
+    <ClInclude Include="component\gameai\util\Position.h" />
+    <ClInclude Include="component\gameai\util\Ray.h" />
+    <ClInclude Include="component\gameai\util\Sphere.h" />
+    <ClInclude Include="component\gameai\util\Square.h" />
     <ClInclude Include="component\input\input.h" />
     <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />

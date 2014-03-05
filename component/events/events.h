@@ -16,6 +16,8 @@ namespace Events {
 		ArenaCollider,
 		StateUpdate,
 		Input,
+		PowerupPickup,
+		Reset,
 		Quit
 	};
 
@@ -35,6 +37,14 @@ namespace Events {
 	EVENTSTRUCT(StateUpdate)
 	ENDEVENT;
 
+	EVENTSTRUCT(PowerupPickup)
+		int picker_kart_index[MAX_POWERUPS];
+	ENDEVENT;
+
+	EVENTSTRUCT(Reset)
+		int kart_to_reset;
+	ENDEVENT;
+
 	EVENTSTRUCT(Input)
 		// Controller Buttons
 		bool xPressed;
@@ -49,7 +59,9 @@ namespace Events {
 		float leftThumbStickUD;
 		float rightThumbStickRL;
 		float rightThumbStickUD;
-
+		
+		// The kart producing this event
+		int kart_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)

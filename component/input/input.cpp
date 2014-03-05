@@ -1,8 +1,9 @@
 #include <stdint.h>
 #include "input.h"
 #include "../../Standard.h"
-#include "../events/events.h"
 #include "../state/state.h"
+
+#define PLAYER_KART_INDEX 0
 
 Input::Input() {
 	m_pMailbox = new Events::Mailbox();	
@@ -24,9 +25,12 @@ Input::Input() {
 	m_pPreviousInput->bPressed = false;
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
+
+	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
 }
 
 Input::~Input() {
+	SDL_HapticClose(m_joy1Haptic);
 	SDL_JoystickClose(m_joystick1);
 	delete m_pPreviousInput;
 	delete m_pMailbox;
@@ -38,6 +42,7 @@ void Input::OpenJoysticks(){
 	int number_of_buttons;
 	number_of_buttons = SDL_JoystickNumButtons(m_joystick1);
 	DEBUGOUT("Joystick %i opened with %i buttons\n", m_joystick1, number_of_buttons);
+	DEBUGOUT("Number of haptic devices: %d\n", SDL_NumHaptics());
 }
 
 void Input::HandleEvents(){
@@ -46,16 +51,6 @@ void Input::HandleEvents(){
 
 	m_pCurrentInput = NEWEVENT(Input);
 	memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-
-	// Inititialize input event with previous events values, except buttons
-	//m_pCurrentInput->rightTrigger = 0;
-	//m_pCurrentInput->leftTrigger = 0;
-	//m_pCurrentInput->leftThumbStickRL = 0;
-	//m_pCurrentInput->rightThumbStickRL = 0;
-	//m_pCurrentInput->aPressed = false;
-	//m_pCurrentInput->bPressed = false;
-	//m_pCurrentInput->xPressed = false;
-	//m_pCurrentInput->yPressed = false;
 
 	//20ms into the future, ensures the input loop doesn't last longer than 10ms
 	Uint32 timeout = SDL_GetTicks() + 20;   
@@ -77,7 +72,8 @@ void Input::HandleEvents(){
 	m_pCurrentInput = NULL;
 }
 
-void Input::OnEvent(SDL_Event* Event) {
+void Input::OnEvent(SDL_Event* Event) 
+{
 	switch (Event->type)
 	{
 	case SDL_WINDOWEVENT:
@@ -156,6 +152,12 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_s:
 		m_pCurrentInput->leftTrigger = 1;
 		break;
+	case SDLK_SPACE:
+		m_pCurrentInput->bPressed = true;
+		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = true;
+		break;
 	default:
 		break;
 	}
@@ -184,6 +186,12 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_RIGHT:
 		m_pCurrentInput->leftThumbStickRL = 0;
 		break;
+	case SDLK_SPACE:
+		m_pCurrentInput->bPressed = false;
+		break;
+	case SDLK_LSHIFT:
+		m_pCurrentInput->aPressed = false;
+		break;
 	default:
 		break;
 	}
@@ -210,13 +218,13 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 		break;
 	case LEFT_TRIGGER_AXIS:
 		{
-		double leftTriggerValue = moveAmt;
+		float leftTriggerValue = moveAmt;
 		m_pCurrentInput->leftTrigger = (leftTriggerValue + 1) / 2;	//Scales the value to [0,1] instead of [-1,1]
 		break;
 		}
 	case RIGHT_TRIGGER_AXIS:
 		{
-		double rightTriggerValue = moveAmt;
+		float rightTriggerValue = moveAmt;
 		m_pCurrentInput->rightTrigger = (rightTriggerValue + 1) / 2;  //Scales the value to [0,1] instead of [-1,1]			
 		break;
 		}
