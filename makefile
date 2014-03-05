@@ -13,6 +13,7 @@ BDIR := build
 
 SRC = main.cpp Standard.cpp \
 	component/gameai/gameai.cpp \
+	component/gameai/GameLogic.cpp \
 	component/events/events.cpp \
 	component/input/input.cpp \
 	component/rendering/rendering.cpp \

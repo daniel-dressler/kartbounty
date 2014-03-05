@@ -1,8 +1,9 @@
 #pragma once
+#include <map>
+
+#include "graph/Graph.h"
 #include "../state/state.h"
 #include "../events/events.h"
-#include "graph/Graph.h"
-#include <map>
 
 class GameLogic 
 {

@@ -48,6 +48,13 @@ long _filelength(int fd);
 #define max(x,y) fmax(x,y)
 
 #define INIT_PLATFORM()
+// Stub for audio.h
+class Audio {
+	public:
+	void Update(double std) {
+		return;
+	}
+};
 #endif
 
 // Common opengl includes are the same on windows and linux, only mac differs

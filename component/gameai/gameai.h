@@ -23,23 +23,23 @@ private:
 	Events::InputEvent *m_pCurrentInput[NUM_KARTS];
 	Events::InputEvent *m_pPreviousInput[NUM_KARTS];
 
-	void GameAi::move_all(Real time);
+	void move_all(Real time);
 	Vector3 think_of_target(int index);
-	Vector3 GameAi::get_target_roaming();
-	Vector3 GameAi::get_target_aggressive();
-	Vector3 GameAi::get_target_pickups();
+	Vector3 get_target_roaming();
+	Vector3 get_target_aggressive();
+	Vector3 get_target_pickups();
 
-	void GameAi::move_kart(int index, Real time);
-	void GameAi::drive(btScalar ang, btScalar dist, int index);
-	void GameAi::avoid_obs(int index, bool send);
+	void move_kart(int index, Real time);
+	void drive(btScalar ang, btScalar dist, int index);
+	void avoid_obs(int index, bool send);
 	void avoid_obs_sqr(int index, bool send);
 	
-	void GameAi::send_reset_event(int index);
-	void GameAi::init_graph();
-	void GameAi::init_obs();
-	void GameAi::init_obs_sqr();
-	btScalar GameAi::getAngle(Vector2 target, int index);
+	void send_reset_event(int index);
+	void init_graph();
+	void init_obs();
+	void init_obs_sqr();
+	btScalar getAngle(Vector2 target, int index);
 
-	float GameAi::get_distance(Vector3 a, Vector3 b);
+	float get_distance(Vector3 a, Vector3 b);
 	Vector3 findIntersection(Sphere s, Vector3 rayDirection, Vector3 rayOrigin);
 };

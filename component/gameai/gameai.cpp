@@ -1,7 +1,8 @@
-#include "gameai.h"
 #include <chrono>
 #include <thread>
 #include <math.h>
+
+#include "gameai.h"
 #include "util/Sphere.h"
 #include "util/Square.h"
 

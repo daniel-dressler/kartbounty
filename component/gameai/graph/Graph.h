@@ -1,10 +1,12 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "Node.h"
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <iostream>
+
+#include "Node.h"
 
 #define MAX_VALUE 1000000;
 

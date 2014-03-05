@@ -1,14 +1,16 @@
-#include "GameLogic.h"
-#include <chrono>
-#include <thread>
+#include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <stdlib.h>
+
+#include <chrono>
+#include <thread>
+
+#include "GameLogic.h"
 
 #define NUM_OF_PICKUP_POINTS 5
 
 // Is there a pickup on a certain spot
-boolean is_point_occupied[NUM_OF_PICKUP_POINTS];
+bool is_point_occupied[NUM_OF_PICKUP_POINTS];
 
 GameLogic::GameLogic()
 {
@@ -58,7 +60,6 @@ void GameLogic::update(Real delta_time)
 {
 	elapsed_time = delta_time;
 
-	int i = 0;
 	//if (state->Powerups[i].bEnabled);
 		//state->Powerups[i].vPos = Vector3(0,0,5.5f);
 

@@ -2,13 +2,15 @@
 #include "Standard.h"
 
 // Sub-System Components
-#include "component/gameai/gameLogic.h"
+#include "component/gameai/GameLogic.h"
 #include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
 #include "component/state/state.h"
+#ifdef _WIN32
 #include "component/audio/audio.h"
+#endif
 
 
 int main( int argc, char** argv )
@@ -28,13 +30,12 @@ int main( int argc, char** argv )
 	// Input
 	Input *input = new Input();
 	// Audio
-	//Audio *audio = new Audio();
-
+	Audio *audio = new Audio();
 	// GameAi
 	GameAi *gameai = new GameAi();
 	// Logic
 	GameLogic *logic = new GameLogic();
-	Real elapsed_time = 0;
+
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
 	{
@@ -43,7 +44,7 @@ int main( int argc, char** argv )
 		input->HandleEvents();
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
-		//audio->Update(elapsed_time);
+		audio->Update(elapsed_time);
 		UpdateRendering(elapsed_time);
 		Render();
 	}
@@ -52,7 +53,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
-	//delete audio;
+	delete audio;
 	ShutdownRendering();
 
 	return 0;
