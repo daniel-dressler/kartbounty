@@ -19,6 +19,7 @@ Simulation::Simulation()
 	m_world->setGravity(btVector3(0,-7,0));
 
 	mb.request(Events::EventType::Input);
+	mb.request(Events::EventType::Reset);
 }
 
 Simulation::~Simulation()
@@ -224,38 +225,49 @@ void Simulation::step(double seconds)
 			// Add checking for speed to this to limit turning angle at high speeds @Kyle
 			state->Karts[kart_index].gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - m_vehicle[kart_index]->getCurrentSpeedKmHour() * 2;
 			//gEngineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger;
-
-			if( GetState().key_map['r'] )
-			{
-				btTransform trans;
-				trans.setOrigin( btVector3( 0, 1, 0 ) );
-				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
-				m_vehicle[kart_index]->getRigidBody()->setWorldTransform( trans );
-				m_vehicle[kart_index]->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
-			}
-
+			
 			if( input->yPressed )
 			{
-				btTransform trans = m_vehicle[kart_index]->getRigidBody()->getWorldTransform();
+				btTransform trans = m_vehicle[PLAYER_KART]->getRigidBody()->getWorldTransform();
 				btVector3 orig = trans.getOrigin();
 				orig.setY( orig.getY() + 0.01f );
 				trans.setOrigin( orig );
 				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
-				m_vehicle[kart_index]->getRigidBody()->setWorldTransform( trans );
+				m_vehicle[PLAYER_KART]->getRigidBody()->setWorldTransform( trans );
 			}
 
+			break;
 //			DEBUGOUT("Bforce: %lf, Eforce: %lf, Steer: %f\n", gBrakingForce, gEngineForce, gVehicleSteering);
 //			DEBUGOUT("Speed: %f\n", (float)ABS( m_vehicle->getCurrentSpeedKmHour() ) );
 		}
 		case Events::EventType::Reset:
 		{
+			Events::ResetEvent *reset_event = (Events::ResetEvent *)event;
+			int kart_index = reset_event->kart_to_reset;
 
+			btTransform trans;
+			trans.setOrigin( btVector3( 0, 1, 0 ) );
+			trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+			m_vehicle[kart_index]->getRigidBody()->setWorldTransform( trans );
+			m_vehicle[kart_index]->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+			break;
 		}
 		default:
 			break;
 		}
 	}
 	mb.emptyMail();
+
+	// Player reset
+	if (state->key_map['r'])
+	{
+		btTransform trans;
+		trans.setOrigin( btVector3( 0, 1, 0 ) );
+		trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+		m_vehicle[PLAYER_KART]->getRigidBody()->setWorldTransform( trans );
+		m_vehicle[PLAYER_KART]->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+	}
+	
 
 	for (int kart_index = 0; kart_index<NUM_KARTS; kart_index++)
 	{
@@ -288,7 +300,7 @@ void Simulation::step(double seconds)
 		UpdateGameState(seconds, kart_index);
 	}
 
-	m_world->stepSimulation( (btScalar)seconds, 100, 0.0166666f * 0.5f );
+	m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
 }
 
 // Updates the car placement in the world state

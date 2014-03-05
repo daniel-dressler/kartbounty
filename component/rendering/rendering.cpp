@@ -274,7 +274,7 @@ int Renderer::Init( SDL_Window* win )
 	GetState().Karts[0].vColor = Vector4( 1,0,0,1 );
 	GetState().Karts[1].vColor = Vector4( 0,0,1,1 );
 	GetState().Karts[2].vColor = Vector4( 0,1,0,1 );
-	//GetState().Karts[3].vColor = Vector4( 1,1,0,1 );
+	GetState().Karts[3].vColor = Vector4( 1,1,0,1 );
 
 	GetState().Karts[1].vPos = Vector3( 10,1.5,10 );							// These two lines are temporary
 	GetState().Karts[1].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(-90));
@@ -282,10 +282,10 @@ int Renderer::Init( SDL_Window* win )
 	
 	GetState().Karts[2].vPos = Vector3( -10,1.5,10 );							// These two lines are temporary
 	GetState().Karts[2].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(90));
-	/*
+	
 	GetState().Karts[3].vPos = Vector3( 10, 1.5, -10 );							// These two lines are temporary
 	GetState().Karts[3].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(180));
-	*/
+	
 	return 1;
 }
 

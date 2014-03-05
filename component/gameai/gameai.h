@@ -34,6 +34,7 @@ private:
 	void GameAi::avoid_obs(int index, bool send);
 	void avoid_obs_sqr(int index, bool send);
 	
+	void GameAi::send_reset_event(int index);
 	void GameAi::init_graph();
 	void GameAi::init_obs();
 	void GameAi::init_obs_sqr();

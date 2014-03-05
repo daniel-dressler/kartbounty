@@ -14,6 +14,11 @@ int current_state;
 std::vector<Vector3> path;
 std::vector<Square> obs_sqr;
 
+
+float stuck_counter[NUM_KARTS];
+bool stuck = 0;
+bool resetBool = 0;
+
 GameAi::GameAi()
 {
 	// seed random
@@ -53,6 +58,24 @@ GameAi::GameAi()
 GameAi::~GameAi()
 {
 
+}
+
+
+void GameAi::send_reset_event(int index)
+{
+	stuck_counter[index] = 0;
+	Events::ResetEvent *reset_event = NEWEVENT(Reset);
+
+	reset_event->kart_to_reset = index;
+
+	// Send new event
+	std::vector<Events::Event *> reset_events_vec;
+	reset_events_vec.push_back(reset_event);
+	m_mb->sendMail(reset_events_vec);
+
+	// Now mailbox owns the object
+	reset_event = NULL;
+	
 }
 
 Vector3 GameAi::think_of_target(int index)
@@ -129,9 +152,6 @@ bool Prev = 0;
 
 void GameAi::move_all(Real elapsed_time)
 {
-	//int index = 0;
-	//for (int index=0; i<NUM_KARTS; i++)
-
 	bool ButtonPressed = state->key_map['m'];
 
 	if( ButtonPressed != Prev && ButtonPressed )
@@ -140,40 +160,32 @@ void GameAi::move_all(Real elapsed_time)
 	Prev = ButtonPressed;
 
 	avoid_obs_sqr(0,false);
-
-	// CURRENTLY player_kart doesn't really do anything.
+	
 	if (UseAI)
 	{
 		for (int index = 0; index<NUM_KARTS; index++)
 		{
 			if (index != PLAYER_KART)
 				GameAi::move_kart(index, elapsed_time);
+
+			
 		}
 	}
 }
-
-float stuck_counter = 0;
-bool stuck = 0;
-bool resetBool = 0;
 
 void GameAi::move_kart(int index, Real elapsed_time)
 {
 	// increment it's timer by time
 	state->Karts[index].TimeStartedTarget += elapsed_time;
 
-	DEBUGOUT("Time : %f", state->Karts[index].TimeStartedTarget)
+	//DEBUGOUT("Stuck value %f for %d\n", stuck_counter[index], index)
+	//DEBUGOUT("Time : %f\n", state->Karts[index].TimeStartedTarget)
 
 	Vector3 target_3 = state->Karts[index].target_to_move;
 	Vector2 target = Vector2(target_3.x, target_3.z);
+
 	// Calculate the updated distance and the difference in angle.
 
-	if (state->key_map['r'] && stuck)
-	{
-		stuck_counter = 0;
-		stuck = false;
-		if (resetBool)
-			state->key_map['r'] = false;
-	}
 
 	btScalar diff_in_angles = getAngle(target, index) / PI;
 	btScalar distance_to_target = sqrtf( pow((state->Karts[index].vPos.x - target.x) , 2) 
@@ -189,20 +201,19 @@ void GameAi::move_kart(int index, Real elapsed_time)
 						abs(state->Karts[index].vOldPos.z - state->Karts[index].vPos.z) < LIMIT_FOR_STUCK);
 	if (stuck)
 	{
-		stuck_counter += 0.1f;
+		stuck_counter[index] += 0.1f;
 	}
 	
 	// Generate input for car.
 	drive(diff_in_angles, distance_to_target, index);
 
 	// Check if the kart is stuck for too long, if so, reset.
-	if (stuck_counter >= RESET_TRESHOLD)
+	if (stuck_counter[index] >= RESET_TRESHOLD)
 	{
-		GetMutState()->key_map['r'] = true;
-		resetBool = true;
+		send_reset_event(index);
 	}
 	
-	//DEBUGOUT("current stuck: %f\n", stuck_counter);
+	
 	// DEBUGOUT("angle: %f, dist: %f\n", RADTODEG(diff_in_angles), distance_to_target);
 
 	// update old pos
@@ -238,7 +249,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 		// Change the previous event to suit situation.
 
-		if (stuck_counter >= REVERSE_TRESHOLD)
+		if (stuck_counter[index] >= REVERSE_TRESHOLD)
 		{
 			//DEBUGOUT("DRIVE BACKWARDS!\n");
 			m_pCurrentInput[index]->leftTrigger = 1;
@@ -252,7 +263,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 			m_pCurrentInput[index]->leftThumbStickRL = turn_value;
 
-			stuck_counter -= 0.0075f;
+			stuck_counter[index] -= 0.0075f;
 		}
 		else
 		{
@@ -282,7 +293,7 @@ void GameAi::drive(btScalar diff_ang, btScalar dist, int index)
 
 			if (!stuck)
 			{
-				stuck_counter = 0.f;
+				stuck_counter[index] = 0.f;
 			}
 		}
 

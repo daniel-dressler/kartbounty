@@ -11,7 +11,7 @@
 // HACK!
 
 #define MAX_POWERUPS	2
-#define NUM_KARTS	3
+#define NUM_KARTS	4
 #define PLAYER_KART 0
 
 typedef struct StateData

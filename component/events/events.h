@@ -42,7 +42,7 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(Reset)
-		bool kart_to_reset[NUM_KARTS];
+		int kart_to_reset;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
