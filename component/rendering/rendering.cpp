@@ -182,7 +182,7 @@ int Renderer::Init( SDL_Window* win )
 		return 1;
 
 	// OpenGL Test Info
-	const GLubyte* strVendor = glGetString( GL_VENDOR );
+	//unused const GLubyte* strVendor = glGetString( GL_VENDOR );
 	GLint major, minor;
 	glGetIntegerv( GL_MAJOR_VERSION, &major );
 	glGetIntegerv( GL_MINOR_VERSION, &minor );
@@ -211,9 +211,19 @@ int Renderer::Init( SDL_Window* win )
 			return 0;
 
 		SEG::Mesh meshdata;
-		GetMutState()->bttmArena = new btTriangleMesh();
-		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, GetMutState()->bttmArena, m_vArenaOfs ) )
+		btTriangleMesh *arena_mesh = new btTriangleMesh();
+		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, arena_mesh, m_vArenaOfs ) )
 			return 0;
+		GetMutState()->bttmArena = arena_mesh;
+
+		/*
+		// Send Arena to phsyics
+		std::vector<Events::Event *> events;
+		auto arena_event = NEWEVENT(ArenaMeshCreated);
+		//arena_event->arena = arena_mesh;
+		//events.push_back(arena_event);
+		m_pMailbox->sendMail(events);
+		*/
 
 		free( pData );
 
@@ -311,9 +321,11 @@ int Renderer::Update( float fElapseSec )
 				break;
 			case Events::EventType::Input:
 				{
-					Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
+					// Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
 				
 				}
+				break;
+			default:
 				break;
 			}
 		}

@@ -2,6 +2,9 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
+
+#include <BulletCollision/CollisionShapes/btTriangleMesh.h>
+
 #include "../entities/entities.h"
 
 
@@ -18,6 +21,11 @@ namespace Events {
 		Input,
 		PowerupPickup,
 		Reset,
+		ArenaMeshCreated,
+		AiKart,
+		PlayerKart,
+		KartCreated,
+		KartDestroyed,
 		Quit
 	};
 
@@ -28,6 +36,26 @@ namespace Events {
 	
 	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(EventType our_type) {this->type = our_type;};
 	#define ENDEVENT }
+
+	EVENTSTRUCT(KartCreated)
+		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(KartDestroyed)
+		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(PlayerKart)
+		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(AiKart)
+		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(ArenaMeshCreated)
+		btTriangleMesh *arena;
+	ENDEVENT;
 
 	EVENTSTRUCT(Explosion)
 		entity_id exploder;
@@ -62,6 +90,7 @@ namespace Events {
 		
 		// The kart producing this event
 		int kart_index;
+		entity_id kart_id;
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)

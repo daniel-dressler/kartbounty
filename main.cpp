@@ -2,6 +2,7 @@
 #include "Standard.h"
 
 // Sub-System Components
+#include "component/entities/entities.h"
 #include "component/gameai/GameLogic.h"
 #include "component/gameai/gameai.h"
 #include "component/rendering/rendering.h"
@@ -19,14 +20,15 @@ int main( int argc, char** argv )
 	INIT_PLATFORM();
 
 	// -- Init components -----------------------------------------------------
+	// Inventory
+	init_inventory();
+	// Physics
+	Physics::Simulation *simulation = new Physics::Simulation();
 	// Rendering
 	if( !InitRendering() )
 		return 1;
-
-	// Physics
-	Physics::Simulation *simulation = new Physics::Simulation();
+	// Let components act on initial events
 	simulation->loadWorld();
-
 	// Input
 	Input *input = new Input();
 	// Audio
@@ -35,6 +37,7 @@ int main( int argc, char** argv )
 	GameAi *gameai = new GameAi();
 	// Logic
 	GameLogic *logic = new GameLogic();
+
 
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
@@ -55,6 +58,7 @@ int main( int argc, char** argv )
 	delete gameai;
 	delete audio;
 	ShutdownRendering();
+	shutdown_inventory();
 
 	return 0;
 }

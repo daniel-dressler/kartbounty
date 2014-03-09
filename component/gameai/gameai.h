@@ -19,6 +19,8 @@ private:
 	Timer fps_timer;
 	StateData *state;
 
+	std::vector<entity_id> kart_ids;
+
 	// The event that will be sent to the physics.
 	Events::InputEvent *m_pCurrentInput[NUM_KARTS];
 	Events::InputEvent *m_pPreviousInput[NUM_KARTS];

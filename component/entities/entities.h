@@ -47,6 +47,20 @@ namespace Entities {
 		public:
 		PowerupEntity *powerup_slot;
 
+		// Kart
+		Vector3 Pos;
+		Quaternion Orient;
+		// Camera
+		Real CameraFOV;
+		Vector3 CameraFocus;
+		Vector3 CameraPos;
+		Quaternion orient_old;
+		// Misc Data
+		btVector3 ForDirection;
+		Vector3 Up;
+		float Speed;
+
+
 		CarEntity(std::string name) : Entity()
 		{
 			this->health = 1;
@@ -58,11 +72,16 @@ namespace Entities {
 	// Thin wrapper over map
 	class Inventory {
 		public:
-		Entity FindEntity(entity_id id);
+		Entity *FindEntity(entity_id id);
 		bool Contains(entity_id id);
-		void AddEntity(Entity entity);
+		entity_id AddEntity(Entity *entity);
 
 		private:
-		std::map<entity_id, Entity> entity_store;
+		std::map<entity_id, Entity *> entity_store;
 	};
 }
+
+extern Entities::Inventory *g_inventory;
+void init_inventory();
+void shutdown_inventory();
+#define GETENTITY(id, type) static_cast<Entities::type *>(g_inventory->FindEntity(id))
