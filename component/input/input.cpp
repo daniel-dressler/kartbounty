@@ -1,13 +1,26 @@
 #include <stdint.h>
+#include <SDL.h>
+
 #include "input.h"
 #include "../../Standard.h"
 #include "../state/state.h"
+#include "../entities/entities.h"
 
 #define PLAYER_KART_INDEX 0
 
 Input::Input() {
 	m_pMailbox = new Events::Mailbox();	
-	
+	m_pMailbox->request(Events::EventType::PlayerKart);
+}
+
+Input::~Input() {
+	SDL_HapticClose(m_joy1Haptic);
+	SDL_JoystickClose(m_joystick1);
+	delete m_pPreviousInput;
+	delete m_pMailbox;
+}
+
+void Input::setup() {
 	// Initialize joysticks
 	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
 	if(SDL_NumJoysticks())
@@ -25,15 +38,9 @@ Input::Input() {
 	m_pPreviousInput->bPressed = false;
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
+	m_pPreviousInput->print_position = false;
 
 	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
-}
-
-Input::~Input() {
-	SDL_HapticClose(m_joy1Haptic);
-	SDL_JoystickClose(m_joystick1);
-	delete m_pPreviousInput;
-	delete m_pMailbox;
 }
 
 void Input::OpenJoysticks(){
@@ -41,35 +48,47 @@ void Input::OpenJoysticks(){
 	m_joystick1 = SDL_JoystickOpen(0);
 	int number_of_buttons;
 	number_of_buttons = SDL_JoystickNumButtons(m_joystick1);
-	DEBUGOUT("Joystick %i opened with %i buttons\n", m_joystick1, number_of_buttons);
+	DEBUGOUT("Joystick %s opened with %i buttons\n", SDL_JoystickName(m_joystick1), number_of_buttons);
 	DEBUGOUT("Number of haptic devices: %d\n", SDL_NumHaptics());
 }
 
 void Input::HandleEvents(){
 
-	SDL_Event event;
+	SDL_Event sdl_event;
+	std::vector<Events::Event *> inputEvents;
 
-	m_pCurrentInput = NEWEVENT(Input);
-	memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-
-	//20ms into the future, ensures the input loop doesn't last longer than 10ms
-	Uint32 timeout = SDL_GetTicks() + 20;   
-
-	while( SDL_PollEvent(&event) )
+	for ( Events::Event *mail_event : (m_pMailbox->checkMail()) )
 	{
-		OnEvent(&event);
+		switch ( mail_event->type )
+		{
+		case Events::EventType::PlayerKart:
+		{
+			auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
+			m_pCurrentInput = NEWEVENT(Input);
+			memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+			m_pCurrentInput->kart_id = kart_id;
+		
+			while( SDL_PollEvent(&sdl_event) )
+			{
+				OnEvent(&sdl_event);
+			}
+		
+			// Update previous input event
+			memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
+		
+			// Send input events to mail system
+			inputEvents.push_back(m_pCurrentInput);
+			
+			// Now mailbox owns the object
+			m_pCurrentInput = NULL;
+			break;
+		}
+		default:
+			break;
+		}
 	}
 
-	// Update previous input event
-	memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
-
-	// Send input events to mail system
-	std::vector<Events::Event *> inputEvents;
-	inputEvents.push_back(m_pCurrentInput);
 	m_pMailbox->sendMail(inputEvents);
-	
-	// Now mailbox owns the object
-	m_pCurrentInput = NULL;
 }
 
 void Input::OnEvent(SDL_Event* Event) 
@@ -120,10 +139,6 @@ void Input::OnEvent(SDL_Event* Event)
 
 void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 
-	// Add key to state key map
-	if(keycode < 256)
-		GetMutState()->key_map[keycode] = true;
-
 	// Handle key press for sending InputEvent to physics
 	switch (keycode)
 	{
@@ -158,14 +173,15 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = true;
 		break;
+	case SDLK_z:
+		m_pCurrentInput->print_position = true;
+		break;
 	default:
 		break;
 	}
 }
 
 void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
-	if(keycode < 256)
-		GetMutState()->key_map[keycode] = false;
 	switch (keycode)
 	{
 	case SDLK_a:
@@ -191,6 +207,9 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = false;
+		break;
+	case SDLK_z:
+		m_pCurrentInput->print_position = false;
 		break;
 	default:
 		break;

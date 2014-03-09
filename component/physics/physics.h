@@ -1,3 +1,5 @@
+#include <map>
+
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
@@ -31,9 +33,9 @@ namespace Physics {
 		Events::Mailbox mb;
 
 		btDiscreteDynamicsWorld *m_world;
-		btVehicleRaycaster*	m_vehicleRayCaster[NUM_KARTS];
-		btRaycastVehicle*	m_vehicle[NUM_KARTS];
-		btRaycastVehicle::btVehicleTuning	m_tuning[NUM_KARTS];
+		//btVehicleRaycaster*	m_vehicleRayCaster[NUM_KARTS];
+		//btRaycastVehicle*	m_vehicle[NUM_KARTS];
+		//btRaycastVehicle::btVehicleTuning	m_tuning[NUM_KARTS];
 		//btRigidBody* m_carChassis[NUM_KARTS];
 		btRigidBody* m_arena;
 		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;

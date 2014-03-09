@@ -24,14 +24,39 @@ GameAi::GameAi()
 {
 	// seed random
 	srand(time(NULL));
-	state = GetMutState();
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 
 	// Possible points for the car to wander about.
 	init_graph();
 
+	current_state = 0;
+}
+
+GameAi::~GameAi()
+{
+
+}
+
+void GameAi::setup()
+{
+	std::vector<Events::Event *> events;
+	// Create karts
+	for (int i = 0; i < 4; i++) {
+		std::string kart_name = "Kart #" + i;
+		auto kart = new Entities::CarEntity(kart_name);
+		entity_id kart_id = g_inventory->AddEntity(kart);
+		this->kart_ids.push_back(kart_id);
+
+		// Tell people of the new kart
+		auto new_kart_ev = NEWEVENT(KartCreated);
+		new_kart_ev->kart_id = kart_id;
+		events.push_back(new_kart_ev);
+
+	}
+
 	// Setup previous input event struct
+	state = GetMutState();
 	for (int i = 0; i<NUM_KARTS; i++)
 	{
 		m_pPreviousInput[i] = NEWEVENT(Input);
@@ -53,28 +78,7 @@ GameAi::GameAi()
 
 
 	GameAi::init_obs_sqr();
-	current_state = 0;
-
-	std::vector<Events::Event *> events;
-	// Create karts
-	for (int i = 0; i < 4; i++) {
-		std::string kart_name = "Kart #" + i;
-		auto kart = new Entities::CarEntity(kart_name);
-		entity_id kart_id = g_inventory->AddEntity(kart);
-		this->kart_ids.push_back(kart_id);
-
-		// Tell people of the new kart
-		auto new_kart_ev = NEWEVENT(KartCreated);
-		new_kart_ev->kart_id = kart_id;
-		events.push_back(new_kart_ev);
-
-	}
 	m_mb->sendMail(events);
-}
-
-GameAi::~GameAi()
-{
-
 }
 
 int GameAi::planFrame()
@@ -100,6 +104,7 @@ int GameAi::planFrame()
 			first_kart = false;
 			auto kart_event = NEWEVENT(PlayerKart);
 			kart_event->kart_id = id;
+			//printf("Kart id = %lu\n", id);
 			event = kart_event;
 		} else {
 			auto kart_event = NEWEVENT(AiKart);
@@ -170,16 +175,6 @@ Vector3 GameAi::get_target_roaming()
 void GameAi::update(Real elapsed_time)
 {
 	// =========== AI movement ===============================
-
-	if( state->key_map['z'] ) // Print kart position on 'z' key.
-	{
-		btScalar x_pos = state->Karts[0].vPos.x;
-		btScalar y_pos = state->Karts[0].vPos.y;
-		btScalar z_pos = state->Karts[0].vPos.z;
-
-		DEBUGOUT("Pos: %f, %f, %f\n", x_pos, y_pos, z_pos);
-	}
-
 	move_all(elapsed_time);
 }
 
@@ -188,6 +183,9 @@ bool Prev = 0;
 
 void GameAi::move_all(Real elapsed_time)
 {
+	/*
+	 * We don't need this since we have
+	 * ai cars right?
 	bool ButtonPressed = state->key_map['m'];
 
 	if( ButtonPressed != Prev && ButtonPressed )
@@ -207,6 +205,7 @@ void GameAi::move_all(Real elapsed_time)
 			
 		}
 	}
+	*/
 }
 
 void GameAi::move_kart(int index, Real elapsed_time)

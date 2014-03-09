@@ -20,6 +20,4 @@ StateData::StateData()
 
 StateData::~StateData()
 {
-	if( bttmArena )
-		delete bttmArena;
 }

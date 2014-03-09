@@ -214,16 +214,13 @@ int Renderer::Init( SDL_Window* win )
 		btTriangleMesh *arena_mesh = new btTriangleMesh();
 		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, arena_mesh, m_vArenaOfs ) )
 			return 0;
-		GetMutState()->bttmArena = arena_mesh;
 
-		/*
 		// Send Arena to phsyics
 		std::vector<Events::Event *> events;
 		auto arena_event = NEWEVENT(ArenaMeshCreated);
-		//arena_event->arena = arena_mesh;
-		//events.push_back(arena_event);
+		arena_event->arena = arena_mesh;
+		events.push_back(arena_event);
 		m_pMailbox->sendMail(events);
-		*/
 
 		free( pData );
 

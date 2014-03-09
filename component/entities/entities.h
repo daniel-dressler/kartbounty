@@ -45,6 +45,7 @@ namespace Entities {
 
 	class CarEntity : public Entity {
 		public:
+		CarEntity(std::string name);
 		PowerupEntity *powerup_slot;
 
 		// Kart
@@ -56,17 +57,9 @@ namespace Entities {
 		Vector3 CameraPos;
 		Quaternion orient_old;
 		// Misc Data
-		btVector3 ForDirection;
+		btVector3 forDirection;
 		Vector3 Up;
 		float Speed;
-
-
-		CarEntity(std::string name) : Entity()
-		{
-			this->health = 1;
-			this->name = name;
-			this->powerup_slot = NULL;
-		}
 	};
 
 	// Thin wrapper over map

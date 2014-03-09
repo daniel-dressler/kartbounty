@@ -31,6 +31,7 @@ typedef struct StateData
 		Vector3		target_to_move;
 		int			TimeStartedTarget;
 
+		/*
 		// physics info
 		float	gVehicleSteering;
 		float	gEngineForce;
@@ -42,6 +43,7 @@ typedef struct StateData
 		float	suspensionCompression ;
 		float	rollInfluence ; // Keep low to prevent car flipping
 		float	suspensionTravelcm ;
+		*/
 
 	} Karts[NUM_KARTS];
 
@@ -60,9 +62,9 @@ typedef struct StateData
 		Vector3		vPos;
 	} Camera;
 
-	btTriangleMesh	*bttmArena;
+	//btTriangleMesh	*bttmArena;
 
-	bool key_map[256];
+	//bool key_map[256];
 
 	StateData();
 	~StateData();

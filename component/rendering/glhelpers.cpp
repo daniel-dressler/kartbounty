@@ -195,7 +195,7 @@ void glhCheckUniformNames( GLuint program )
 	{
 		GLsizei nSize;
 		glGetActiveUniformBlockName( program, i, 256, &nSize, strLabel );
-		GLuint index = glGetUniformBlockIndex( program, strLabel );
+		glGetUniformBlockIndex( program, strLabel );
 
 		DEBUGOUT( "%s\n", strLabel );
 	}

@@ -20,23 +20,20 @@ int main( int argc, char** argv )
 	INIT_PLATFORM();
 
 	// -- Init components -----------------------------------------------------
-	// Inventory
+	// Register Events
 	init_inventory();
-	// Physics
 	Physics::Simulation *simulation = new Physics::Simulation();
-	// Rendering
 	if( !InitRendering() )
 		return 1;
-	// Let components act on initial events
-	simulation->loadWorld();
-	// Input
 	Input *input = new Input();
-	// Audio
 	Audio *audio = new Audio();
-	// GameAi
 	GameAi *gameai = new GameAi();
-	// Logic
 	GameLogic *logic = new GameLogic();
+
+	// Act on events
+	gameai->setup();
+	simulation->loadWorld();
+	input->setup();
 
 
 	// -- Main Loop -----------------------------------------------------------

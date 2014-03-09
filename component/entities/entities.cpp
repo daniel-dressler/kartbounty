@@ -41,7 +41,15 @@ bool Inventory::Contains(entity_id id)
 
 entity_id Inventory::AddEntity(Entity *entity)
 {
-	entity_store[entity->GetId()] = entity;
+	entity_id id = entity->GetId();
+	entity_store[id] = entity;
+	return id;
 }
 
+CarEntity::CarEntity(std::string name) : Entity()
+{
+	this->health = 1;
+	this->name = name;
+	this->powerup_slot = NULL;
+}
 

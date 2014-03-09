@@ -40,7 +40,7 @@ $(ODIR)/%.o: %.cpp
 
 $(BULLET)/built:
 	cd $(BULLET); \
-		mkdir static_lib; \
+		mkdir -p static_lib; \
 		cd static_lib; \
 		cmake ../ -G "Unix Makefiles" -DBUILD_DEMOS=off -DBUILD_EXTRAS=off -DINSTALL_LIBS=on; \
 		make -j4; \

@@ -34,7 +34,7 @@ namespace Events {
 		int64_t id;
 	};
 	
-	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(EventType our_type) {this->type = our_type;};
+	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(enum EventType our_type) {this->type = our_type;};
 	#define ENDEVENT }
 
 	EVENTSTRUCT(KartCreated)
@@ -71,6 +71,7 @@ namespace Events {
 
 	EVENTSTRUCT(Reset)
 		int kart_to_reset;
+		entity_id kart_id;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
@@ -87,6 +88,9 @@ namespace Events {
 		float leftThumbStickUD;
 		float rightThumbStickRL;
 		float rightThumbStickUD;
+
+		// Development Cheats
+		bool print_position;
 		
 		// The kart producing this event
 		int kart_index;

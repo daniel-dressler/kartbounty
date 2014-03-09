@@ -9,6 +9,7 @@ class GameAi
 public:
 	GameAi();
 	~GameAi();
+	void setup();
 	int planFrame();
 	Real getElapsedTime();
 	void update(Real elapsed_time);

@@ -51,6 +51,7 @@ public:
 	void OpenJoysticks();
 
 	void HandleEvents();
+	void setup();
 	void OnEvent(SDL_Event* Event);
 
 	// Keyboard events
