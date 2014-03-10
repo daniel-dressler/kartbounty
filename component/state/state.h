@@ -18,6 +18,7 @@ typedef struct StateData
 {
 	struct
 	{
+		/*
 		Vector3		vPos;
 		Vector3		vOldPos;
 		Quaternion	qOrient;
@@ -25,11 +26,14 @@ typedef struct StateData
 		btVector3	forDirection;
 		Vector4		vColor;
 		float		vSpeed;
+		*/
 
 		// This is where the AI is planning to go
+		/* 
 		bool		isPlayer;
 		Vector3		target_to_move;
 		int			TimeStartedTarget;
+		*/
 
 		/*
 		// physics info

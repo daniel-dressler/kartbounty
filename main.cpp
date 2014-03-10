@@ -5,6 +5,7 @@
 #include "component/entities/entities.h"
 #include "component/gameai/GameLogic.h"
 #include "component/gameai/gameai.h"
+#include "component/enemyai/enemyai.h"
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
@@ -27,6 +28,7 @@ int main( int argc, char** argv )
 	Input *input = new Input();
 	Audio *audio = new Audio();
 	GameAi *gameai = new GameAi();
+	EnemyAi *enemyai = new EnemyAi();
 	GameLogic *logic = new GameLogic();
 
 	// Act on events
@@ -34,6 +36,7 @@ int main( int argc, char** argv )
 	renderer->setup();
 	simulation->loadWorld();
 	input->setup();
+	enemyai->setup();
 
 
 	// -- Main Loop -----------------------------------------------------------
@@ -41,15 +44,20 @@ int main( int argc, char** argv )
 	{
 		Real elapsed_time = gameai->getElapsedTime();
 		logic->update(elapsed_time);
+
 		input->HandleEvents();
-		gameai->update(elapsed_time);
+		enemyai->update(elapsed_time);
+
 		simulation->step(elapsed_time);
+
 		audio->Update(elapsed_time);
 		renderer->update(elapsed_time);
 		renderer->render();
 	}
 	
 	// -- Cleanup & Exit ------------------------------------------------------
+	delete logic;
+	delete enemyai;
 	delete input;
 	delete simulation;
 	delete gameai;

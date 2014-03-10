@@ -34,7 +34,9 @@ namespace Events {
 		int64_t id;
 	};
 	
-	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(enum EventType our_type) {this->type = our_type;};
+	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(enum EventType our_type) { \
+		memset(this, 0, sizeof(*this));\
+		this->type = our_type;};
 	#define ENDEVENT }
 
 	EVENTSTRUCT(KartCreated)

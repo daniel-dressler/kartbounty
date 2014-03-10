@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 
-#include "graph/Graph.h"
+#include "../enemyai/graph/Graph.h"
 #include "../state/state.h"
 #include "../events/events.h"
 
