@@ -21,10 +21,9 @@ int main( int argc, char** argv )
 
 	// -- Init components -----------------------------------------------------
 	// Register Events
+	Renderer *renderer = new Renderer();
 	init_inventory();
 	Physics::Simulation *simulation = new Physics::Simulation();
-	if( !InitRendering() )
-		return 1;
 	Input *input = new Input();
 	Audio *audio = new Audio();
 	GameAi *gameai = new GameAi();
@@ -33,6 +32,7 @@ int main( int argc, char** argv )
 	// Act on events
 	gameai->setup();
 	simulation->loadWorld();
+	renderer->setup();
 	input->setup();
 
 
@@ -45,8 +45,8 @@ int main( int argc, char** argv )
 		gameai->update(elapsed_time);
 		simulation->step(elapsed_time);
 		audio->Update(elapsed_time);
-		UpdateRendering(elapsed_time);
-		Render();
+		renderer->update(elapsed_time);
+		renderer->render();
 	}
 	
 	// -- Cleanup & Exit ------------------------------------------------------
@@ -54,7 +54,7 @@ int main( int argc, char** argv )
 	delete simulation;
 	delete gameai;
 	delete audio;
-	ShutdownRendering();
+	delete renderer;
 	shutdown_inventory();
 
 	return 0;

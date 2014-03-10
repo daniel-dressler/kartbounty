@@ -1,10 +1,10 @@
 #include <stdint.h>
-#include <SDL.h>
+
+#include "../../Standard.h"
+#include "../entities/entities.h"
+#include "../state/state.h"
 
 #include "input.h"
-#include "../../Standard.h"
-#include "../state/state.h"
-#include "../entities/entities.h"
 
 #define PLAYER_KART_INDEX 0
 
@@ -14,19 +14,20 @@ Input::Input() {
 }
 
 Input::~Input() {
-	SDL_HapticClose(m_joy1Haptic);
-	SDL_JoystickClose(m_joystick1);
+	for (auto joystick : m_mJoysticks) {
+		SDL_JoystickClose(joystick);
+	}
+	for (auto haptic : m_mHaptics) { 
+		SDL_HapticClose(haptic);
+	}
+
 	delete m_pPreviousInput;
 	delete m_pMailbox;
 }
 
 void Input::setup() {
 	// Initialize joysticks
-	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
-	if(SDL_NumJoysticks())
-	{
-		OpenJoysticks();
-	}
+	OpenJoysticks();
 
 	// Setup previous input event struct
 	m_pPreviousInput = NEWEVENT(Input);
@@ -44,12 +45,18 @@ void Input::setup() {
 }
 
 void Input::OpenJoysticks(){
-	SDL_JoystickEventState(SDL_ENABLE);
-	m_joystick1 = SDL_JoystickOpen(0);
-	int number_of_buttons;
-	number_of_buttons = SDL_JoystickNumButtons(m_joystick1);
-	DEBUGOUT("Joystick %s opened with %i buttons\n", SDL_JoystickName(m_joystick1), number_of_buttons);
+	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
 	DEBUGOUT("Number of haptic devices: %d\n", SDL_NumHaptics());
+
+	SDL_JoystickEventState(SDL_ENABLE);
+	for (int i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		auto joystick = SDL_JoystickOpen(i);
+		int number_of_buttons;
+		number_of_buttons = SDL_JoystickNumButtons(joystick);
+		DEBUGOUT("Joystick %s opened with %i buttons\n", SDL_JoystickName(joystick), number_of_buttons);
+		m_mJoysticks.push_back(joystick);
+	}
 }
 
 void Input::HandleEvents(){

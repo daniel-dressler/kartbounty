@@ -196,7 +196,7 @@ int Simulation::loadWorld()
 			m_arena->setCollisionFlags(m_arena->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 			btTriangleInfoMap* triangleInfoMap = new btTriangleInfoMap();
 			btGenerateInternalEdgeInfo(arenaShape, triangleInfoMap);
-			//delete arena_mesh;
+			delete arena_mesh;
 			break;
 		}
 		default:
@@ -343,19 +343,21 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 	Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
 	vCamOfs.y = 1.0f;
 
-	kart->CameraFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
+	kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
 
 	Real fLerpAmt = seconds * 5.0f;
 
 	static Vector3 vLastofs = Vector3( 0, 1.0f, -1.5f );
+	auto cameraPos = kart->camera.vPos;
+	auto cameraFocus = kart->camera.vFocus;
 	if( vUp.y > 0.5f )
 	{
-		kart->Pos = Vector3::Lerp( kart->CameraPos, vCamOfs + kart->CameraFocus, fLerpAmt );
+		kart->Pos = Vector3::Lerp( cameraPos, vCamOfs + cameraFocus, fLerpAmt );
 		vLastofs = vCamOfs;
 	}
 	else
 	{
-		kart->Pos = Vector3::Lerp( kart->CameraPos, vLastofs + kart->CameraFocus, fLerpAmt );
+		kart->Pos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
 	}
 
 	static Real fLastSpeed = 0;
@@ -364,7 +366,7 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
 	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
 
-	kart->CameraFOV = Lerp( kart->CameraFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
+	kart->camera.fFOV = Lerp( kart->camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
 
 
 	//DEBUGOUT( "%f\n", state->Camera.fFOV );

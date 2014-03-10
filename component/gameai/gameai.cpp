@@ -175,7 +175,7 @@ Vector3 GameAi::get_target_roaming()
 void GameAi::update(Real elapsed_time)
 {
 	// =========== AI movement ===============================
-	move_all(elapsed_time);
+	//move_all(elapsed_time);
 }
 
 bool UseAI = 1;

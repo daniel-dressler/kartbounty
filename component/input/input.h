@@ -1,14 +1,16 @@
 #pragma once
 
+#include <vector>
 #include <SDL.h>
 #include <algorithm>
+
 #include "../events/events.h"
 
 class Input {
 
 private:
-	SDL_Joystick *m_joystick1;
-	SDL_Haptic *m_joy1Haptic;
+	std::vector<SDL_Joystick *> m_mJoysticks;
+	std::vector<SDL_Haptic *> m_mHaptics;
 	Events::Mailbox *m_pMailbox;
 	Events::InputEvent *m_pCurrentInput;
 	Events::InputEvent *m_pPreviousInput;

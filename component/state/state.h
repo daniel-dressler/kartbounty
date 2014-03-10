@@ -55,12 +55,14 @@ typedef struct StateData
 		int			pointId;
 	} Powerups[MAX_POWERUPS];
 
+	/*
 	struct 
 	{
 		Real		fFOV;
 		Vector3		vFocus;
 		Vector3		vPos;
 	} Camera;
+	*/
 
 	//btTriangleMesh	*bttmArena;
 

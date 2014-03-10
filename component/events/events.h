@@ -66,7 +66,9 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPickup)
-		int picker_kart_index[MAX_POWERUPS];
+		int picker_kart_index[100];
+		entity_id kart_id;
+		entity_id powerup_id;
 	ENDEVENT;
 
 	EVENTSTRUCT(Reset)

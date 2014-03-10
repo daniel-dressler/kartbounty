@@ -1,7 +1,8 @@
 #pragma once
-#include "../../Standard.h"
 #include <string>
 #include <map>
+
+#include "../../Standard.h"
 
 typedef UInt64 entity_id;
 
@@ -52,10 +53,12 @@ namespace Entities {
 		Vector3 Pos;
 		Quaternion Orient;
 		// Camera
-		Real CameraFOV;
-		Vector3 CameraFocus;
-		Vector3 CameraPos;
-		Quaternion orient_old;
+		struct Camera {
+			Real fFOV;
+			Vector3 vFocus;
+			Vector3 vPos;
+			Quaternion orient_old;
+		} camera;
 		// Misc Data
 		btVector3 forDirection;
 		Vector3 Up;

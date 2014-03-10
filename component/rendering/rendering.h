@@ -1,14 +1,75 @@
 #ifndef __RENDERING__
 #define __RENDERING__
 
+#include <map>
+
 #include "../../Standard.h"
+#include "../events/events.h"
+
 #include "SELib/SELib.h"
 #include "glhelpers.h"
 #include "ShaderStructs.h"
 
-int InitRendering();
-int UpdateRendering( float fElapseSec );
-int Render();
-int ShutdownRendering();
+class Renderer
+{
+private:
+	Int32				m_bInitComplete;
+	SDL_Window*			m_Window;
+	Events::Mailbox*	m_pMailbox;
+
+	Real				m_fTime;
+
+	GLeffect			m_eftMesh;
+	GLbuffer			m_bufPerMesh;
+	GLbuffer			m_bufPerFrame;
+
+
+	// Arena
+	GLmesh				m_mshArenaCldr;
+
+	GLmesh				m_mshArenaWalls;
+	GLtex				m_difArenaWalls;
+	GLtex				m_nrmArenaWalls;
+
+	GLmesh				m_mshArenaFlags;
+	GLtex				m_difArenaFlags;
+	GLtex				m_nrmArenaFlags;
+
+	GLmesh				m_mshArenaTops;
+	GLtex				m_difArenaTops;
+	GLtex				m_nrmArenaTops;
+
+	GLmesh				m_mshArenaFloor;
+	GLtex				m_difArenaFloor;
+	GLtex				m_nrmArenaFloor;
+
+	GLmesh				m_mshKart;
+
+	// Power ups
+	GLmesh				m_mshPowerRing1;
+	GLmesh				m_mshPowerRing2;
+	GLmesh				m_mshPowerSphere;
+
+
+	Vector3				m_vArenaOfs;
+
+	void _DrawArena();
+	void _DrawArenaQuad( Vector3 vColor );
+
+	// Local knowledge of karts
+	struct kart {
+		entity_id idKart;
+		Vector4 vColor;
+	};
+	std::map<entity_id, struct kart> m_mKarts;
+
+public:
+	int setup();
+	int update( float fElapseSec );
+	int render();
+
+	Renderer();
+	~Renderer();
+};
 
 #endif

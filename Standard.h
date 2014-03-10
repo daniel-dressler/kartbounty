@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#include <algorithm>
 
 #ifdef _WIN32			// Order of this matters on windows
 
@@ -45,7 +46,7 @@ long _filelength(int fd);
 // Hack, SDL2.0.1 is not in repos
 #define SDL_TICKS_PASSED(A, B)  ((Sint32)((B) - (A)) <= 0)
 
-#define max(x,y) fmax(x,y)
+//#define max(x,y) fmax(x,y)
 
 #define INIT_PLATFORM()
 // Stub for audio.h
@@ -72,4 +73,3 @@ class Audio {
 
 #include "component/rendering/SELib/SELib.h"
 
-#include "component/state/state.h"

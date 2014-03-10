@@ -1,116 +1,19 @@
+#include <vector>
+
 #include "rendering.h"
-#include "../events/events.h"
-
-class Renderer
-{
-private:
-	Int32				m_bInitComplete;
-	SDL_Window*			m_Window;
-	Events::Mailbox*	m_pMailbox;
-
-	Real				m_fTime;
-
-	GLeffect			m_eftMesh;
-	GLbuffer			m_bufPerMesh;
-	GLbuffer			m_bufPerFrame;
-
-
-	// Arena
-	GLmesh				m_mshArenaCldr;
-
-	GLmesh				m_mshArenaWalls;
-	GLtex				m_difArenaWalls;
-	GLtex				m_nrmArenaWalls;
-
-	GLmesh				m_mshArenaFlags;
-	GLtex				m_difArenaFlags;
-	GLtex				m_nrmArenaFlags;
-
-	GLmesh				m_mshArenaTops;
-	GLtex				m_difArenaTops;
-	GLtex				m_nrmArenaTops;
-
-	GLmesh				m_mshArenaFloor;
-	GLtex				m_difArenaFloor;
-	GLtex				m_nrmArenaFloor;
-
-	GLmesh				m_mshKart;
-
-	// Power ups
-	GLmesh				m_mshPowerRing1;
-	GLmesh				m_mshPowerRing2;
-	GLmesh				m_mshPowerSphere;
-
-
-	Vector3				m_vArenaOfs;
-
-	void _DrawArena();
-	void _DrawArenaQuad( Vector3 vColor );
-
-public:
-	int Init( SDL_Window* win );
-	int Update( float fElapseSec );
-	int Render();
-
-	Renderer();
-	~Renderer();
-};
-
-Renderer* g_pRenderer = 0;
-
-int InitRendering()
-{
-	SDL_Init( SDL_INIT_EVERYTHING );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
-
-	SDL_Window *win = SDL_CreateWindow( GAMENAME,
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED,
-			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-			);
-	if( !win )
-		return 0;
-
-	SDL_GLContext glcontext = SDL_GL_CreateContext( win );
-	if( !glcontext )
-		return 0;
-
-	SDL_GL_MakeCurrent( win, glcontext );
-
-	if( g_pRenderer )
-		return 0;
-
-	g_pRenderer = new Renderer();
-	return g_pRenderer ? g_pRenderer->Init( win ) : 0;
-}
-
-int UpdateRendering( float fElapseSec )
-{
-	return g_pRenderer ? g_pRenderer->Update( fElapseSec ) : 0;
-}
-
-int Render()
-{
-	return g_pRenderer ? g_pRenderer->Render() : 0;
-}
-
-int ShutdownRendering()
-{
-	if( !g_pRenderer ) return 0;
-	delete g_pRenderer;
-	return 1;
-}
 
 Renderer::Renderer()
 {
 	m_bInitComplete = 0;
 	m_Window = 0;
-	m_pMailbox = 0;
-
 	m_fTime = 0;
+
+	m_pMailbox = new Events::Mailbox();
+	m_pMailbox->request( Events::EventType::Input );
+	m_pMailbox->request( Events::EventType::StateUpdate );
+	m_pMailbox->request( Events::EventType::PlayerKart );
+	m_pMailbox->request( Events::EventType::KartCreated );
+	m_pMailbox->request( Events::EventType::KartDestroyed );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -171,15 +74,33 @@ int LoadMesh( GLmesh& mesh, char* strFilename )
 	return 1;
 }
 
-int Renderer::Init( SDL_Window* win )
+int Renderer::setup()
 {
+	std::vector<Events::Event *> events;
+
+	SDL_Init( SDL_INIT_EVERYTHING );
+	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
+	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 4 );
+
+	SDL_Window *win = SDL_CreateWindow( GAMENAME,
+			SDL_WINDOWPOS_UNDEFINED,
+			SDL_WINDOWPOS_UNDEFINED,
+			1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+			);
+	if( !win )
+		exit(1);
 	m_Window = win;
-	m_pMailbox = new Events::Mailbox();
-	m_pMailbox->request( Events::EventType::Input );
-	m_pMailbox->request( Events::EventType::StateUpdate );
+
+	SDL_GLContext glcontext = SDL_GL_CreateContext( win );
+	if( !glcontext )
+		exit(2);
+
+	SDL_GL_MakeCurrent( win, glcontext );
 
 	if( glewInit() != GLEW_OK )
-		return 1;
+		exit(4);
 
 	// OpenGL Test Info
 	//unused const GLubyte* strVendor = glGetString( GL_VENDOR );
@@ -199,7 +120,7 @@ int Renderer::Init( SDL_Window* win )
 	const GLchar* aryHeaders[] = { "component/rendering/ShaderStructs.glsl" };
 	m_eftMesh = glhLoadEffect( "component/rendering/VShader.glsl", NULL, "component/rendering/PShader.glsl", aryHeaders, 1 );
 	if( !m_eftMesh.program )
-		return 0;
+		exit(5);
 
 	glhCreateBuffer( m_eftMesh, "cstPerMesh", sizeof(cstPerMesh), &m_bufPerMesh );
 	glhCreateBuffer( m_eftMesh, "cstPerFrame", sizeof(cstPerFrame), &m_bufPerFrame );
@@ -208,15 +129,14 @@ int Renderer::Init( SDL_Window* win )
 		GLchar* pData;
 		Int32 nSize;
 		if( !glhReadFile( "assets/arena_cldr.msh", pData, nSize ) )
-			return 0;
+			exit(6);
 
 		SEG::Mesh meshdata;
 		btTriangleMesh *arena_mesh = new btTriangleMesh();
 		if( !meshdata.ReadData( (Byte*)pData, nSize, 0, arena_mesh, m_vArenaOfs ) )
-			return 0;
+			exit(7);
 
 		// Send Arena to phsyics
-		std::vector<Events::Event *> events;
 		auto arena_event = NEWEVENT(ArenaMeshCreated);
 		arena_event->arena = arena_mesh;
 		events.push_back(arena_event);
@@ -225,65 +145,57 @@ int Renderer::Init( SDL_Window* win )
 		free( pData );
 
 		if( !glhCreateMesh( m_mshArenaCldr, meshdata ) )
-			return 0;
+			exit(8);
 	}
 
 	if( !LoadMesh( m_mshArenaWalls, "assets/arena_walls.msh" ) )
-		return 0;
+		exit(9);
 	if( !glhLoadTexture( m_difArenaWalls, "assets/arena_walls_diff.png" ) )
-		return 0;
+		exit(10);
 	if( !glhLoadTexture( m_nrmArenaWalls, "assets/arena_walls_norm.png" ) )
-		return 0;
+		exit(11);
 
 	if( !LoadMesh( m_mshArenaFlags, "assets/arena_flags.msh" ) )
-		return 0;
+		exit(12);
 	if( !glhLoadTexture( m_difArenaFlags, "assets/arena_flags_diff.png" ) )
-		return 0;
+		exit(13);
 	if( !glhLoadTexture( m_nrmArenaFlags, "assets/arena_flags_norm.png" ) )
-		return 0;
+		exit(14);
 
 	if( !LoadMesh( m_mshArenaFloor, "assets/arena_floor.msh" ) )
-		return 0;
+		exit(15);
 	if( !glhLoadTexture( m_difArenaFloor, "assets/arena_floor_diff.png" ) )
-		return 0;
+		exit(16);
 	if( !glhLoadTexture( m_nrmArenaFloor, "assets/blank_norm.png" ) )
-		return 0;
+		exit(17);
 
 	if( !LoadMesh( m_mshArenaTops, "assets/arena_tops.msh" ) )
-		return 0;
+		exit(18);
 	if( !glhLoadTexture( m_difArenaTops, "assets/blank.png" ) )
-		return 0;
+		exit(19);
 	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
-		return 0;
+		exit(20);
 
 
 	if( !LoadMesh( m_mshKart, "assets/Kart.msh" ) )
-		return 0;
+		exit(21);
 	
 	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
-		return 0;
+		exit(22);
 	
 	if( !LoadMesh( m_mshPowerRing1, "assets/PowerRing1.msh" ) )
-		return 0;
+		exit(23);
 	
 	if( !LoadMesh( m_mshPowerRing2, "assets/PowerRing2.msh" ) )
-		return 0;
+		exit(24);
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
 
 	m_bInitComplete = 1;
 
-	// TEMP CRAP
-
-	for( Int32 i = 0; i < NUM_KARTS; i++ )
-		GetState().Karts[i].vColor = Vector4( 1,1,1,1 );
-
-	GetState().Karts[0].vColor = Vector4( 1,0,0,1 );
-	GetState().Karts[1].vColor = Vector4( 0,0,1,1 );
-	GetState().Karts[2].vColor = Vector4( 0,1,0,1 );
-	GetState().Karts[3].vColor = Vector4( 1,1,0,1 );
-
+	// Safe to delete?
+	/*
 	GetState().Karts[1].vPos = Vector3( 10,1.5,10 );							// These two lines are temporary
 	GetState().Karts[1].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(-90));
 
@@ -293,41 +205,85 @@ int Renderer::Init( SDL_Window* win )
 	
 	GetState().Karts[3].vPos = Vector3( 10, 1.5, -10 );							// These two lines are temporary
 	GetState().Karts[3].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(180));
+	*/
 	
 	return 1;
 }
 
-int Renderer::Update( float fElapseSec )
+Vector4 getNextColor()
+{
+	static int color = 1;
+	int red = 0;
+	int blue = 0;
+	int green= 0;
+
+	// A table might be nicer
+	switch (color++) {
+	default:
+		red += 9999;
+	case 4:
+		blue += 9000;
+	case 3: 
+		green += 10000;
+	case 2:
+		blue += 100;
+	case 1:
+		red += 1;
+		break;
+	}
+
+	float largest = MAX(red, MAX(blue, green));
+
+	return Vector4(red / largest, blue / largest, green / largest, 1);
+}
+
+int Renderer::update( float fElapseSec )
 {
 	m_fTime += fElapseSec;
 
 	if( !m_bInitComplete )
 		return 0;
 
-	if( m_pMailbox )
+	std::vector<Entities::CarEntity::Camera> cameras;
+	for( Events::Event *event : m_pMailbox->checkMail() )
 	{
-		const std::vector<Events::Event*> aryEvents = m_pMailbox->checkMail();
-		for( unsigned int i = 0; i < aryEvents.size(); i++ )
+		switch( event->type )
 		{
-			switch( aryEvents[i]->type )
+		case Events::EventType::KartCreated:
 			{
-			case Events::EventType::StateUpdate:
-				{
-					//DEBUGOUT( "I GOT HERE!" );
-				}
-				break;
-			case Events::EventType::Input:
-				{
-					// Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
-				
-				}
-				break;
-			default:
-				break;
+				auto kart_event = ((Events::KartCreatedEvent *)event);
+				struct kart kart_local;
+				entity_id id = kart_local.idKart = kart_event->kart_id;
+				kart_local.vColor = getNextColor();
+				m_mKarts[id] = kart_local;
 			}
+			break;
+		case Events::EventType::KartDestroyed:
+			m_mKarts.erase(((Events::KartDestroyedEvent *)event)->kart_id);
+			break;
+		case Events::EventType::PlayerKart:
+			{
+				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
+				auto kart = GETENTITY(kart_id, CarEntity);
+				cameras.push_back(kart->camera);
+			}
+			break;
+		case Events::EventType::StateUpdate:
+			{
+				//DEBUGOUT( "I GOT HERE!" );
+			}
+			break;
+		case Events::EventType::Input:
+			{
+				// Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
+			
+			}
+			break;
+		default:
+			break;
 		}
-		m_pMailbox->emptyMail();
 	}
+	m_pMailbox->emptyMail();
 
 	glClearColor( 0, 0, 0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -337,12 +293,17 @@ int Renderer::Update( float fElapseSec )
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	Vector3 vFocus = GetState().Camera.vFocus;
-	perFrame.vEyePos = GetState().Camera.vPos;
-	perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-	perFrame.matProj.Perspective( DEGTORAD( GetState().Camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
-	perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
-	perFrame.matViewProj = perFrame.matView * perFrame.matProj;
+	// @Phil: How would you like to handle multiple
+	// cameras? You can use cameras.size() to
+	// get the camera count
+	for (Entities::CarEntity::Camera camera : cameras) {
+		Vector3 vFocus = camera.vFocus;
+		perFrame.vEyePos = camera.vPos;
+		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
+		perFrame.matProj.Perspective( DEGTORAD( camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
+		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
+	}
 
 	Real fLightDist = 17.0f;
 	Real fLightHeight = 5.0f;
@@ -365,7 +326,7 @@ int Renderer::Update( float fElapseSec )
 	return 1;
 }
 
-int Renderer::Render()
+int Renderer::render()
 {
 	if( !m_bInitComplete )
 		return 0;
@@ -378,18 +339,20 @@ int Renderer::Render()
 	glhEnableTexture( m_difArenaTops );
 	glhEnableTexture( m_nrmArenaTops, 1 );
 
-	for( Int32 i = 0; i < NUM_KARTS; i++ )
-	{
-		perMesh.vColor = GetState().Karts[i].vColor;
+	for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) {
+		auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
+
+		perMesh.vColor = kart_id_pair.second.vColor;
 		perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-		perMesh.matWorld = Matrix::GetRotateQuaternion( GetState().Karts[i].qOrient ) *
-			Matrix::GetTranslate( GetState().Karts[i].vPos );
+		perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->Orient ) *
+			Matrix::GetTranslate( kart_entity->Pos );
 		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 		glhDrawMesh( m_eftMesh, m_mshKart );
 	}
 
-	for( Int32 i = 0; i < MAX_POWERUPS; i++ )
+	/*
+	for( Int32 i = 0; i < 1; i++ )
 	{
 		if( GetState().Powerups[i].bEnabled )
 		{
@@ -415,6 +378,7 @@ int Renderer::Render()
 
 		}
 	}
+	*/
 
 	SDL_GL_SwapWindow( m_Window );
 

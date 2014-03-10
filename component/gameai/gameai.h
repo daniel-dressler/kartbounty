@@ -1,7 +1,10 @@
 #pragma once
-#include "../events/events.h"
-#include "../../Standard.h"
 #include <vector>
+
+#include "../../Standard.h"
+#include "../events/events.h"
+#include "../state/state.h"
+
 #include "util/Sphere.h"
 
 class GameAi 
