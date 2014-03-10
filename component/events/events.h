@@ -93,6 +93,7 @@ namespace Events {
 
 		// Development Cheats
 		bool print_position;
+		bool reset_requested;
 		
 		// The kart producing this event
 		int kart_index;

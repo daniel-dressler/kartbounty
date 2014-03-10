@@ -120,7 +120,7 @@ typedef struct Vector2
 	inline operator D3DXVECTOR2&() const		{ return *(D3DXVECTOR2*)this; }
 	#endif
 
-	inline Vector2() {}
+	inline Vector2() { x = y = 0; }
 	Vector2( const Real ix, const Real iy )
 	{
 		x = ix;
@@ -342,7 +342,7 @@ typedef struct Vector3
 	inline Vector2 xz()	const { return Vector2( x, z ); }
 	inline Vector2 yz()	const { return Vector2( y, z ); }
 
-	inline Vector3() {}
+	inline Vector3() { x = y = z = 0; }
 	Vector3( const Real ix, const Real iy, const Real iz )
 	{
 		x = ix;

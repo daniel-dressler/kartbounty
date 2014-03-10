@@ -76,7 +76,6 @@ int LoadMesh( GLmesh& mesh, char* strFilename )
 
 int Renderer::setup()
 {
-	std::vector<Events::Event *> events;
 
 	SDL_Init( SDL_INIT_EVERYTHING );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
@@ -137,6 +136,7 @@ int Renderer::setup()
 			exit(7);
 
 		// Send Arena to phsyics
+		std::vector<Events::Event *> events;
 		auto arena_event = NEWEVENT(ArenaMeshCreated);
 		arena_event->arena = arena_mesh;
 		events.push_back(arena_event);

@@ -40,6 +40,7 @@ void Input::setup() {
 	m_pPreviousInput->xPressed = false;
 	m_pPreviousInput->yPressed = false;
 	m_pPreviousInput->print_position = false;
+	m_pPreviousInput->reset_requested = false;
 
 	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
 }
@@ -70,10 +71,16 @@ void Input::HandleEvents(){
 		{
 		case Events::EventType::PlayerKart:
 		{
-			auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
 			m_pCurrentInput = NEWEVENT(Input);
 			memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+
+			// What kart is this input for?
+			auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
 			m_pCurrentInput->kart_id = kart_id;
+
+			// Reset Development Tools
+			m_pCurrentInput->print_position = false;
+			m_pCurrentInput->reset_requested = false;
 		
 			while( SDL_PollEvent(&sdl_event) )
 			{
@@ -180,8 +187,13 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = true;
 		break;
+
+	// Development Tools
 	case SDLK_z:
 		m_pCurrentInput->print_position = true;
+		break;
+	case SDLK_r:
+		m_pCurrentInput->reset_requested = true;
 		break;
 	default:
 		break;
@@ -214,9 +226,6 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = false;
-		break;
-	case SDLK_z:
-		m_pCurrentInput->print_position = false;
 		break;
 	default:
 		break;

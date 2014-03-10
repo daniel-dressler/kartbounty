@@ -31,8 +31,8 @@ int main( int argc, char** argv )
 
 	// Act on events
 	gameai->setup();
-	simulation->loadWorld();
 	renderer->setup();
+	simulation->loadWorld();
 	input->setup();
 
 

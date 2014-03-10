@@ -105,7 +105,7 @@ int Simulation::loadWorld()
 
 			btTransform tr;
 			tr.setIdentity();
-			tr.setOrigin(btVector3(0,3,0));		// This sets where the car initially spawns
+			tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
 			
 			btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
 			m_kart_bodies[kart_id] = carChassis;
@@ -196,7 +196,8 @@ int Simulation::loadWorld()
 			m_arena->setCollisionFlags(m_arena->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 			btTriangleInfoMap* triangleInfoMap = new btTriangleInfoMap();
 			btGenerateInternalEdgeInfo(arenaShape, triangleInfoMap);
-			delete arena_mesh;
+			//delete arena_mesh;
+			DEBUGOUT("Arena mesh in simulation\n");
 			break;
 		}
 		default:
@@ -206,6 +207,24 @@ int Simulation::loadWorld()
 	}
 
 	return 0;
+}
+
+void Simulation::resetKart(entity_id id)
+{
+	btRaycastVehicle *kart_body = m_karts[id];
+	btTransform trans;
+	trans.setOrigin( btVector3( 0, 3, 0 ) );
+	trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+	kart_body->getRigidBody()->setWorldTransform( trans );
+	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+
+	auto kart_entity = GETENTITY(id, CarEntity);
+	kart_entity->camera.fFOV = 0;
+	kart_entity->camera.vFocus.Zero();
+	kart_entity->camera.vPos.Zero();
+	kart_entity->camera.orient_old.Zero();
+
+	DEBUGOUT("Kart #%lu Reset\n", id);
 }
 
 void Simulation::step(double seconds)
@@ -264,13 +283,10 @@ void Simulation::step(double seconds)
 			kart->setBrake(breakingForce, 2);
 			kart->setBrake(breakingForce, 3);
 	    	
-			if( orig.y() < -10.0f )
+			if( orig.y() < -10.0f  ||
+				input->reset_requested)
 			{
-				btTransform trans;
-				trans.setOrigin( btVector3( 0, 1, 0 ) );
-				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
-				kart->getRigidBody()->setWorldTransform( trans );
-				kart->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+				resetKart(kart_id);
 			}
 	
 			UpdateGameState(seconds, kart_id);
@@ -286,13 +302,7 @@ void Simulation::step(double seconds)
 		{
 			Events::ResetEvent *reset_event = (Events::ResetEvent *)event;
 			entity_id kart_id = reset_event->kart_id;
-			auto kart = m_karts[kart_id];
-
-			btTransform trans;
-			trans.setOrigin( btVector3( 0, 1, 0 ) );
-			trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
-			kart->getRigidBody()->setWorldTransform( trans );
-			kart->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+			resetKart(kart_id);
 			break;
 		}
 		default:
@@ -352,13 +362,9 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 	auto cameraFocus = kart->camera.vFocus;
 	if( vUp.y > 0.5f )
 	{
-		kart->Pos = Vector3::Lerp( cameraPos, vCamOfs + cameraFocus, fLerpAmt );
 		vLastofs = vCamOfs;
 	}
-	else
-	{
-		kart->Pos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
-	}
+	kart->Pos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
 
 	static Real fLastSpeed = 0;
 	Real fSpeed = ABS( m_karts[kart_id]->getCurrentSpeedKmHour() );
