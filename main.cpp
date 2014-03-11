@@ -37,6 +37,7 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	input->setup();
 	enemyai->setup();
+	audio->setup();
 
 
 	// -- Main Loop -----------------------------------------------------------
@@ -50,7 +51,7 @@ int main( int argc, char** argv )
 
 		simulation->step(elapsed_time);
 
-		audio->Update(elapsed_time);
+		audio->update(elapsed_time);
 		renderer->update(elapsed_time);
 		renderer->render();
 	}

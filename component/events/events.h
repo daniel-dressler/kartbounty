@@ -26,6 +26,7 @@ namespace Events {
 		PlayerKart,
 		KartCreated,
 		KartDestroyed,
+		AudioPlayPause,
 		Quit
 	};
 
@@ -67,10 +68,14 @@ namespace Events {
 	EVENTSTRUCT(StateUpdate)
 	ENDEVENT;
 
+	EVENTSTRUCT(PowerupPlacement)
+		Vector3 pos;
+		powerup_t type;
+	ENDEVENT;
+
 	EVENTSTRUCT(PowerupPickup)
-		int picker_kart_index[100];
-		entity_id kart_id;
-		entity_id powerup_id;
+		Vector3 pos;
+		powerup_t type;
 	ENDEVENT;
 
 	EVENTSTRUCT(Reset)
@@ -100,6 +105,9 @@ namespace Events {
 		// The kart producing this event
 		int kart_index;
 		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(AudioPlayPause)
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)
