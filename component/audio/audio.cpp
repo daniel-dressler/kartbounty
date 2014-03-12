@@ -29,6 +29,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::AiKart );
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
 	m_pMailbox->request( Events::EventType::PowerupPickup );
+	primary_player = 0;
 }
 
 Audio::~Audio() {
@@ -56,6 +57,7 @@ void Audio::setup() {
 	LoadMusic("assets/audio/BrainDead.mp3");
 	playMusic = true;
 
+	//Sounds.EngineSound = LoadSound("assets/audio/
 	Sounds.PowerUp = LoadSound("assets/audio/powerup2.wav");
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
 	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
@@ -172,7 +174,7 @@ void Audio::SetupEngineSounds(struct kart_audio *kart_local){
 
 	idelNoiseChannel->setVolume(LOW_ENGINE_NOISE_VOLUME);
 
-	kart_local->enginePitch = 0;
+	kart_local->enginePitch = 1;
 	kart_local->engineSound = engineSound;
 	kart_local->engineChannel = engineNoisechannel;
 	kart_local->idleNoiseChannel = idelNoiseChannel;
@@ -239,6 +241,7 @@ int Audio::LoadSound(char* file){
 void Audio::StartMusic(){
 	FMOD::Channel *musicChannel;
 	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicChannel);
+	musicChannel->setMode(FMOD_LOOP_NORMAL);
 	musicChannel->setChannelGroup(m_channelGroupMusic);
 	m_channelGroupMusic->setVolume(MUSIC_VOLUME);
 }
@@ -281,7 +284,7 @@ void Audio::UpdateListenerPos(){
 		// sound from center of world.
 		// Might be used in menus.
 		// @Kyle: Does FMOD_VECTOR self init to zero?
-		forward.x = 0;
+		forward.x = 1;
 		forward.y = 0;
 		forward.z = 0;
 		position = velocity = forward;
@@ -295,6 +298,7 @@ void Audio::UpdateListenerPos(){
 }
 
 void Audio::UpdateKartsPos(entity_id kart_id){
+
 	auto kart_entity = GETENTITY(kart_id, CarEntity);
 	auto kart = m_karts[kart_id];
 
@@ -382,12 +386,18 @@ void Audio::update(Real seconds){
 				int x = 0;
 			}
 
-			Real lerpAmt = seconds * 2.0f;
-			Real newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+			float lerpAmt = seconds * 2.0f;
+			float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
 
 			kart_local->enginePitch = newPitch;
 
+			if(newPitch > 2.0f || newPitch < 0.0f)
+			{
+				DEBUGOUT("EnginePitch: %f, Trigger: %f\n", newPitch, input->rightTrigger);
+			}
+
 			// Update Kart Engine Sounds
+			//ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, 0.000000f));
 			ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 		}
 		break;

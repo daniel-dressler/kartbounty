@@ -23,14 +23,13 @@ private:
 
 	FMOD::DSP *m_pitchShift;
 
-
 	struct kart_audio {
 		FMOD::Channel *idleNoiseChannel;
 		FMOD::Channel *engineChannel;
 		FMOD::Sound   *engineSound;
 		FMOD::Channel *soundsChannel;
 		FMOD::DSP     *engineDSP;
-		Real enginePitch;
+		float enginePitch;
 		entity_id kart_id;
 		kart_audio() {
 			memset(this, 0, sizeof(*this));
@@ -68,6 +67,8 @@ public:
 
 	struct Sounds
 	{
+		int EngineSound;
+		int EngineIdleSound;
 		int PowerUp;
 		int LowFreqEngine;
 		int MachineGun;

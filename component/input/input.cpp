@@ -210,7 +210,7 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		m_pCurrentInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_w:
-		m_pCurrentInput->rightTrigger = 0;
+		m_pCurrentInput->rightTrigger = 0.01;
 		break;
 	case SDLK_s:
 		m_pCurrentInput->leftTrigger = 0;

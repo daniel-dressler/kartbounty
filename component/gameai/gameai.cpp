@@ -79,7 +79,7 @@ int GameAi::planFrame()
 	frames++;
 	static Real timeAtLastFrame = 0;
 	if ( (int32_t)timeAtLastFrame != (int32_t)fps_timer.CalcSeconds()) {
-		//DEBUGOUT( "FPS: %d\n", frames);
+		DEBUGOUT( "FPS: %d\n", frames);
 		frames = 0;
 	}
 	timeAtLastFrame = fps_timer.CalcSeconds();
