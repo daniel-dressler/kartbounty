@@ -41,7 +41,16 @@ namespace Physics {
 		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
 
 		std::map<entity_id, btRigidBody *> m_kart_bodies;
-		std::map<entity_id, btRaycastVehicle *> m_karts;
+		struct kart_phy {
+			btRaycastVehicle *vehicle;
+			Real lastspeed;
+			Vector3 lastofs;
+			kart_phy() {
+				lastspeed = 0;
+				lastofs = Vector3( 0, 1.0f, -1.5f );
+			}
+		};
+		std::map<entity_id, struct kart_phy *> m_karts;
 
 		class btBroadphaseInterface* m_broadphase;
 		class btCollisionDispatcher* m_dispatcher;
@@ -49,7 +58,7 @@ namespace Physics {
 		class btDefaultCollisionConfiguration* m_collisionConfiguration;
 
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
-		void UpdateGameState(double,int);
+		void UpdateGameState(double, entity_id);
 		void resetKart(entity_id id);
 	};
 };

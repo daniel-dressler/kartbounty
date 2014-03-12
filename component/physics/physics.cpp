@@ -82,7 +82,8 @@ int Simulation::loadWorld()
 		case Events::KartCreated:
 		{
 			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
-
+			m_karts[kart_id] = new kart_phy();
+			
 			float wheelFriction = 5;
 			float suspensionStiffness = 10;
 			float suspensionDamping = 0.5f;
@@ -90,6 +91,14 @@ int Simulation::loadWorld()
 			float rollInfluence = 0.015f; // Keep low to prevent car flipping
 			btScalar suspensionRestLength(0.1f);// Suspension Interval = rest +/- travel * 0.01
 			float suspensionTravelcm = 20;
+			
+			btRaycastVehicle::btVehicleTuning tuning;
+			tuning.m_maxSuspensionTravelCm = suspensionRestLength * 1.5;
+			tuning.m_frictionSlip = 3;
+			tuning.m_maxSuspensionForce = 5;
+			tuning.m_suspensionCompression = suspensionCompression;
+			tuning.m_suspensionDamping = suspensionDamping;
+			tuning.m_suspensionStiffness = suspensionStiffness;
 
 			btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
 			btCompoundShape* compound = new btCompoundShape();
@@ -112,12 +121,11 @@ int Simulation::loadWorld()
 			carChassis->setActivationState(DISABLE_DEACTIVATION);
 
 			btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-			btRaycastVehicle::btVehicleTuning tuning;
 
 			auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
 			kart->setCoordinateSystem(0,1,0);
 			m_world->addVehicle(kart);
-			m_karts[kart_id] = kart;
+			m_karts[kart_id]->vehicle = kart;
 
 			float connectionHeight = 0.10f;
 			btVector3 wheelDirectionCS0(0,-1,0);
@@ -211,7 +219,7 @@ int Simulation::loadWorld()
 
 void Simulation::resetKart(entity_id id)
 {
-	btRaycastVehicle *kart_body = m_karts[id];
+	btRaycastVehicle *kart_body = m_karts[id]->vehicle;
 	btTransform trans;
 	trans.setOrigin( btVector3( 0, 3, 0 ) );
 	trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
@@ -244,7 +252,7 @@ void Simulation::step(double seconds)
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
 			entity_id kart_id = input->kart_id;
-			btRaycastVehicle *kart = m_karts.at(kart_id);
+			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
 
 			Real speed = kart->getCurrentSpeedKmHour();
 
@@ -315,12 +323,12 @@ void Simulation::step(double seconds)
 }
 
 // Updates the car placement in the world state
-void Simulation::UpdateGameState(double seconds, int kart_id)
+void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 {
 	Entities::CarEntity *kart = GETENTITY(kart_id, CarEntity);
 
 	// -- Kart position ------------------------
-	btTransform car1 = m_karts[kart_id]->getChassisWorldTransform();
+	btTransform car1 = m_karts[kart_id]->vehicle->getChassisWorldTransform();
 
 	//Vector3 vPosOld = state->Karts[kart_index].vPos;
 	Quaternion qOriOld = kart->Orient;
@@ -339,7 +347,7 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 	kart->Orient.w = (Real)-rot.getW();
 
 	// save forward vector
-	kart->forDirection = (m_karts[kart_id]->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 
 	// Camera
 	// Performed for Ai & Player
@@ -357,17 +365,17 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 
 	Real fLerpAmt = seconds * 5.0f;
 
-	static Vector3 vLastofs = Vector3( 0, 1.0f, -1.5f );
+	Vector3 vLastofs = m_karts[kart_id]->lastofs;
 	auto cameraPos = kart->camera.vPos;
 	auto cameraFocus = kart->camera.vFocus;
 	if( vUp.y > 0.5f )
 	{
-		vLastofs = vCamOfs;
+		m_karts[kart_id]->lastofs = vCamOfs;
 	}
-	kart->Pos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
+	kart->camera.vPos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
 
-	static Real fLastSpeed = 0;
-	Real fSpeed = ABS( m_karts[kart_id]->getCurrentSpeedKmHour() );
+	Real fLastSpeed = m_karts[kart_id]->lastspeed;
+	Real fSpeed = ABS( m_karts[kart_id]->vehicle->getCurrentSpeedKmHour() );
 	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
 	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
 	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
@@ -376,7 +384,7 @@ void Simulation::UpdateGameState(double seconds, int kart_id)
 
 
 	//DEBUGOUT( "%f\n", state->Camera.fFOV );
-	fLastSpeed = fSpeed;
+	m_karts[kart_id]->lastspeed = fSpeed;
 	kart->Speed = fSpeed;
 
 }
