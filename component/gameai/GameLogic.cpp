@@ -43,7 +43,7 @@ void GameLogic::add_pickup_points()
 
 void GameLogic::modify_pickup_event(int kart_index, int power_up_index)
 {
-	m_pPickUpEvent->picker_kart_index[power_up_index] = kart_index;
+	//m_pPickUpEvent->picker_kart_index[power_up_index] = kart_index;
 }
 
 void GameLogic::reset_pickup_event()
@@ -81,7 +81,7 @@ void GameLogic::handle_powerup(int power_up_index)
 	bool any_pickup_picked = false;
 	for (int kart_index =0; kart_index<NUM_KARTS; kart_index++)
 	{
-		Vector3 kart_loc = state->Karts[kart_index].vPos;
+		Vector3 kart_loc;// = state->Karts[kart_index].vPos;
 	
 		if ((get_distance(power_up_location, kart_loc) < PICKUP_DIST) && (state->Powerups[power_up_index].bEnabled))
 		{

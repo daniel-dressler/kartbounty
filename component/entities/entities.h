@@ -33,7 +33,7 @@ namespace Entities {
 			entity_id GetId() { return id; };
 	};
 
-	typedef enum {
+	typedef enum power_up_t {
 		NullPowerup, // default
 		BulletPowerup,
 		GoldCasePowerup,

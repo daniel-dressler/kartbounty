@@ -38,7 +38,7 @@ private:
 	void init_graph();
 	void init_obs();
 	void init_obs_sqr();
-	btScalar getAngle(Vector2 target, Vector3 pos, btVector3 forward);
+	btScalar getAngle(Vector2 target, Vector3 pos, btVector3 *forward);
 
 	float get_distance(Vector3 a, Vector3 b);
 	Vector3 findIntersection(Sphere s, Vector3 rayDirection, Vector3 rayOrigin);

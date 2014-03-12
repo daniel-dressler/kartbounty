@@ -254,7 +254,7 @@ void Simulation::step(double seconds)
 
 			Real steering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
-			Real breakingForce = input->bPressed ? E_BRAKE_FORCE : 0;
+			Real breakingForce = input->bPressed ? E_BRAKE_FORCE : 0.0;
 
 			// Add checking for speed to this to limit turning angle at high speeds @Kyle
 			Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;

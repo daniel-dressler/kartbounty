@@ -70,12 +70,12 @@ namespace Events {
 
 	EVENTSTRUCT(PowerupPlacement)
 		Vector3 pos;
-		powerup_t type;
+		Entities::powerup_t powerup_type;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPickup)
 		Vector3 pos;
-		powerup_t type;
+		Entities::powerup_t powerup_type;
 	ENDEVENT;
 
 	EVENTSTRUCT(Reset)

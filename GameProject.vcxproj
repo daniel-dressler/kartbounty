@@ -77,6 +77,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="component\audio\audio.cpp" />
+    <ClCompile Include="component\enemyai\enemyai.cpp" />
     <ClCompile Include="component\entities\entities.cpp" />
     <ClCompile Include="component\events\events.cpp" />
     <ClCompile Include="component\gameai\gameai.cpp" />
@@ -99,6 +100,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="component\audio\audio.h" />
+    <ClInclude Include="component\enemyai\enemyai.h" />
+    <ClInclude Include="component\enemyai\graph\DistPair.h" />
+    <ClInclude Include="component\enemyai\graph\Graph.h" />
+    <ClInclude Include="component\enemyai\graph\Node.h" />
+    <ClInclude Include="component\enemyai\util\Position.h" />
+    <ClInclude Include="component\enemyai\util\Ray.h" />
+    <ClInclude Include="component\enemyai\util\Sphere.h" />
+    <ClInclude Include="component\enemyai\util\Square.h" />
     <ClInclude Include="component\entities\entities.h" />
     <ClInclude Include="component\events\events.h" />
     <ClInclude Include="component\gameai\gameai.h" />

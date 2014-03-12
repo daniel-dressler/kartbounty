@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "enemyai.h"
 #include "util/Sphere.h"
 #include "util/Square.h"
@@ -113,7 +115,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	Vector3 oldPos = kart_local->lastPos;
 
 	// Calculate the updated distance and the difference in angle.
-	btScalar diff_in_angles = getAngle(target, pos, kart_entity->forDirection) / PI;
+	btScalar diff_in_angles = getAngle(target, pos, &kart_entity->forDirection) / PI;
 	btScalar distance_to_target = sqrtf( pow((pos.x - target.x) , 2) 
 											+ pow((pos.z - target.y),2) );
 
@@ -147,16 +149,16 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	return directions;
 }
 
-btScalar EnemyAi::getAngle(Vector2 target, Vector3 pos, btVector3 forward)
+btScalar EnemyAi::getAngle(Vector2 target, Vector3 pos, btVector3 *forward)
 {
 	//Position location = Position(state->Karts[index].vPos.x, state->Karts[index].vPos.z);
 	btVector3 toLocation = btVector3( target.x - pos.x, 0.f , target.y - pos.z);
 	toLocation.safeNormalize();
 	//DEBUGOUT("target: %f %f\n",target.x , target.y)
 
-	forward.setY(0.f);
-	btVector3 zAxis = forward.cross(toLocation);
-	btScalar angle = forward.angle(toLocation);
+	forward->setY(0.f);
+	btVector3 zAxis = forward->cross(toLocation);
+	btScalar angle = forward->angle(toLocation);
 
 	if (zAxis.getY() < 0)
 		angle = -angle;
@@ -355,7 +357,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 
 	for(Square square : obs_sqr)
 	{
-		float angle = getAngle(Vector2(square.getCenter().x, square.getCenter().z), pos, forward);
+		float angle = getAngle(Vector2(square.getCenter().x, square.getCenter().z), pos, &forward);
 		if ( abs(RADTODEG(angle)) < IN_FRONT_ANGLE )
 		{
 			btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
@@ -416,7 +418,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 		Vector2 sqr_center = Vector2(center_threat.x, center_threat.z);
 
 		// get angle between car and the most threatening obsticle.
-		float steer_correction_angle = getAngle(sqr_center, pos, forward);
+		float steer_correction_angle = getAngle(sqr_center, pos, &forward);
 
 		if (steer_correction_angle > 0)
 		{
