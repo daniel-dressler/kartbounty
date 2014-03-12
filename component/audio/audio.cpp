@@ -176,7 +176,7 @@ void Audio::SetupEngineSounds(struct kart_audio *kart_local){
 	kart_local->engineSound = engineSound;
 	kart_local->engineChannel = engineNoisechannel;
 	kart_local->idleNoiseChannel = idelNoiseChannel;
-	kart_local->kartEngineDSP = dsp;
+	kart_local->engineDSP = dsp;
 
 	ERRCHECK(engineNoisechannel->setChannelGroup(m_channelGroupEngineSound));
 	ERRCHECK(idelNoiseChannel->setChannelGroup(m_channelGroupEngineSound));
@@ -231,7 +231,7 @@ int Audio::LoadSound(char* file){
 	ERRCHECK(m_system->createSound(file, FMOD_3D, 0, &newSound));
 
 	m_SoundList.push_back(newSound);
-	m_SoundsChannelList.push_back(newChannel);
+	m_SoundChannelList.push_back(newChannel);
 
 	return m_SoundList.size() - 1;
 }
@@ -294,15 +294,16 @@ void Audio::UpdateListenerPos(){
 	ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
 }
 
-void Audio::UpdateKartsPos(struct kart_audio *kart_local){
-	auto kart_entity = GETENTITY(kart_local->kart_id, CarEntity);
+void Audio::UpdateKartsPos(entity_id kart_id){
+	auto kart_entity = GETENTITY(kart_id, CarEntity);
+	auto kart = m_karts[kart_id];
 
 	FMOD_VECTOR *pos = new FMOD_VECTOR();
 	pos->x = kart_entity->Pos.x;
 	pos->y = kart_entity->Pos.y;
 	pos->z = kart_entity->Pos.z;
-	ERRCHECK(kart_local->engineChannel->set3DAttributes(pos, 0));
-	ERRCHECK(kart_local->idleNoiseChannel->set3DAttributes(pos, 0));
+	ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
+	ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
 }
 
 void Audio::update(Real seconds){
@@ -317,8 +318,8 @@ void Audio::update(Real seconds){
 		break;
 		case Events::EventType::KartCreated:
 		{
-			entity_id kart_id = ((Events::KartCreatedEvent *)events)->kart_id;
-			struct kart_audio *kart = new kart_audio();
+			entity_id kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+			auto *kart = new Audio::kart_audio();
 
 			kart->kart_id = kart_id;
 			SetupEngineSounds(kart);
@@ -327,14 +328,15 @@ void Audio::update(Real seconds){
 		break;
 		case Events::EventType::KartDestroyed:
 		{
-			entity_id kart_id = ((Events::KartDestroyedEvent *)events)->kart_id;
-			DestroyEngineSounds(kart);
+			entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
+			
+			DestroyEngineSounds(m_karts[kart_id]);
 			m_karts.erase(kart_id);
 		}
 		break;
 		case Events::EventType::PlayerKart:
 		{
-			entity_id kart_id = ((Events::KartDestroyedEvent *)events)->kart_id;
+			entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
 			if (primary_player == 0) {
 				primary_player = kart_id;
 			}
@@ -343,15 +345,15 @@ void Audio::update(Real seconds){
 		break;
 		case Events::EventType::AiKart:
 		{
-			entity_id kart_id = ((Events::KartDestroyedEvent *)events)->kart_id;
+			entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
 			UpdateKartsPos(kart_id);
 		}
 		break;
 		case Events::EventType::Input:
 		{
 			// Handle all one-off sound effects
-			Events::InputEvent *input = (Events::InputEvent *)events;
-			entity_id kart_id = events->kart_id;
+			Events::InputEvent *input = (Events::InputEvent *)event;
+			entity_id kart_id = input->kart_id;
 			auto kart_local = m_karts[kart_id];
 			auto kart_entity = GETENTITY(kart_id, CarEntity);
 

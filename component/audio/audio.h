@@ -12,6 +12,7 @@ private:
 	Events::Mailbox *m_pMailbox;
 
 	std::vector<FMOD::Sound *>		m_SoundList;
+	std::vector<FMOD::Channel *>	m_SoundChannelList;
 	std::vector<FMOD::Sound *>		m_MusicList;
 
 	std::vector<FMOD::Sound *>		m_EngineSoundList;
@@ -22,11 +23,11 @@ private:
 
 	FMOD::DSP *m_pitchShift;
 
-	Real enginePitch[NUM_KARTS];
 
 	struct kart_audio {
 		FMOD::Channel *idleNoiseChannel;
 		FMOD::Channel *engineChannel;
+		FMOD::Sound   *engineSound;
 		FMOD::Channel *soundsChannel;
 		FMOD::DSP     *engineDSP;
 		Real enginePitch;
@@ -54,11 +55,12 @@ private:
 	void ToggleMusic();
 
 	void SetupEngineSounds(struct kart_audio *);
+	void DestroyEngineSounds(struct kart_audio *);
 	void Setup3DEnvironment();
 	void OutputMemUsage();
 
 	void UpdateListenerPos();
-	void UpdateKartsPos(struct kart_audio *);
+	void UpdateKartsPos(entity_id);
 
 public:
 	Audio();
@@ -75,6 +77,6 @@ public:
 	void PlayMusic(int id);
 	void PlaySoundEffect(int id, Vector3 pos);
 
-	void Update(Real seconds);
+	void update(Real seconds);
 	void setup();
 };
