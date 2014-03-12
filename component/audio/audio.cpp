@@ -390,6 +390,7 @@ void Audio::update(Real seconds){
 
 			float lerpAmt = clampedSeconds * 2.0f;
 			float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+			newPitch = Clamp(newPitch, 0.0f, 2.0f);
 
 			newPitch = Clamp(newPitch, 0.0f, 2.0f);
 
@@ -400,7 +401,7 @@ void Audio::update(Real seconds){
 				DEBUGOUT("WTF?\n");
 			}
 			// Update Kart Engine Sounds
-			ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
+			//ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 		}
 		break;
 		case Events::EventType::PowerupPickup:
