@@ -386,18 +386,13 @@ void Audio::update(Real seconds){
 				int x = 0;
 			}
 
-			float lerpAmt = seconds * 2.0f;
+			Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);
+			float lerpAmt = clampedSeconds * 2.0f;
 			float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
 
 			kart_local->enginePitch = newPitch;
 
-			if(newPitch > 2.0f || newPitch < 0.0f)
-			{
-				DEBUGOUT("EnginePitch: %f, Trigger: %f\n", newPitch, input->rightTrigger);
-			}
-
 			// Update Kart Engine Sounds
-			//ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, 0.000000f));
 			ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 		}
 		break;
