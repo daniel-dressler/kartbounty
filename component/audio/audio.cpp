@@ -386,12 +386,19 @@ void Audio::update(Real seconds){
 				int x = 0;
 			}
 
-			Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);
+			Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
+
 			float lerpAmt = clampedSeconds * 2.0f;
 			float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
 
+			newPitch = Clamp(newPitch, 0.0f, 2.0f);
+
 			kart_local->enginePitch = newPitch;
 
+			if(newPitch > 2.0f || newPitch < 0.0f)
+			{
+				DEBUGOUT("WTF?\n");
+			}
 			// Update Kart Engine Sounds
 			ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 		}
