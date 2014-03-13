@@ -4,7 +4,7 @@
 
 #include "../../Standard.h"
 
-typedef UInt64 entity_id;
+typedef uint64_t entity_id;
 
 // Entities do not define models or
 // sounds or similar. Instead the system

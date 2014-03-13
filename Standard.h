@@ -52,7 +52,10 @@ long _filelength(int fd);
 // Stub for audio.h
 class Audio {
 	public:
-	void Update(double std) {
+	void update(double std) {
+		return;
+	}
+	void setup() {
 		return;
 	}
 };

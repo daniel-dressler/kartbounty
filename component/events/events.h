@@ -7,6 +7,8 @@
 
 #include "../entities/entities.h"
 
+typedef uint64_t event_id_t;
+typedef uint64_t mailbox_id_t;
 
 // Use this to get new events
 #define NEWEVENT(type) (new Events::type##Event(Events::EventType::type))
@@ -32,7 +34,7 @@ namespace Events {
 
 	struct Event {
 		EventType type;
-		int64_t id;
+		event_id_t id;
 	};
 	
 	#define EVENTSTRUCT(X)  struct X##Event : Event { X##Event(enum EventType our_type) { \
@@ -145,6 +147,6 @@ namespace Events {
 
 		private:
 		std::string mailbox_name;
-		int32_t mailbox_id;
+		mailbox_id_t mailbox_id;
 	};
 }
