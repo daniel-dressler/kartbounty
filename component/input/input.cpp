@@ -41,8 +41,6 @@ void Input::setup() {
 	m_pPreviousInput->yPressed = false;
 	m_pPreviousInput->print_position = false;
 	m_pPreviousInput->reset_requested = false;
-
-	m_pPreviousInput->kart_index = PLAYER_KART_INDEX;
 }
 
 void Input::OpenJoysticks(){
@@ -72,7 +70,9 @@ void Input::HandleEvents(){
 		case Events::EventType::PlayerKart:
 		{
 			m_pCurrentInput = NEWEVENT(Input);
+			auto event_id = m_pCurrentInput->id;
 			memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+			m_pCurrentInput->id = event_id;
 
 			// What kart is this input for?
 			auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
@@ -101,6 +101,7 @@ void Input::HandleEvents(){
 			break;
 		}
 	}
+	m_pMailbox->emptyMail();
 
 	m_pMailbox->sendMail(inputEvents);
 }
