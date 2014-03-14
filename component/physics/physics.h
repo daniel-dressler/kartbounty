@@ -29,6 +29,10 @@ namespace Physics {
 		// will update the entitie's locations
 		int saveoutState();
 
+		// Only physics should call this.
+		// Needs to be public because 
+		// of reasons.
+		void substepEnforcer(btDynamicsWorld *, btScalar);
 		private:
 		Events::Mailbox mb;
 
