@@ -58,8 +58,8 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 		btScalar angle = up.dot(btVector3(0, 1, 0));
 		if (angle < 0.6) {
 			// Unflip!
-			printf("%f\n", angle);
-			printf("%f,%f,%f\n", up.getX(), up.getY(), up.getZ());
+			//printf("%f\n", angle);
+			//printf("%f,%f,%f\n", up.getX(), up.getY(), up.getZ());
 			btQuaternion q_up;
 			q_up.setEulerZYX(0, 1, 0);
 			tr.setRotation(rot.slerp(q_up, 0.4));

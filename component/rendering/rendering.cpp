@@ -1,4 +1,5 @@
 #include <vector>
+#include <functional>
 
 #include "rendering.h"
 
@@ -210,17 +211,17 @@ int Renderer::setup()
 	return 1;
 }
 
+#define expand_int(x) ((uint64_t)x << 31 ^ (uint64_t)x)
 Vector4 getNextColor()
 {
-	static int color = 1;
-	int red = 0;
-	int blue = 0;
-	int green= 0;
+	static uint64_t color = 1;
+	static std::hash<uint64_t> hasher;
+	uint64_t red = 0;
+	uint64_t blue = 0;
+	uint64_t green= 0;
 
 	// A table might be nicer
 	switch (color++) {
-	default:
-		red += 9999;
 	case 4:
 		blue += 9000;
 	case 3: 
@@ -229,6 +230,11 @@ Vector4 getNextColor()
 		blue += 100;
 	case 1:
 		red += 1;
+		break;
+	default:
+		red += rand();
+		blue += rand();
+		green += rand();
 		break;
 	}
 
