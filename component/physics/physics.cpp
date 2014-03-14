@@ -4,6 +4,13 @@
 
 using namespace Physics;
 
+// Callback cannot be inside class
+Simulation *g_physics_subsystem = NULL;
+void substepCallback(btDynamicsWorld *world, btScalar timestep)
+{
+	g_physics_subsystem->substepEnforcer(world, timestep);
+}
+
 Simulation::Simulation()
 {
 	m_broadphase = new btDbvtBroadphase();
@@ -11,6 +18,8 @@ Simulation::Simulation()
 	m_dispatcher = new btCollisionDispatcher(m_collisionConfiguration);
 	m_solver = new btSequentialImpulseConstraintSolver;
 	m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfiguration);
+	m_world->setInternalTickCallback(substepCallback);
+	g_physics_subsystem = this;
 
 	m_world->setGravity(btVector3(0,-7,0));
 
@@ -23,13 +32,40 @@ Simulation::Simulation()
 
 Simulation::~Simulation()
 {
-	/*
 	delete m_world;
 	delete m_solver;
 	delete m_broadphase;
 	delete m_dispatcher;
 	delete m_collisionConfiguration;
-	*/
+}
+
+void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
+{
+	// TODO: Check collisions
+	// TODO: Check trigger volumes
+	btCollisionObjectArray objects = m_world->getCollisionObjectArray();
+	for (int i = 0; i < objects.size(); i++) {
+		btRigidBody *rigidBody = btRigidBody::upcast(objects[i]);
+		if (!rigidBody) {
+			continue;
+		}
+
+		// Clamp kart rotate to 60% of sideways
+		// Prevents flips
+		btTransform tr = rigidBody->getCenterOfMassTransform();
+		btQuaternion rot = rigidBody->getCenterOfMassTransform().getRotation();
+		btVector3 up = rigidBody->getCenterOfMassTransform().getBasis().getColumn(1);
+		btScalar angle = up.dot(btVector3(0, 1, 0));
+		if (angle < 0.6) {
+			// Unflip!
+			//printf("%f\n", angle);
+			//printf("%f,%f,%f\n", up.getX(), up.getY(), up.getZ());
+			btQuaternion q_up;
+			q_up.setEulerZYX(0, 1, 0);
+			tr.setRotation(rot.slerp(q_up, 0.4));
+			rigidBody->setCenterOfMassTransform(tr);
+		}
+	}
 }
 
 // Tuning
@@ -71,9 +107,6 @@ int Simulation::loadWorld()
 #define CAR_WIDTH (0.11f)
 #define CAR_LENGTH (0.15f)
 #define CAR_MASS (800.0f)
-
-#define CON1 (CAR_WIDTH)
-#define CON2 (CAR_LENGTH)
 	
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
@@ -84,17 +117,18 @@ int Simulation::loadWorld()
 			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
 			m_karts[kart_id] = new kart_phy();
 			
-			float wheelFriction = 5;
+			float wheelFriction = 3;
 			float suspensionStiffness = 10;
 			float suspensionDamping = 0.5f;
 			float suspensionCompression = 0.3f;
-			float rollInfluence = 0.015f; // Keep low to prevent car flipping
-			btScalar suspensionRestLength(0.1f);// Suspension Interval = rest +/- travel * 0.01
+			// Prevents car flipping due to sharp turns
+			float rollInfluence = 0.000;
+			btScalar suspensionRestLength(0.15f);// Suspension Interval = rest +/- travel * 0.01
 			float suspensionTravelcm = 20;
 			
 			btRaycastVehicle::btVehicleTuning tuning;
 			tuning.m_maxSuspensionTravelCm = suspensionRestLength * 1.5;
-			tuning.m_frictionSlip = 3;
+			tuning.m_frictionSlip = 30;
 			tuning.m_maxSuspensionForce = 5;
 			tuning.m_suspensionCompression = suspensionCompression;
 			tuning.m_suspensionDamping = suspensionDamping;
@@ -120,6 +154,17 @@ int Simulation::loadWorld()
 			m_kart_bodies[kart_id] = carChassis;
 			carChassis->setActivationState(DISABLE_DEACTIVATION);
 
+			// Air resistance
+			// 1 = 100% of speed lost per second
+			carChassis->setDamping(0.4, 0.4);
+
+			// Thread says adds "bounce"
+			// No idea yet if it works
+			carChassis->setRestitution(0.3);
+
+			// Makes us bounce off walls
+			carChassis->setFriction(0.0);
+
 			btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
 
 			auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
@@ -127,6 +172,8 @@ int Simulation::loadWorld()
 			m_world->addVehicle(kart);
 			m_karts[kart_id]->vehicle = kart;
 
+#define CON1 (CAR_WIDTH * 1.0)
+#define CON2 (CAR_LENGTH * 1.0)
 			float connectionHeight = 0.10f;
 			btVector3 wheelDirectionCS0(0,-1,0);
 			btVector3 wheelAxleCS(-1,0,0);
@@ -237,10 +284,10 @@ void Simulation::resetKart(entity_id id)
 
 void Simulation::step(double seconds)
 {
-#define STEER_MAX_ANGLE (25)
-#define ENGINE_MAX_FORCE (2000)
-#define BRAKE_MAX_FORCE (1500)
-#define E_BRAKE_FORCE (200)
+#define STEER_MAX_ANGLE (35)
+#define ENGINE_MAX_FORCE (3000)
+#define BRAKE_MAX_FORCE (2500)
+#define E_BRAKE_FORCE (2000)
 #define MAX_SPEED (30.0)
 
 	for ( Events::Event *event : (mb.checkMail()) )
@@ -258,11 +305,13 @@ void Simulation::step(double seconds)
 
 			Real fTurnPower = 1 - ( 2.0f / PI ) * ACOS( MAX( MIN( input->leftThumbStickRL, 1 ), -1 ) );
 			fTurnPower *= fTurnPower < 0.0f ? -fTurnPower : fTurnPower;
-			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/3), 0.5);
+			fTurnPower *= MIN((1.0 - (speed / MAX_SPEED)/2), 0.5);
 
 			Real steering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
 			Real breakingForce = input->bPressed ? E_BRAKE_FORCE : 0.0;
+			if (steering > 0.4 || steering < -0.4)
+				DEBUGOUT("s: %f, (): %f, ()_p: %f\n", speed, steering, fTurnPower);
 
 			// Add checking for speed to this to limit turning angle at high speeds @Kyle
 			Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;
@@ -319,6 +368,11 @@ void Simulation::step(double seconds)
 	}
 	mb.emptyMail();
 
+	// 3 means max process 16ms * 3 worth of physics
+	// this thus clamps simulation at between 20FPS
+	// and 60FPS.
+	// If we have lower real FPS the car will
+	// slow down.
 	m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
 }
 

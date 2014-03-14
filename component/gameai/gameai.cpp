@@ -18,7 +18,11 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
+<<<<<<< HEAD
 	for (int i = 0; i < 2; i++) {
+=======
+	for (int i = 0; i < 20; i++) {
+>>>>>>> 1808d4087b958ac921378b9c416cc828c1505c4d
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
