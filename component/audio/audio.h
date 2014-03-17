@@ -26,8 +26,9 @@ private:
 	struct kart_audio {
 		FMOD::Channel *idleNoiseChannel;
 		FMOD::Channel *engineChannel;
-		FMOD::Sound   *engineSound;
+		FMOD::Channel *collisionChannel;
 		FMOD::Channel *soundsChannel;
+		FMOD::Sound   *engineSound;
 		FMOD::DSP     *engineDSP;
 		float enginePitch;
 		entity_id kart_id;
@@ -72,6 +73,8 @@ public:
 		int PowerUp;
 		int LowFreqEngine;
 		int MachineGun;
+		int WallCollision;
+		int Skid;
 	} Sounds;
 	
 	int SetupHardware();
