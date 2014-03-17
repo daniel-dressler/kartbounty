@@ -156,7 +156,8 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 			if (report.impact < pt.getAppliedImpulse()) {
 				report.impact = pt.getAppliedImpulse();
 
-				btVector3 pos = pt.getPositionWorldOnA();
+				btVector3 pos = A->is_kart ? pt.getPositionWorldOnA() :
+				                             pt.getPositionWorldOnB();
 				report.pos.x = pos.getX();
 				report.pos.y = pos.getY();
 				report.pos.z = pos.getZ();
