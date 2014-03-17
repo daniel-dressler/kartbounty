@@ -162,6 +162,10 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 				report.pos.z = pos.getZ();
 			}
 		}
+	} else if (A->is_powerup) {
+		report.pos = A->powerup_pos;
+	} else if (B->is_powerup) {
+		report.pos = B->powerup_pos;
 	}
 
 	if (report.impact > 10.0 && A->is_kart && B->is_kart) {
@@ -518,7 +522,7 @@ void Simulation::step(double seconds)
 
 			btTransform tr;
 			tr.setIdentity();
-			auto pos = powerup_event->pos;
+			auto pos = powerup->powerup_pos = powerup_event->pos;
 			btVector3 powerup_pos = btVector3(pos.x, pos.y, pos.z);
 			tr.setOrigin(powerup_pos);
 			body->setWorldTransform(tr);
