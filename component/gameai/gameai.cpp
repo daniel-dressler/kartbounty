@@ -6,8 +6,24 @@
 
 GameAi::GameAi()
 {
+	active_powerups = 0;
+	active_tresures = 0;
+	next_powerup_id = 3;
+
+
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
+	m_mb->request( Events::EventType::PowerupPickup );
+
+	Vector3 p_positions[] = {
+		Vector3(0.0, 0.0, 5.5),
+		Vector3(1.0, 0.0, 5.5),
+		Vector3(-1.0, 0.0, 5.5),
+		Vector3(3.22, 0.0, 7.95),
+		Vector3(-3.22, 0.0, 7.59)};
+	for (auto pt : p_positions) {
+		m_open_points.push_back(pt);
+	}
 }
 
 GameAi::~GameAi()
@@ -18,7 +34,7 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 20; i++) {
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
@@ -40,6 +56,38 @@ int GameAi::planFrame()
 		switch( event->type ) {
 		case Events::EventType::Quit:
 			return 0;
+			break;
+		case Events::EventType::PowerupPickup:
+			{
+				auto pickup = ((Events::PowerupPickupEvent *)event);
+				auto powerup = pickup->powerup_type;
+				entity_id kart_id = pickup->kart_id;
+
+				// Return point to pool
+				open_point(pickup->pos);
+
+				// Score or store pickup
+				auto kart = GETENTITY(kart_id, CarEntity);
+				switch (powerup) {
+					case Entities::GoldCasePowerup:
+						active_tresures--;
+						kart->gold += 5000;
+						break;
+					case Entities::GoldCoinPowerup:
+						kart->gold += 100;
+						break;
+					default:
+						// Player loses any unused powerups
+						kart->powerup_slot = powerup;
+						break;
+				}
+			}
+			break;
+		case Events::EventType::PowerupDestroyed:
+			{
+				auto pickup = ((Events::PowerupPickupEvent *)event);
+				open_point(pickup->pos);
+			}
 			break;
 		default:
 			break;
@@ -64,6 +112,16 @@ int GameAi::planFrame()
 		}
 		events_out.push_back(event);
 	}
+
+	// Spawn Powerups?
+	if (active_tresures <= 0) {
+		active_tresures++;
+		events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
+	} else if (active_powerups <= 3) {
+		events_out.push_back(spawn_powerup(Entities::BulletPowerup));
+	}
+
+	// Issue planned events
 	m_mb->sendMail(events_out);
 
 	// Yield until next frame
@@ -75,14 +133,17 @@ int GameAi::planFrame()
 	}
 
 	// Report FPS
+	const bool PRINT_FPS = 0;
 	static int32_t frames = 0;
-	frames++;
-	static Real timeAtLastFrame = 0;
-	if ( (int32_t)timeAtLastFrame != (int32_t)fps_timer.CalcSeconds()) {
-		DEBUGOUT( "FPS: %d\n", frames);
-		frames = 0;
+	if (PRINT_FPS) {
+		frames++;
+		static Real timeAtLastFrame = 0;
+		if ( (int32_t)timeAtLastFrame != (int32_t)fps_timer.CalcSeconds()) {
+			DEBUGOUT( "FPS: %d\n", frames);
+			frames = 0;
+		}
+		timeAtLastFrame = fps_timer.CalcSeconds();
 	}
-	timeAtLastFrame = fps_timer.CalcSeconds();
 
 	return 1;
 }
@@ -92,5 +153,31 @@ Real GameAi::getElapsedTime()
 	Real period = frame_timer.CalcSeconds();
 	frame_timer.ResetClock();
 	return period;
+}
+
+Vector3 GameAi::pick_point()
+{
+	int pt = rand() % m_open_points.size();
+	Vector3 open = m_open_points[pt];
+	m_open_points.erase(m_open_points.begin() + pt);
+	return open;
+}
+
+void GameAi::open_point(Vector3 pt)
+{
+	if (--active_powerups <= 0)
+		DEBUGOUT("Warning: Extra powerup location appeared\n");
+	m_open_points.push_back(pt);
+}
+
+Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type)
+{
+	auto p_event = NEWEVENT(PowerupPlacement);
+	p_event->powerup_type = p_type;
+	p_event->pos = pick_point();
+	p_event->powerup_id = this->next_powerup_id++;
+
+	active_powerups++;
+	return p_event;
 }
 

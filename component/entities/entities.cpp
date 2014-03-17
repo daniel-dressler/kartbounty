@@ -22,8 +22,6 @@ static entity_id entity_id_next = 42;
 Entity::Entity()
 {
 	this->id = entity_id_next++;
-	this->gold = 0;
-	this->health = 1.0;
 }
 
 Entity *Inventory::FindEntity(entity_id id)
@@ -48,8 +46,9 @@ entity_id Inventory::AddEntity(Entity *entity)
 
 CarEntity::CarEntity(std::string name) : Entity()
 {
-	this->health = 1;
+	this->gold = 0;
+	this->health = 1.0;
 	this->name = name;
-	this->powerup_slot = NULL;
+	this->powerup_slot = NullPowerup;
 }
 

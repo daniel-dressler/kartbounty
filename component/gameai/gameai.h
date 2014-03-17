@@ -20,4 +20,13 @@ private:
 	Timer fps_timer;
 
 	std::vector<entity_id> kart_ids;
+
+	std::vector<Vector3> m_open_points;
+	uint32_t active_powerups;
+	uint32_t active_tresures;
+	powerup_id_t next_powerup_id;
+
+	Vector3 pick_point();
+	void open_point(Vector3);
+	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t);
 };

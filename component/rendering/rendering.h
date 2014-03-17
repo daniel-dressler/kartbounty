@@ -4,6 +4,7 @@
 #include <map>
 
 #include "../../Standard.h"
+#include "../entities/entities.h"
 #include "../events/events.h"
 
 #include "SELib/SELib.h"
@@ -62,6 +63,15 @@ private:
 		Vector4 vColor;
 	};
 	std::map<entity_id, struct kart> m_mKarts;
+
+
+	// Local knowldge of powerups
+	struct powerup {
+		powerup_id_t idPowerup;
+		Entities::powerup_t type;
+		Vector3 vPos;
+	};
+	std::map<powerup_id_t, struct powerup> m_powerups;
 
 public:
 	int setup();
