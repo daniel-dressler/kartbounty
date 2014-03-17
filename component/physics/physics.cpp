@@ -360,6 +360,12 @@ int Simulation::loadWorld()
 			kart_entity->Orient.z = (Real)rot.getZ();
 			kart_entity->Orient.w = (Real)-rot.getW();
 
+			//Set initial camera value
+			kart_entity->camera.fFOV = 0;
+			kart_entity->camera.vFocus.Zero();
+			kart_entity->camera.vPos.Zero();
+			kart_entity->camera.orient_old.Zero();
+
 			// save forward vector	
 			kart_entity->forDirection = (kart->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 			break;

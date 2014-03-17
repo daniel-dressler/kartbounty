@@ -5,9 +5,6 @@
     <ClInclude Include="component\events\events.h">
       <Filter>component\events</Filter>
     </ClInclude>
-    <ClInclude Include="component\physics\GLDebugDrawer.h">
-      <Filter>component\physics</Filter>
-    </ClInclude>
     <ClInclude Include="component\physics\physics.h">
       <Filter>component\physics</Filter>
     </ClInclude>
@@ -125,9 +122,6 @@
     <ClCompile Include="Standard.cpp" />
     <ClCompile Include="component\events\events.cpp">
       <Filter>component\events</Filter>
-    </ClCompile>
-    <ClCompile Include="component\physics\GLDebugDrawer.cpp">
-      <Filter>component\physics</Filter>
     </ClCompile>
     <ClCompile Include="component\physics\physics.cpp">
       <Filter>component\physics</Filter>

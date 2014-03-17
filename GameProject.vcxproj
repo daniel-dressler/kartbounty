@@ -83,7 +83,6 @@
     <ClCompile Include="component\gameai\gameai.cpp" />
     <ClCompile Include="component\gameai\GameLogic.cpp" />
     <ClCompile Include="component\input\input.cpp" />
-    <ClCompile Include="component\physics\GLDebugDrawer.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
     <ClCompile Include="component\rendering\glhelpers.cpp" />
     <ClCompile Include="component\rendering\Outsource\lodepng.cpp" />
@@ -120,7 +119,6 @@
     <ClInclude Include="component\gameai\util\Sphere.h" />
     <ClInclude Include="component\gameai\util\Square.h" />
     <ClInclude Include="component\input\input.h" />
-    <ClInclude Include="component\physics\GLDebugDrawer.h" />
     <ClInclude Include="component\physics\physics.h" />
     <ClInclude Include="component\rendering\glhelpers.h" />
     <ClInclude Include="component\rendering\Outsource\lodepng.h" />
