@@ -61,6 +61,7 @@ namespace Physics {
 			Entities::powerup_t powerup_type;
 			powerup_id_t powerup_id;
 			btGhostObject *powerup_body;
+			Vector3 powerup_pos;
 
 			// Arena
 			btRigidBody* arena;
