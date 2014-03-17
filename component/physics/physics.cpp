@@ -653,7 +653,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
 
 	Real fLerpAmt = seconds * 5.0f;
-
+	Clamp(fLerpAmt, 0.1f, 0.0f);
 	Vector3 vLastofs = m_karts[kart_id]->lastofs;
 	auto cameraPos = kart->camera.vPos;
 	auto cameraFocus = kart->camera.vFocus;
