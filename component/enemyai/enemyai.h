@@ -16,22 +16,30 @@ public:
 private:
 	Events::Mailbox m_mb;
 
+	enum drivingMode {Reverse, Roaming};
+
 	struct ai_kart {
 		Vector3 target_to_move;
 		Vector3 lastPos;
-		int TimeStartedTarget;
+
+		float target_timer;
+
 		float time_stuck;
 		entity_id kart_id;
+		int current_target_index;
+
+		drivingMode driving_mode;
 	};
+
 	std::map<entity_id, ai_kart *> m_karts;
 
-	Vector3 think_of_target(struct ai_kart *);
-	Vector3 get_target_roaming();
-	Vector3 get_target_aggressive();
-	Vector3 get_target_pickups();
+	void think_of_target(struct ai_kart *);
+	void get_target_roaming(struct ai_kart *kart);
+	void get_target_aggressive(struct ai_kart *kart);
+	void get_target_pickups(struct ai_kart *kart);
 
 	Events::InputEvent *move_kart(struct ai_kart *, Real);
-	Events::InputEvent *drive(btScalar ang, btScalar dist, struct ai_kart *);
+	Events::InputEvent *drive(btScalar ang, btScalar dist, struct ai_kart *, Real elapse_time);
 	void avoid_obs(int index, bool send);
 	float avoid_obs_sqr(struct ai_kart *);
 	

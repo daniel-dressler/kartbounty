@@ -156,7 +156,8 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 			if (report.impact < pt.getAppliedImpulse()) {
 				report.impact = pt.getAppliedImpulse();
 
-				btVector3 pos = pt.getPositionWorldOnA();
+				btVector3 pos = A->is_kart ? pt.getPositionWorldOnA() :
+				                             pt.getPositionWorldOnB();
 				report.pos.x = pos.getX();
 				report.pos.y = pos.getY();
 				report.pos.z = pos.getZ();
@@ -365,7 +366,7 @@ int Simulation::loadWorld()
 			kart_entity->Orient.w = (Real)-rot.getW();
 
 			//Set initial camera value
-			kart_entity->camera.fFOV = 0;
+			kart_entity->camera.fFOV = 1;
 			kart_entity->camera.vFocus.Zero();
 			kart_entity->camera.vPos.Zero();
 			kart_entity->camera.orient_old.Zero();

@@ -68,29 +68,8 @@
     <ClInclude Include="component\audio\audio.h">
       <Filter>component\audio</Filter>
     </ClInclude>
-    <ClInclude Include="component\gameai\graph\DistPair.h">
-      <Filter>component\gameai\graph</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\graph\Graph.h">
-      <Filter>component\gameai\graph</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\graph\Node.h">
-      <Filter>component\gameai\graph</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\util\Position.h">
-      <Filter>component\gameai\util</Filter>
-    </ClInclude>
     <ClInclude Include="component\gameai\GameLogic.h">
       <Filter>component\gameai</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\util\Ray.h">
-      <Filter>component\gameai\util</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\util\Sphere.h">
-      <Filter>component\gameai\util</Filter>
-    </ClInclude>
-    <ClInclude Include="component\gameai\util\Square.h">
-      <Filter>component\gameai\util</Filter>
     </ClInclude>
     <ClInclude Include="component\enemyai\enemyai.h">
       <Filter>component\enemyai</Filter>
@@ -214,12 +193,6 @@
     </Filter>
     <Filter Include="component\audio">
       <UniqueIdentifier>{f5d0a495-60a6-4d83-bb09-161217ba4fef}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="component\gameai\graph">
-      <UniqueIdentifier>{a7708a17-7d17-416d-bf1a-b645c91d777e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="component\gameai\util">
-      <UniqueIdentifier>{99ed12cb-8790-4db4-847d-753306636852}</UniqueIdentifier>
     </Filter>
     <Filter Include="component\enemyai">
       <UniqueIdentifier>{e859659b-25bf-4779-b702-5a8e724fefe5}</UniqueIdentifier>
