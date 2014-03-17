@@ -366,7 +366,7 @@ int Simulation::loadWorld()
 			kart_entity->Orient.w = (Real)-rot.getW();
 
 			//Set initial camera value
-			kart_entity->camera.fFOV = 0;
+			kart_entity->camera.fFOV = 1;
 			kart_entity->camera.vFocus.Zero();
 			kart_entity->camera.vPos.Zero();
 			kart_entity->camera.orient_old.Zero();

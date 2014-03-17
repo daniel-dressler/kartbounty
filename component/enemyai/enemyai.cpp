@@ -4,12 +4,12 @@
 #include "util/Sphere.h"
 #include "util/Square.h"
 
-#define LIMIT_FOR_STUCK 0.004f
-#define REVERSE_TRESHOLD 6
-#define RESET_TRESHOLD REVERSE_TRESHOLD*4
+#define LIMIT_FOR_STUCK 0.1f
+#define REVERSE_TRESHOLD 1.5f
+#define REVERSE_TIME 0.7f
+#define RESET_TRESHOLD 4.f
 
 // temp
-int current_state;
 std::vector<Vector3> path;
 std::vector<Square> obs_sqr;
 
@@ -23,8 +23,6 @@ EnemyAi::EnemyAi()
 
 	// Possible points for the car to wander about.
 	init_graph();
-
-	current_state = 0;
 }
 
 EnemyAi::~EnemyAi()
@@ -37,22 +35,23 @@ void EnemyAi::setup()
 	EnemyAi::init_obs_sqr();
 }
 
-Vector3 EnemyAi::think_of_target(struct ai_kart *kart)
+void EnemyAi::think_of_target(struct ai_kart *kart)
 {
-	kart->TimeStartedTarget = 0;
-	return kart->target_to_move = get_target_roaming();
+	kart->target_timer = 0;
+	get_target_roaming(kart);
 }
 
-Vector3 EnemyAi::get_target_roaming()
+void EnemyAi::get_target_roaming(struct ai_kart *kart)
 {
 	int rand = (std::rand() % path.size());
-	if (rand == current_state)
+	if (rand == kart->current_target_index)
 		rand = (std::rand() % path.size());
 
 	Vector3 answer = path.at(rand);
-	current_state = rand;
+	kart->current_target_index = rand;
 
-	return answer;
+	kart->target_to_move = answer;
+	kart->driving_mode = drivingMode::Roaming;
 }
 
 void EnemyAi::update(Real elapsed_time)
@@ -62,17 +61,20 @@ void EnemyAi::update(Real elapsed_time)
 	// Send new event
 	for (Events::Event *event : m_mb.checkMail()) {
 		switch( event->type ) {
-		case Events::EventType::AiKart:
+		case Events::EventType::AiKart: 
 		{
 			auto kart_id = ((Events::AiKartEvent *)event)->kart_id;
 			struct ai_kart *kart;
-			if (m_karts.count(kart_id) == 0) {
+			if (m_karts.count(kart_id) == 0) 
+			{
 				kart = m_karts[kart_id] = new ai_kart;
 				kart->kart_id = kart_id;
 				think_of_target(kart);
-			} else {
+			} else 
+			{
 				kart = m_karts[kart_id];
 			}
+
 			inputEvents.push_back(move_kart(kart, elapsed_time));
 		}
 			break;
@@ -82,7 +84,8 @@ void EnemyAi::update(Real elapsed_time)
 			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
 			// We only need delete the kart
 			// If it was ai controlled
-			if (m_karts.count(kart_id) > 0) {
+			if (m_karts.count(kart_id) > 0) 
+			{
 				m_karts.erase(kart_id);
 			}
 		}
@@ -103,10 +106,10 @@ bool Prev = 0;
 Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_time)
 {
 	// increment it's timer by time
-	kart_local->TimeStartedTarget += elapsed_time;
+	kart_local->target_timer -= elapsed_time;
 
-	//DEBUGOUT("Stuck value %f for %d\n", stuck_counter[index], index)
-	//DEBUGOUT("Time : %f\n", state->Karts[index].TimeStartedTarget)
+	//DEBUGOUT("Stuck value %f for %d\n", kart_local->time_stuck, kart_local->kart_id)
+	//DEBUGOUT("Time : %f\n", kart_local->target_timer)
 
 	auto kart_entity = GETENTITY(kart_local->kart_id, CarEntity);
 	Vector3 target_3 = kart_local->target_to_move;
@@ -125,14 +128,17 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	// check if car stuck, increase stuck timer if stuck.
 	bool stuck = (abs(oldPos.x - pos.x) < LIMIT_FOR_STUCK && 
 						abs(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
-	if (stuck) {
+	if (stuck) 
+	{
 		kart_local->time_stuck += elapsed_time;
-	} else {
+	} 
+	else 
+	{
 		kart_local->time_stuck = 0;
 	}
 	
 	// Generate input for car.
-	auto directions = drive(diff_in_angles, distance_to_target, kart_local);
+	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
 
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
@@ -166,7 +172,7 @@ btScalar EnemyAi::getAngle(Vector2 target, Vector3 pos, btVector3 *forward)
 	return angle;
 }
 
-Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_kart *kart_local)
+Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_kart *kart_local, Real elapsed_time)
 {
 		// Make a new event.
 		auto directions = NEWEVENT(Input);
@@ -175,6 +181,12 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 
 		// Change the previous event to suit situation.
 		if (kart_local->time_stuck >= REVERSE_TRESHOLD)
+		{
+			kart_local->driving_mode = drivingMode::Reverse;
+			kart_local->target_timer = REVERSE_TIME;
+		}
+
+		if (kart_local->driving_mode == drivingMode::Reverse)
 		{
 			//DEBUGOUT("DRIVE BACKWARDS!\n");
 			directions->leftTrigger = 1;
@@ -185,13 +197,14 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 			else
 				turn_value = 1.f;
 
-			kart_local->time_stuck -= 0.0075f;
+			if (kart_local->target_timer <= 0)
+				think_of_target(kart_local);
 		}
 		else
 		{
 			//DEBUGOUT("DRIVE FORWARD!!\n");
 			
-			directions->rightTrigger = 0.7;
+			directions->rightTrigger = .9f;
 			directions->leftTrigger = 0;
 
 			if (abs(diff_ang) < 0.7f  && abs(diff_ang) > 0.05f )
@@ -211,15 +224,9 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 		}
 
 		float avoidance_angle = avoid_obs_sqr(kart_local);
+
+
 		directions->leftThumbStickRL = avoidance_angle == 0 ? turn_value : avoidance_angle;
-
-		/* @Eric: How would these get out of bounds?
-		if (m_pCurrentInput[index]->leftThumbStickRL > 1)
-			m_pCurrentInput[index]->leftThumbStickRL = 1;
-
-		if (m_pCurrentInput[index]->leftThumbStickRL < -1)
-			m_pCurrentInput[index]->leftThumbStickRL = -1;
-		*/
 
 		return directions;
 }
@@ -242,14 +249,16 @@ void EnemyAi::init_obs_sqr()
 {
 	Vector3 center;
 	Vector3 top_left;
+	Vector3 top_right;
 	Vector3 bot_right;
+	Vector3 bot_left;
 	/// ============= First quarter of the map X > 0 , Z > 0================
 	// 21-20-22-23 - left part
 	center = Vector3(4.f, 0, 14.f); top_left = Vector3(1.28f, 0, 15.544f); bot_right = Vector3(3.87f, 0, 12.695f);
 	Square s0 = Square(center, top_left, bot_right);
 
 	// 21-20-22-23 - right part
-	center = Vector3(4.f, 0, 14.f); top_left = Vector3(3.88f, 0, 15.544f); bot_right = Vector3(6.07f, 0, 12.695f);
+	center = Vector3(4.f, 0, 14.f); top_left = Vector3(3.88f, 0, 15.544f); bot_right = Vector3(6.77f, 0, 12.695f);
 	Square s1 = Square(center, top_left, bot_right);
 
 
@@ -259,9 +268,10 @@ void EnemyAi::init_obs_sqr()
 	// 12-16-11-17 square
 	center = Vector3(14.f, 0, 12.f); top_left = Vector3(12.77f, 0, 12.69f); bot_right = Vector3(15.37f, 0, 9.65f);
 	Square s3 = Square(center, top_left, bot_right);
-	// 12 square corner inside (center slightly moved higher on the z)
-	center = Vector3(12.77f, 0, 13.00f); top_left = Vector3(11.45f, 0, 11.45f); bot_right = Vector3(11.77f, 0, 13.77f);
-	Square s4 = Square(center, top_left, bot_right);
+
+	// 13-12-11 triangle
+	center = Vector3(12.75f, 0, 12.75f); top_left = Vector3(9.6f, 0, 12.76f); top_right = Vector3(12.75f, 0 , 12.75f); bot_right = Vector3(12.75f, 0, 9.6f); bot_left = bot_right;
+	Square s4 = Square(center, top_left, top_right, bot_right, bot_left);
 
 	// 19-18 - top half
 	center = Vector3(14.f, 0, 0.f); top_left = Vector3(12.77f, 0, 5.5f); bot_right = Vector3(15.37f, 0, 2.f);
@@ -275,13 +285,70 @@ void EnemyAi::init_obs_sqr()
 	// 5-9-10-4 square
 	center = Vector3(9.f, 0, 7.f); top_left = Vector3(7.77f, 0, 7.69f); bot_right = Vector3(10.37f, 0, 4.65f);
 	Square s8 = Square(center, top_left, bot_right);
-	// 5 square corner inside (center slightly moved higher on the z)
-	center = Vector3(7.77f, 0.F, 8.00f); top_left = Vector3(6.45f, 0, 6.45f); bot_right = Vector3(6.77f, 0, 8.77f);
-	Square s9 = Square(center, top_left, bot_right);
+
+	// 6-5-4 triangle
+	center = Vector3(7.5f, 0.F, 7.5f); top_left = Vector3(4.45f, 0,7.7f); top_right = Vector3(7.5f, 0, 7.5f); bot_right = Vector3(7.6f, 0, 4.77f); bot_left = bot_right;
+	Square s9 = Square(center, top_left, top_right, bot_right, bot_left);
 
 	// 1-2-3 - center offseted to be 1
-	center = Vector3(2.71f, 0, 2.63f); top_left = Vector3(2.71f, 0,5.46f); bot_right = Vector3(5.58f, 0, 2.63f);
-	Square s10 = Square(center, top_left, bot_right);
+	center = Vector3(3.15f, 0, 3.15f); top_left = Vector3(2.71f, 0,5.46f); top_right = top_left; bot_right = Vector3(5.58f, 0, 2.63f); bot_left = Vector3(2.75f, 0, 2.75);
+	Square s10 = Square(center, top_left, top_right, bot_right, bot_left);
+
+	// 15-16-12 triangle
+	center = Vector3(12.75f, 0, 12.75f); top_left = Vector3(13.f, 0, 15.56f); top_right = top_left; bot_right = Vector3(15.37f, 0, 13.12f); bot_left = Vector3(12.75f, 0, 12.75f);
+	Square s11 = Square(center, top_left, top_right, bot_right, bot_left);
+
+	// 8-9-6 triangle
+	center = Vector3(7.5f, 0.F, 7.5f); top_left = Vector3(8.f, 0,10.2f); top_right = top_left; bot_right = Vector3(10.42f, 0, 8.35f); bot_left = Vector3(7.5f, 0.F, 7.5f);
+	Square s12 = Square(center, top_left, top_right, bot_right, bot_left);
+
+	// Outer walls - top/bottom
+	center = Vector3(3.f, 0, 19.f); top_left = Vector3(1.f, 0, 19.f);bot_right = Vector3(5.f, 0, 19.f);
+	Square s13 = Square(center, top_left, bot_right);
+	center = Vector3(5.f, 0, 19.f); top_left = Vector3(3.f, 0, 19.f);bot_right = Vector3(7.f, 0, 19.f);
+	Square s14 = Square(center, top_left, bot_right);
+	center = Vector3(7.f, 0, 19.f); top_left = Vector3(5.f, 0, 19.f);bot_right = Vector3(9.f, 0, 19.f);
+	Square s15 = Square(center, top_left, bot_right);
+	center = Vector3(9.f, 0, 19.f); top_left = Vector3(7.f, 0, 19.f);bot_right = Vector3(11.f, 0, 19.f);
+	Square s16 = Square(center, top_left, bot_right);
+	center = Vector3(11.f, 0, 19.f); top_left = Vector3(9.f, 0, 19.f);bot_right = Vector3(13.f, 0, 19.f);
+	Square s17 = Square(center, top_left, bot_right);
+	center = Vector3(13.f, 0, 19.f); top_left = Vector3(11.f, 0, 19.f);bot_right = Vector3(15.f, 0, 19.f);
+	Square s18 = Square(center, top_left, bot_right);
+
+	// Outer walls - left/right
+	center = Vector3(19.f, 0, 3.f); top_left = Vector3(19.f, 0, 1.f);bot_right = Vector3(19.f, 0, 5.f);
+	Square s19 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 5.f); top_left = Vector3(19.f, 0, 3.f);bot_right = Vector3(19.f, 0, 7.f);
+	Square s20 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 7.f); top_left = Vector3(19.f, 0, 5.f);bot_right = Vector3(19.f, 0, 9.f);
+	Square s21 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 9.f); top_left = Vector3(19.f, 0, 7.f);bot_right = Vector3(19.f, 0, 11.f);
+	Square s22 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 11.f); top_left = Vector3(19.f, 0, 9.f);bot_right = Vector3(19.f, 0, 13.f);
+	Square s23 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 13.f); top_left = Vector3(19.f, 0, 11.f);bot_right = Vector3(19.f, 0, 15.f);
+	Square s24 = Square(center, top_left, bot_right);
+
+	// Outer wall - corner padding
+	center = Vector3(19.f, 0, 15.f); top_left = Vector3(19.f, 0, 12.f);bot_right = Vector3(19.f, 0, 16.f);
+	Square s25 = Square(center, top_left, bot_right);
+	center = Vector3(15.f, 0, 19.f); top_left = Vector3(12.f, 0, 19.f);bot_right = Vector3(16.f, 0, 19.f);
+	Square s26 = Square(center, top_left, bot_right);
+
+	// Corner triangle
+	center = Vector3(19.f, 0,19.f); top_left = Vector3(14.9f, 0, 19.f); top_right = center; bot_right = Vector3(19.f, 0, 14.9f); bot_left = bot_right;
+	Square s27 = Square(center, top_left, top_right, bot_right, bot_left);
+
+	// 0 squares
+	center = Vector3(0.f, 0, 19.f); top_left = Vector3(-2.f, 0, 19.f);bot_right = Vector3(2.f, 0, 19.f);
+	Square s28 = Square(center, top_left, bot_right);
+	center = Vector3(0.f, 0, -19.f); top_left = Vector3(-2.f, 0, -19.f);bot_right = Vector3(2.f, 0, -19.f);
+	Square s29 = Square(center, top_left, bot_right);
+	center = Vector3(19.f, 0, 0.f); top_left = Vector3(19.f, 0, 2.f);bot_right = Vector3(19.f, 0, -2.f);
+	Square s30 = Square(center, top_left, bot_right);
+	center = Vector3(-19.f, 0, 0.f); top_left = Vector3(-19.f, 0, 2.f);bot_right = Vector3(-19.f, 0, -2.f);
+	Square s31 = Square(center, top_left, bot_right);
 
 	// q1 no flip , X > 0, Z > 0
 	obs_sqr.push_back(s0);
@@ -295,6 +362,29 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s8);
 	obs_sqr.push_back(s9);
 	obs_sqr.push_back(s10);
+	obs_sqr.push_back(s11);
+	obs_sqr.push_back(s12);
+	obs_sqr.push_back(s13);
+	obs_sqr.push_back(s14);
+	obs_sqr.push_back(s15);
+	obs_sqr.push_back(s16);
+	obs_sqr.push_back(s17);
+	obs_sqr.push_back(s18);
+	obs_sqr.push_back(s19);
+	obs_sqr.push_back(s20);
+	obs_sqr.push_back(s21);
+	obs_sqr.push_back(s22);
+	obs_sqr.push_back(s23);
+	obs_sqr.push_back(s24);
+	obs_sqr.push_back(s25);
+	obs_sqr.push_back(s26);
+	obs_sqr.push_back(s27);
+
+	// 0's
+	obs_sqr.push_back(s28);
+	obs_sqr.push_back(s29);
+	obs_sqr.push_back(s30);
+	obs_sqr.push_back(s31);
 
 	// q2 flip on the Z axis. X < 0, Z > 0
 	obs_sqr.push_back(s0.flip_z_axis());
@@ -308,6 +398,23 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s8.flip_z_axis());
 	obs_sqr.push_back(s9.flip_z_axis());
 	obs_sqr.push_back(s10.flip_z_axis());
+	obs_sqr.push_back(s11.flip_z_axis());
+	obs_sqr.push_back(s12.flip_z_axis());
+	obs_sqr.push_back(s13.flip_z_axis());
+	obs_sqr.push_back(s14.flip_z_axis());
+	obs_sqr.push_back(s15.flip_z_axis());
+	obs_sqr.push_back(s16.flip_z_axis());
+	obs_sqr.push_back(s17.flip_z_axis());
+	obs_sqr.push_back(s18.flip_z_axis());
+	obs_sqr.push_back(s19.flip_z_axis());
+	obs_sqr.push_back(s20.flip_z_axis());
+	obs_sqr.push_back(s21.flip_z_axis());
+	obs_sqr.push_back(s22.flip_z_axis());
+	obs_sqr.push_back(s23.flip_z_axis());
+	obs_sqr.push_back(s24.flip_z_axis());
+	obs_sqr.push_back(s25.flip_z_axis());
+	obs_sqr.push_back(s26.flip_z_axis());
+	obs_sqr.push_back(s27.flip_z_axis());
 
 	// q3 flip on the Z axis and the X axis. X < 0, Z < 0
 	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis());
@@ -321,6 +428,23 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s8.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s9.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s10.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s11.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s12.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s13.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s14.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s15.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s16.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s17.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s18.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s19.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s20.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s21.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s22.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s23.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s24.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s25.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s26.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s27.flip_z_axis().flip_x_axis());
 
 	// q4 flip on the  X axis. X > 0, Z < 0
 	obs_sqr.push_back(s0.flip_x_axis());
@@ -334,9 +458,23 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s8.flip_x_axis());
 	obs_sqr.push_back(s9.flip_x_axis());
 	obs_sqr.push_back(s10.flip_x_axis());
-
-	// TODO need to add 4 corner squares for 2nd inner loop.
-	// TODO need to add 4 outer walls.
+	obs_sqr.push_back(s11.flip_x_axis());
+	obs_sqr.push_back(s12.flip_x_axis());
+	obs_sqr.push_back(s13.flip_x_axis());
+	obs_sqr.push_back(s14.flip_x_axis());
+	obs_sqr.push_back(s15.flip_x_axis());
+	obs_sqr.push_back(s16.flip_x_axis());
+	obs_sqr.push_back(s17.flip_x_axis());
+	obs_sqr.push_back(s18.flip_x_axis());
+	obs_sqr.push_back(s19.flip_x_axis());
+	obs_sqr.push_back(s20.flip_x_axis());
+	obs_sqr.push_back(s21.flip_x_axis());
+	obs_sqr.push_back(s22.flip_x_axis());
+	obs_sqr.push_back(s23.flip_x_axis());
+	obs_sqr.push_back(s24.flip_x_axis());
+	obs_sqr.push_back(s25.flip_x_axis());
+	obs_sqr.push_back(s26.flip_x_axis());
+	obs_sqr.push_back(s27.flip_x_axis());
 }
 
 #define LENGTH_OF_RAY 3.75
@@ -376,7 +514,6 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 			if (intersections_forward + intersections_left + intersections_right > 0)
 			{
 				danger_sqr.push_back(square);
-				//old_index.push_back(i);
 
 				/*
 				if (intersections_forward > 0)
