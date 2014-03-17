@@ -15,6 +15,9 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::PlayerKart );
 	m_pMailbox->request( Events::EventType::KartCreated );
 	m_pMailbox->request( Events::EventType::KartDestroyed );
+	m_pMailbox->request( Events::EventType::PowerupPlacement );
+	m_pMailbox->request( Events::EventType::PowerupDestroyed );
+	m_pMailbox->request( Events::EventType::PowerupPickup );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -215,7 +218,6 @@ int Renderer::setup()
 Vector4 getNextColor()
 {
 	static uint64_t color = 1;
-	static std::hash<uint64_t> hasher;
 	uint64_t red = 0;
 	uint64_t blue = 0;
 	uint64_t green= 0;
@@ -274,15 +276,21 @@ int Renderer::update( float fElapseSec )
 				cameras.push_back(kart->camera);
 			}
 			break;
-		case Events::EventType::StateUpdate:
+		case Events::EventType::PowerupPlacement:
 			{
-				//DEBUGOUT( "I GOT HERE!" );
+				auto powerup_event = ((Events::PowerupPlacementEvent *)event);
+				struct powerup powerup_local;
+				powerup_local.vPos = powerup_event->pos;
+				powerup_local.type = powerup_event->powerup_type;
+				powerup_local.idPowerup = powerup_event->powerup_id;
+				m_powerups[powerup_local.idPowerup] = powerup_local;
 			}
 			break;
-		case Events::EventType::Input:
+		case Events::EventType::PowerupPickup:
+		case Events::EventType::PowerupDestroyed:
 			{
-				// Events::InputEvent* input = (Events::InputEvent*)aryEvents[i];
-			
+				auto powerup = ((Events::PowerupDestroyedEvent *)event);
+				m_powerups.erase(powerup->powerup_id);
 			}
 			break;
 		default:
@@ -291,7 +299,7 @@ int Renderer::update( float fElapseSec )
 	}
 	m_pMailbox->emptyMail();
 
-	glClearColor( 0, 0, 0, 1 );
+	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
@@ -357,34 +365,44 @@ int Renderer::render()
 		glhDrawMesh( m_eftMesh, m_mshKart );
 	}
 
-	/*
-	for( Int32 i = 0; i < 1; i++ )
-	{
-		if( GetState().Powerups[i].bEnabled )
-		{
-			perMesh.vColor = Vector4( 1,0,0,1 );
-			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
-			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( GetState().Powerups[i].vPos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+	for (auto id_powerup_pair : m_powerups) {
+		auto powerup = id_powerup_pair.second;
+		Vector4 color1;
+		Vector4 color2;
+		Vector3 pos = powerup.vPos;
 
-			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( GetState().Powerups[i].vPos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
-
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-			perMesh.vColor = Vector4( 1,1,1,1 );
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
-			glDisable( GL_BLEND );
-
-
+		// Could switch mesh if we had
+		// multiple models
+		switch (powerup.type) {
+			case Entities::BulletPowerup:
+				color1 = Vector4(1, 0, 0, 1);
+				color2 = Vector4(1, 1, 1, 1);
+			break;
+			default:
+				color1 = Vector4(1, 1, 0, 1);
+				color2 = Vector4(0, 0, 1, 1);
+			break;
 		}
+
+		perMesh.vColor = color1;
+		perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+		perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		perMesh.vColor = color2;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+		glDisable( GL_BLEND );
 	}
-	*/
 
 	SDL_GL_SwapWindow( m_Window );
 

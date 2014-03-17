@@ -22,6 +22,8 @@ namespace Events {
 		StateUpdate,
 		Input,
 		PowerupPickup,
+		PowerupPlacement,
+		PowerupDestroyed,
 		Reset,
 		ArenaMeshCreated,
 		AiKart,
@@ -29,6 +31,8 @@ namespace Events {
 		KartCreated,
 		KartDestroyed,
 		AudioPlayPause,
+		KartColideKart,
+		KartColideArena,
 		Quit
 	};
 
@@ -71,17 +75,38 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPlacement)
+		powerup_id_t powerup_id;
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPickup)
+		powerup_id_t powerup_id;
+		Vector3 pos;
+		Entities::powerup_t powerup_type;
+		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(PowerupDestroyed)
+		powerup_id_t powerup_id;
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
 	ENDEVENT;
 
+	EVENTSTRUCT(KartColideKart)
+		entity_id kart_id;
+		entity_id kart_id_alt;
+		Vector3 pos;
+		Real force;
+	ENDEVENT;
+
+	EVENTSTRUCT(KartColideArena)
+		entity_id kart_id;
+		Vector3 pos;
+		Real force;
+	ENDEVENT;
+
 	EVENTSTRUCT(Reset)
-		int kart_to_reset;
 		entity_id kart_id;
 	ENDEVENT;
 

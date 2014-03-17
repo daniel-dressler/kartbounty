@@ -5,6 +5,7 @@
 #include "../../Standard.h"
 
 typedef uint64_t entity_id;
+typedef uint64_t powerup_id_t;
 
 // Entities do not define models or
 // sounds or similar. Instead the system
@@ -19,8 +20,6 @@ namespace Entities {
 			Entity();
 			// -- Read & Write Values
 			// Position
-			Float64 health; // 1.0 == full 0.0 == death
-			Int64 gold;
 
 		private:
 			entity_id id;
@@ -33,25 +32,24 @@ namespace Entities {
 			entity_id GetId() { return id; };
 	};
 
-	typedef enum power_up_t {
+	typedef enum powerup_t {
 		NullPowerup, // default
 		BulletPowerup,
 		GoldCasePowerup,
 		GoldCoinPowerup
 	} powerup_t;
 
-	class PowerupEntity : public Entity {
-		powerup_t type;
-	};
-
 	class CarEntity : public Entity {
 		public:
 		CarEntity(std::string name);
-		PowerupEntity *powerup_slot;
+		powerup_t powerup_slot;
 
 		// Kart
 		Vector3 Pos;
 		Quaternion Orient;
+		Float64 health; // 1.0 == full 0.0 == death
+		Int64 gold;
+
 		// Camera
 		struct Camera {
 			Real fFOV;
@@ -59,6 +57,7 @@ namespace Entities {
 			Vector3 vPos;
 			Quaternion orient_old;
 		} camera;
+
 		// Misc Data
 		btVector3 forDirection;
 		Vector3 Up;

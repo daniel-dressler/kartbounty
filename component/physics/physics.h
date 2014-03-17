@@ -3,6 +3,8 @@
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
+#include <BulletCollision/CollisionDispatch/btCollisionObject.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletCollision/CollisionShapes/btTriangleShape.h>
 
 #include <BulletDynamics/Vehicle/btRaycastVehicle.h>
@@ -33,28 +35,67 @@ namespace Physics {
 		// Needs to be public because 
 		// of reasons.
 		void substepEnforcer(btDynamicsWorld *, btScalar);
+
+
 		private:
 		Events::Mailbox mb;
 
 		btDiscreteDynamicsWorld *m_world;
-		//btVehicleRaycaster*	m_vehicleRayCaster[NUM_KARTS];
-		//btRaycastVehicle*	m_vehicle[NUM_KARTS];
-		//btRaycastVehicle::btVehicleTuning	m_tuning[NUM_KARTS];
-		//btRigidBody* m_carChassis[NUM_KARTS];
-		btRigidBody* m_arena;
+
+		// Handles to objects for GC use
 		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
+		btTriangleInfoMap *m_triangleInfoMap;
 
 		std::map<entity_id, btRigidBody *> m_kart_bodies;
-		struct kart_phy {
+		struct phy_obj {
+			bool is_kart;
+			bool is_powerup;
+			bool is_arena;
+			// Vehicle
 			btRaycastVehicle *vehicle;
+			btVehicleRaycaster *raycaster;
 			Real lastspeed;
 			Vector3 lastofs;
-			kart_phy() {
+			entity_id kart_id;
+
+			// Powerup
+			Entities::powerup_t powerup_type;
+			powerup_id_t powerup_id;
+			btGhostObject *powerup_body;
+
+			// Arena
+			btRigidBody* arena;
+			phy_obj() {
 				lastspeed = 0;
+				is_kart = false;
+				is_powerup = false;
+				is_arena = false;
 				lastofs = Vector3( 0, 1.0f, -1.5f );
 			}
 		};
-		std::map<entity_id, struct kart_phy *> m_karts;
+		std::map<entity_id, struct phy_obj *> m_karts;
+		std::map<powerup_id_t, struct phy_obj *> m_powerups;
+		struct phy_obj *m_arena;
+
+		enum col_type_t {
+			NULL_TO_NULL,
+			KART_TO_KART,
+			KART_TO_POWERUP,
+			KART_TO_ARENA
+		};
+		struct col_report {
+			entity_id kart_id;
+			col_type_t type;
+			Real impact;
+			Vector3 pos;
+			// Kart&Kart
+			entity_id kart_id_alt;
+			// Powerup
+			Entities::powerup_t powerup_type;
+			powerup_id_t powerup_id;
+		};
+		std::map<entity_id, struct col_report> m_col_reports;
+
 
 		class btBroadphaseInterface* m_broadphase;
 		class btCollisionDispatcher* m_dispatcher;
@@ -64,5 +105,6 @@ namespace Physics {
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
 		void UpdateGameState(double, entity_id);
 		void resetKart(entity_id id);
+		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
 	};
 };
