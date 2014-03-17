@@ -34,6 +34,11 @@ Audio::Audio() {
 
 Audio::~Audio() {
 
+	for(int i = 0; i < m_SoundList.size(); i++)
+	{
+		m_SoundList[i]->release();
+	}
+
 	m_system->release();
 
 	if(m_pMailbox)
@@ -185,6 +190,8 @@ void Audio::SetupEngineSounds(struct kart_audio *kart_local){
 
 	ERRCHECK(engineNoisechannel->setPaused(false));
 	ERRCHECK(idelNoiseChannel->setPaused(false));
+
+	delete pos;
 }
 
 void Audio::DestroyEngineSounds(struct kart_audio *kart) {
@@ -308,6 +315,8 @@ void Audio::UpdateKartsPos(entity_id kart_id){
 	pos->z = kart_entity->Pos.z;
 	ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
 	ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
+
+	delete pos;
 }
 
 void Audio::update(Real seconds){
