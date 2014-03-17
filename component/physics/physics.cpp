@@ -667,6 +667,3 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 }
 
-void Simulation::enableDebugView()
-{
-}

@@ -19,8 +19,7 @@ namespace Physics {
 		public:
 		Simulation();
 		~Simulation();
-		void enableDebugView(); // auto called
-		void step(double seconds); // Need real time class
+		void step(double seconds);
 
 		// after the content loader exists
 		// loadWorld will take our models and
