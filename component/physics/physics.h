@@ -105,6 +105,7 @@ namespace Physics {
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
 		void UpdateGameState(double, entity_id);
 		void resetKart(entity_id id);
+		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
 	};
 };

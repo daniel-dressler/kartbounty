@@ -415,6 +415,14 @@ void Simulation::resetKart(entity_id id)
 	DEBUGOUT("Kart #%lu Reset\n", id);
 }
 
+void Simulation::removePowerup(powerup_id_t id)
+{
+	auto powerup = m_powerups[id];
+	m_world->removeCollisionObject(powerup->powerup_body);
+	delete m_powerups[id];
+	m_powerups.erase(id);
+}
+
 void Simulation::step(double seconds)
 {
 #define STEER_MAX_ANGLE (35)
@@ -522,9 +530,7 @@ void Simulation::step(double seconds)
 		case Events::EventType::PowerupDestroyed:
 		{
 			auto powerup_event = (Events::PowerupDestroyedEvent *)event;
-			auto powerup_id = powerup_event->powerup_id;
-			delete m_powerups[powerup_id];
-			m_powerups.erase(powerup_id);
+			removePowerup(powerup_event->powerup_id);
 		}
 		break;
 		case Events::EventType::Reset:
@@ -566,6 +572,8 @@ void Simulation::step(double seconds)
 				event->powerup_type = report.powerup_type;
 				event->powerup_id = report.powerup_id;
 				events_out.push_back(event);
+
+				removePowerup(report.powerup_id);
 			}
 			break;
 			case KART_TO_KART:
