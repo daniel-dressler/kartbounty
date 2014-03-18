@@ -107,6 +107,8 @@ void EnemyAi::update(Real elapsed_time)
 
 				kart = m_karts[kart_id] = new ai_kart;
 				kart->kart_id = kart_id;
+				kart->time_stuck = 0;
+				kart->current_target_index = -1;
 
 				m_kart_ids.push_back(kart_id);
 			}
