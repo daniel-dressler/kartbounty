@@ -2,7 +2,7 @@
 
 #include "../../Standard.h"
 #include "../events/events.h"
-
+#include <map>
 #include "util/Sphere.h"
 
 class EnemyAi 
@@ -15,8 +15,9 @@ public:
 
 private:
 	Events::Mailbox m_mb;
+	entity_id m_player_kart;
 
-	enum drivingMode {Reverse, Roaming};
+	enum drivingMode {Reverse, Roaming, Aggressive};
 
 	struct ai_kart {
 		Vector3 target_to_move;
@@ -26,12 +27,15 @@ private:
 
 		float time_stuck;
 		entity_id kart_id;
+		entity_id target_kart_id;
 		int current_target_index;
 
 		drivingMode driving_mode;
 	};
 
 	std::map<entity_id, ai_kart *> m_karts;
+	std::vector<entity_id> m_kart_ids;
+
 
 	void think_of_target(struct ai_kart *);
 	void get_target_roaming(struct ai_kart *kart);

@@ -7,7 +7,7 @@
 
 #include "GameLogic.h"
 
-#define NUM_OF_PICKUP_POINTS 5
+#define NUM_OF_PICKUP_POINTS 25
 
 // Is there a pickup on a certain spot
 bool is_point_occupied[NUM_OF_PICKUP_POINTS];
@@ -28,17 +28,33 @@ GameLogic::GameLogic()
 
 void GameLogic::add_pickup_points()
 {
-	Vector3 v1 = Vector3(0.f, 0.f, 5.5f);
-	Vector3 v2 = Vector3(1.f, 0.f, 5.5f);
-	Vector3 v3 = Vector3(-1.f, 0.f, 5.5f);
-	Vector3 v4 = Vector3(3.22f, 0.f, 7.59f);
-	Vector3 v5 = Vector3(-3.22f, 0.f, 7.59f);
+	pickup_locations[0] = Vector3(0.f, 0.f, 5.5f);
+	pickup_locations[1] = Vector3(1.f, 0.f, 5.5f);
+	pickup_locations[2] = Vector3(-1.f, 0.f, 5.5f);
+	pickup_locations[3] = Vector3(3.22f, 0.f, 7.59f);
+	pickup_locations[4] = Vector3(-3.22f, 0.f, 7.59f);
+	pickup_locations[5] = Vector3(15.5f, 0.f, 15.5f);
+	pickup_locations[6] = Vector3(-15.5f, 0.f, 15.5f);
+	pickup_locations[7] = Vector3(15.5f, 0.f, -15.5f);
+	pickup_locations[8] = Vector3(-15.5f, 0.f, -15.5f);
+	pickup_locations[9] = Vector3(6.5f, 0.f, 2.5f);
+	pickup_locations[10] = Vector3(-6.5f, 0.f, -2.5f);
+	pickup_locations[11] = Vector3(6.5f, 0.f, -2.5f);
+	pickup_locations[12] = Vector3(-6.5f, 0.f, 2.5f);	
+	pickup_locations[13] = Vector3(2.5f, 0.f, 6.5f);
+	pickup_locations[14] = Vector3(-2.5f, 0.f, -6.5f);
+	pickup_locations[15] = Vector3(2.5f, 0.f, -6.5f);
+	pickup_locations[16] = Vector3(-2.5f, 0.f, 6.5f);
+	pickup_locations[17]  = Vector3(0.f, 0.f, 0.f);
+	pickup_locations[18]  = Vector3(1.f, 0.f, 0.f);
+	pickup_locations[19]  = Vector3(-1.f, 0.f, 0.f);
+	pickup_locations[20]  = Vector3(1.f, 0.f, 1.f);
+	pickup_locations[21]  = Vector3(-1.f, 0.f, -1.f);
+	pickup_locations[22]  = Vector3(11.5f, 0.f, 0.f);
+	pickup_locations[23]  = Vector3(-11.5f, 0.f, 0.f);
+	pickup_locations[24]  = Vector3(0.f, 0.f, 11.5f);
+	pickup_locations[25]  = Vector3(0.f, 0.f, -11.5f);
 
-	pickup_locations.insert( std::pair <int, Vector3> (0, v1));
-	pickup_locations.insert( std::pair <int, Vector3> (1, v2));
-	pickup_locations.insert( std::pair <int, Vector3> (2, v3));
-	pickup_locations.insert( std::pair <int, Vector3> (3, v4));
-	pickup_locations.insert( std::pair <int, Vector3> (4, v5));
 }
 
 void GameLogic::modify_pickup_event(int kart_index, int power_up_index)

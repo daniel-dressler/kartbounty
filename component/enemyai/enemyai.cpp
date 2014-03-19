@@ -3,11 +3,13 @@
 #include "enemyai.h"
 #include "util/Sphere.h"
 #include "util/Square.h"
+#include <algorithm>
 
-#define LIMIT_FOR_STUCK 0.1f
+#define LIMIT_FOR_STUCK 0.01f
 #define REVERSE_TRESHOLD 1.5f
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
+#define TIME_TO_FOLLOW_TARGET 15.f
 
 // temp
 std::vector<Vector3> path;
@@ -20,7 +22,8 @@ EnemyAi::EnemyAi()
 	srand(time(NULL));
 	m_mb.request( Events::EventType::KartDestroyed );
 	m_mb.request( Events::EventType::AiKart );
-
+	m_mb.request( Events::EventType::KartCreated);
+	m_mb.request( Events::EventType::PlayerKart);
 	// Possible points for the car to wander about.
 	init_graph();
 }
@@ -38,7 +41,35 @@ void EnemyAi::setup()
 void EnemyAi::think_of_target(struct ai_kart *kart)
 {
 	kart->target_timer = 0;
-	get_target_roaming(kart);
+
+	int choice = std::rand() % 10;
+	if (choice < 2)
+		get_target_roaming(kart);
+	else if (choice < 8)
+		get_target_aggressive(kart);
+	else
+		get_target_roaming(kart); //get_target_pickups(kart)
+}
+
+void EnemyAi::get_target_aggressive(struct ai_kart *kart)
+{
+	int isPlayer = std::rand() % 3;
+	kart->target_kart_id = m_player_kart;
+
+	// if 0, choose random kart. Else, follow the player!
+	if (isPlayer == 0)
+	{
+		int rand = (std::rand() % m_kart_ids.size());
+
+		while (m_kart_ids[rand] == kart->kart_id)
+			rand = (std::rand() % m_kart_ids.size());
+
+		kart->target_kart_id = m_kart_ids.at(rand);
+	}
+	kart->target_timer = TIME_TO_FOLLOW_TARGET;
+	kart->driving_mode = drivingMode::Aggressive;
+
+	//DEBUGOUT("Kart %lu decided to go after kart %lu\n", kart->kart_id, kart->target_kart_id)
 }
 
 void EnemyAi::get_target_roaming(struct ai_kart *kart)
@@ -59,44 +90,68 @@ void EnemyAi::update(Real elapsed_time)
 	std::vector<Events::Event *> inputEvents;
 
 	// Send new event
-	for (Events::Event *event : m_mb.checkMail()) {
-		switch( event->type ) {
-		case Events::EventType::AiKart: 
+	for (Events::Event *event : m_mb.checkMail()) 
+	{
+		switch( event->type ) 
 		{
-			auto kart_id = ((Events::AiKartEvent *)event)->kart_id;
-			struct ai_kart *kart;
-			if (m_karts.count(kart_id) == 0) 
+			case Events::EventType::PlayerKart:
 			{
+				auto kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
+				m_player_kart = kart_id;
+			}
+			break;
+			case Events::EventType::KartCreated:
+			{
+				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				struct ai_kart *kart;
+
 				kart = m_karts[kart_id] = new ai_kart;
 				kart->kart_id = kart_id;
-				think_of_target(kart);
-			} else 
-			{
-				kart = m_karts[kart_id];
+				kart->time_stuck = 0;
+				kart->current_target_index = -1;
+
+				m_kart_ids.push_back(kart_id);
 			}
-
-			inputEvents.push_back(move_kart(kart, elapsed_time));
-		}
 			break;
-
-		case Events::EventType::KartDestroyed:
-		{
-			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
-			// We only need delete the kart
-			// If it was ai controlled
-			if (m_karts.count(kart_id) > 0) 
+			case Events::EventType::AiKart: 
 			{
-				m_karts.erase(kart_id);
-			}
-		}
-			break;
+				auto kart_id = ((Events::AiKartEvent *)event)->kart_id;
+				struct ai_kart *kart;
+				if (m_karts.count(kart_id) == 0) 
+				{
+					kart = m_karts[kart_id] = new ai_kart;
+					kart->kart_id = kart_id;
+					m_kart_ids.push_back(kart_id);
+					
+					think_of_target(kart);
+				} 
+				else 
+				{
+					kart = m_karts[kart_id];
+				}
 
-		default:
-			break;
+				inputEvents.push_back(move_kart(kart, elapsed_time));
+			}
+				break;
+
+			case Events::EventType::KartDestroyed:
+			{
+				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				// We only need delete the kart
+				// If it was ai controlled
+				if (m_karts.count(kart_id) > 0) 
+				{
+					m_karts.erase(kart_id);
+				}
+				m_kart_ids.erase(std::find(m_kart_ids.begin(), m_kart_ids.end() ,kart_id));
+			}
+				break;
+
+			default:
+				break;
 		}
 	}
 	m_mb.emptyMail();
-
 	m_mb.sendMail(inputEvents);
 }
 
@@ -107,6 +162,19 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 {
 	// increment it's timer by time
 	kart_local->target_timer -= elapsed_time;
+
+	if (kart_local->target_timer <= 0 && kart_local->driving_mode == drivingMode::Aggressive)
+	{
+		DEBUGOUT("Timer for agressive ran out, rethink!\n")
+		think_of_target(kart_local);
+	}
+
+	if (kart_local->driving_mode == drivingMode::Aggressive)
+	{
+		//DEBUGOUT("KART %d is still targetting %d agressivly!!!\n", kart_local->kart_id, kart_local->target_kart_id)
+		auto target_kart_entity = GETENTITY(kart_local->target_kart_id, CarEntity);
+		kart_local->target_to_move = target_kart_entity->Pos;
+	}
 
 	//DEBUGOUT("Stuck value %f for %d\n", kart_local->time_stuck, kart_local->kart_id)
 	//DEBUGOUT("Time : %f\n", kart_local->target_timer)
@@ -126,8 +194,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 		think_of_target(kart_local);
 
 	// check if car stuck, increase stuck timer if stuck.
-	bool stuck = (abs(oldPos.x - pos.x) < LIMIT_FOR_STUCK && 
-						abs(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
+	bool stuck = (abs(oldPos.x - pos.x) < LIMIT_FOR_STUCK && abs(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
 	if (stuck) 
 	{
 		kart_local->time_stuck += elapsed_time;
@@ -139,7 +206,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	
 	// Generate input for car.
 	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
-
+	directions->reset_requested = false;
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
 	{
@@ -148,7 +215,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	}
 	
 	
-	// DEBUGOUT("angle: %f, dist: %f\n", RADTODEG(diff_in_angles), distance_to_target);
+	//DEBUGOUT("angle: %f, dist: %f\n", RADTODEG(diff_in_angles), distance_to_target);
 
 	// update old pos
 	kart_local->lastPos = pos;
@@ -237,11 +304,27 @@ void EnemyAi::init_graph()
 	path.push_back(Vector3(-15.5f, 0.f, 15.5f));
 	path.push_back(Vector3(15.5f, 0.f, -15.5f));
 	path.push_back(Vector3(-15.5f, 0.f, -15.5f));
+	
+	path.push_back(Vector3(6.5f, 0.f, 2.5f));
+	path.push_back(Vector3(-6.5f, 0.f, -2.5f));
+	path.push_back(Vector3(6.5f, 0.f, -2.5f));
+	path.push_back(Vector3(-6.5f, 0.f, 2.5f));
+	
+	path.push_back(Vector3(2.5f, 0.f, 6.5f));
+	path.push_back(Vector3(-2.5f, 0.f, -6.5f));
+	path.push_back(Vector3(2.5f, 0.f, -6.5f));
+	path.push_back(Vector3(-2.5f, 0.f, 6.5f));
+
 	path.push_back(Vector3(0.f, 0.f, 0.f));
+	path.push_back(Vector3(1.f, 0.f, 0.f));
+	path.push_back(Vector3(-1.f, 0.f, 0.f));
+	path.push_back(Vector3(1.f, 0.f, 1.f));
+	path.push_back(Vector3(-1.f, 0.f, -1.f));
 	path.push_back(Vector3(11.5f, 0.f, 0.f));
 	path.push_back(Vector3(-11.5f, 0.f, 0.f));
 	path.push_back(Vector3(0.f, 0.f, 11.5f));
 	path.push_back(Vector3(0.f, 0.f, -11.5f));
+	
 }
 
 // This maps the obsticles to square obsticles.
@@ -254,11 +337,11 @@ void EnemyAi::init_obs_sqr()
 	Vector3 bot_left;
 	/// ============= First quarter of the map X > 0 , Z > 0================
 	// 21-20-22-23 - left part
-	center = Vector3(4.f, 0, 14.f); top_left = Vector3(1.28f, 0, 15.544f); bot_right = Vector3(3.87f, 0, 12.695f);
+	center = Vector3(4.f, 0, 14.f); top_left = Vector3(1.28f, 0, 15.544f); bot_right = Vector3(3.87f, 0, 12.75f);
 	Square s0 = Square(center, top_left, bot_right);
 
 	// 21-20-22-23 - right part
-	center = Vector3(4.f, 0, 14.f); top_left = Vector3(3.88f, 0, 15.544f); bot_right = Vector3(6.77f, 0, 12.695f);
+	center = Vector3(4.f, 0, 14.f); top_left = Vector3(3.88f, 0, 15.544f); bot_right = Vector3(6.77f, 0, 12.75f);
 	Square s1 = Square(center, top_left, bot_right);
 
 
