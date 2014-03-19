@@ -10,7 +10,6 @@ GameAi::GameAi()
 	active_tresures = 0;
 	next_powerup_id = 3;
 
-
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
@@ -44,7 +43,6 @@ void GameAi::setup()
 		auto new_kart_ev = NEWEVENT(KartCreated);
 		new_kart_ev->kart_id = kart_id;
 		events.push_back(new_kart_ev);
-
 	}
 	m_mb->sendMail(events);
 }
