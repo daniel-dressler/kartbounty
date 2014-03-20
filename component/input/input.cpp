@@ -117,8 +117,8 @@ void Input::OnEvent(SDL_Event* Event)
 				SDL_Window* win;
 				Int32 nWinWidth, nWinHeight;			
 				win = SDL_GetWindowFromID(Event->window.windowID);
-				SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
-				glViewport( 0, 0, nWinWidth, nWinHeight );
+//				SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
+//				glViewport( 0, nWinHeight >> 1, nWinWidth, nWinHeight >> 1 );
 				break;
 			default:
 				break;

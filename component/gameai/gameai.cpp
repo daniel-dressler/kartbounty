@@ -34,7 +34,7 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 2; i++) {
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
@@ -133,7 +133,7 @@ int GameAi::planFrame()
 	}
 
 	// Report FPS
-	const bool PRINT_FPS = 0;
+	const bool PRINT_FPS = 1;
 	static int32_t frames = 0;
 	if (PRINT_FPS) {
 		frames++;

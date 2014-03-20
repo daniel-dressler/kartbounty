@@ -299,17 +299,9 @@ int Renderer::update( float fElapseSec )
 	}
 	m_pMailbox->emptyMail();
 
-	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
-
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
-
-	// @Phil: How would you like to handle multiple
-	// cameras? You can use cameras.size() to
-	// get the camera count
+	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 	for (Entities::CarEntity::Camera camera : cameras) {
 		Vector3 vFocus = camera.vFocus;
 		perFrame.vEyePos = camera.vPos;
@@ -318,6 +310,10 @@ int Renderer::update( float fElapseSec )
 		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 	}
+
+	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 
 	Real fLightDist = 17.0f;
 	Real fLightHeight = 5.0f;
@@ -335,8 +331,6 @@ int Renderer::update( float fElapseSec )
 	perFrame.vLight[8] = Vector4( -fLightDist, fLightHeight, -fLightDist, fLightPower );
 	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * fSpinRadius, 2, -COS( m_fTime ) * fSpinRadius, fLightPower );
 
-	glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
-
 	return 1;
 }
 
@@ -348,60 +342,70 @@ int Renderer::render()
 	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 
-	_DrawArena();
+	Int32 nWinWidth, nWinHeight;
+	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	glhEnableTexture( m_difArenaTops );
-	glhEnableTexture( m_nrmArenaTops, 1 );
+	for( Int32 i = 0; i < 2; i++ )
+	{	
+		glViewport( 0, ( nWinHeight >> 1 ) * i, nWinWidth, nWinHeight >> 1 );
 
-	for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) {
-		auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
+		glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
-		perMesh.vColor = kart_id_pair.second.vColor;
-		perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-		perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->Orient ) *
-			Matrix::GetTranslate( kart_entity->Pos );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshKart );
-	}
+		_DrawArena();
 
-	for (auto id_powerup_pair : m_powerups) {
-		auto powerup = id_powerup_pair.second;
-		Vector4 color1;
-		Vector4 color2;
-		Vector3 pos = powerup.vPos;
+		glhEnableTexture( m_difArenaTops );
+		glhEnableTexture( m_nrmArenaTops, 1 );
 
-		// Could switch mesh if we had
-		// multiple models
-		switch (powerup.type) {
-			case Entities::BulletPowerup:
-				color1 = Vector4(1, 0, 0, 1);
-				color2 = Vector4(1, 1, 1, 1);
-			break;
-			default:
-				color1 = Vector4(1, 1, 0, 1);
-				color2 = Vector4(0, 0, 1, 1);
-			break;
+		for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) {
+			auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
+
+			perMesh.vColor = kart_id_pair.second.vColor;
+			perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+			perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->Orient ) *
+				Matrix::GetTranslate( kart_entity->Pos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshKart );
 		}
 
-		perMesh.vColor = color1;
-		perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
-		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+		for (auto id_powerup_pair : m_powerups) {
+			auto powerup = id_powerup_pair.second;
+			Vector4 color1;
+			Vector4 color2;
+			Vector3 pos = powerup.vPos;
 
-		perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+			// Could switch mesh if we had
+			// multiple models
+			switch (powerup.type) {
+				case Entities::BulletPowerup:
+					color1 = Vector4(1, 0, 0, 1);
+					color2 = Vector4(1, 1, 1, 1);
+				break;
+				default:
+					color1 = Vector4(1, 1, 0, 1);
+					color2 = Vector4(0, 0, 1, 1);
+				break;
+			}
 
-		glEnable( GL_BLEND );
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-		perMesh.vColor = color2;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerSphere );
-		glDisable( GL_BLEND );
+			perMesh.vColor = color1;
+			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+			glEnable( GL_BLEND );
+			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+			perMesh.vColor = color2;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+			glDisable( GL_BLEND );
+		}
 	}
 
 	SDL_GL_SwapWindow( m_Window );
