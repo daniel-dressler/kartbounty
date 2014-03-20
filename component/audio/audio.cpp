@@ -357,7 +357,7 @@ void Audio::update(Real seconds){
 			break;
 		case Events::EventType::PlayerKart:
 			{
-				entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
+				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				if (primary_player == 0) {
 					primary_player = kart_id;
 				}
@@ -366,7 +366,7 @@ void Audio::update(Real seconds){
 			break;
 		case Events::EventType::AiKart:
 			{
-				entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
+				entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
 				UpdateKartsPos(kart_id);
 			}
 			break;
@@ -394,7 +394,7 @@ void Audio::update(Real seconds){
 					kart_local->collisionChannel->setChannelGroup(m_channelGroupEffects);
 					kart_local->collisionChannel->setPaused(false);
 				}
-				DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
+				//DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
 			}
 			break;
 		case Events::EventType::Input:

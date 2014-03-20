@@ -49,6 +49,9 @@ namespace Entities {
 		Quaternion Orient;
 		Float64 health; // 1.0 == full 0.0 == death
 		Int64 gold;
+		Real heightOffGround;
+		Vector3 groundHit;
+		Vector3 groundNormal;
 
 		// Camera
 		struct Camera {

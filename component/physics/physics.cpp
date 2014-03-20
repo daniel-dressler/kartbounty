@@ -481,7 +481,7 @@ void Simulation::step(double seconds)
 
 			Real breakingForce = 0.0;
 
-			// E-brake checking if kart is on the ground or not
+			// Check if kart is grounded for handbrake event
 			if( input->bPressed )
 			{
 				btVector3 downRay = orig - btVector3(0,20,0);
@@ -668,8 +668,33 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	// save forward vector
 	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 
+	// Update the karts height above ground and what point is bellow it for rendering shadows
+	// Casts ray 20 units directly down from karts position, which is the size of our arena so 
+	// we should not go higher than that.
+	btVector3 downRay = pos - btVector3(0,20,0);
+	btCollisionWorld::ClosestRayResultCallback RayCallback(pos, downRay);
+
+	m_world->rayTest(pos, downRay, RayCallback);
+
+	if(RayCallback.hasHit())
+	{
+		btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
+		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
+		kart->groundHit.x = hitEnd.getX();
+		kart->groundHit.y = hitEnd.getY();
+		kart->groundHit.z = hitEnd.getZ();
+		
+		kart->groundNormal.x = RayCallback.m_hitNormalWorld.getX();
+		kart->groundNormal.y = RayCallback.m_hitNormalWorld.getY();
+		kart->groundNormal.z = RayCallback.m_hitNormalWorld.getZ();
+	}
+
 	// Camera
 	// Performed for Ai & Player
+
+	// @Kyle: Update this code to cast ray from kart to camera to see if wall is in way (outter walls cause issues)
+	// put ray cast point slightly above the kart to not collide with smaller walls
+
 	Quaternion qOriNew = kart->Orient;
 	Quaternion qOriMod = qOriNew;
 	qOriMod.w = -qOriMod.w;
