@@ -107,5 +107,14 @@ namespace Physics {
 		void resetKart(entity_id id);
 		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
+		struct hit_report {
+			bool did_hit_kart;
+			bool did_hit_wall;
+			entity_id kart_hit_id;
+			// TODO: Make these Vector3
+			btVector3 impact_pos;
+			btVector3 impact_normal;
+		};
+		struct hit_report solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
 	};
 };
