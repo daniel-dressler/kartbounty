@@ -1,4 +1,6 @@
 #include <iostream>
+#include <algorithm>
+#include <queue>
 
 #include "physics.h"
 
@@ -676,5 +678,84 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	m_karts[kart_id]->lastspeed = fSpeed;
 	kart->Speed = fSpeed;
 
+}
+
+
+Simulation::hit_report Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist)
+{
+	auto kart1 = m_karts[firing_kart_id];
+	auto kart1_pos = kart1->vehicle->getChassisWorldTransform().getOrigin();
+	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+	kart1_forward.normalize();
+	kart1_pos += (kart1_forward / 3);
+
+	struct hit_report report;
+	report.did_hit_kart = false;
+
+	// Find closest karts in cone of firing
+	std::priority_queue<btScalar, std::vector<btScalar>, std::greater<btScalar>>possible_dists;
+	std::map<btScalar, std::pair<entity_id, btVector3>>dists_to_karts;
+	for (auto kart2_pair : m_karts) {
+		auto kart2 = kart2_pair.second;
+		if (kart2->kart_id == firing_kart_id)
+			continue;
+
+		// Positions
+		auto kart2_pos = kart2->vehicle->getChassisWorldTransform().getOrigin();
+
+		// Vectors
+		auto kart1_to_kart2 = kart2_pos - kart1_pos;
+
+		// Angle
+		btScalar angle = kart1_forward.dot(kart1_to_kart2.normalized());
+		if (angle < min_angle)
+			continue;
+
+		// Distance
+		btScalar dist = kart1_to_kart2.length();
+		if (dist >= max_dist)
+			continue;
+
+		possible_dists.push(dist);
+		dists_to_karts[dist] = std::make_pair(kart2->kart_id, kart2_pos);
+	}
+
+	// Find closests kart not blocked by wall
+	while (!possible_dists.empty()) {
+		auto dist = possible_dists.top();
+		possible_dists.pop();
+		auto kart_pair = dists_to_karts[dist];
+
+		// Ray cast & test
+		btCollisionWorld::ClosestRayResultCallback raycast_test(kart1_pos, kart_pair.second);
+		m_world->rayTest(kart1_pos, kart_pair.second, raycast_test);
+
+		if (!raycast_test.hasHit())
+			continue;
+
+		auto hit_obj = (struct phy_obj *)raycast_test.m_collisionObject->getUserPointer();
+		if (hit_obj == NULL || !(hit_obj->is_kart))
+			continue;
+
+		report.did_hit_kart = true;
+		report.kart_hit_id = hit_obj->kart_id;
+		report.impact_pos = raycast_test.m_hitPointWorld;
+		report.impact_normal = raycast_test.m_hitNormalWorld;
+		break;
+	}
+
+	// Last resort shot forward
+	if (report.did_hit_kart == false) {
+		auto to_point = kart1_pos + kart1_forward;
+		btCollisionWorld::ClosestRayResultCallback raycast_test(kart1_pos, to_point);
+		m_world->rayTest(kart1_pos, to_point, raycast_test);
+		if (raycast_test.hasHit()) {
+			report.did_hit_wall = true;
+			report.impact_pos = raycast_test.m_hitPointWorld;
+			report.impact_normal = raycast_test.m_hitNormalWorld;
+		}
+	}
+
+	return report;
 }
 
