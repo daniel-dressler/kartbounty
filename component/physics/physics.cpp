@@ -444,6 +444,9 @@ void Simulation::step(double seconds)
 #define E_BRAKE_FORCE (2000)
 #define MAX_SPEED (30.0)
 
+	// Vector to hold out going mail events
+	std::vector<Events::Event *> events_out;
+
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		switch ( event->type )
@@ -463,11 +466,9 @@ void Simulation::step(double seconds)
 
 			Real steering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
-			Real breakingForce = input->bPressed ? E_BRAKE_FORCE : 0.0;
 			if (steering > 0.4 || steering < -0.4)
 				DEBUGOUT("s: %f, (): %f, ()_p: %f\n", speed, steering, fTurnPower);
 
-			// Add checking for speed to this to limit turning angle at high speeds @Kyle
 			Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;
 			
 			btTransform trans = kart->getRigidBody()->getWorldTransform();
@@ -478,6 +479,35 @@ void Simulation::step(double seconds)
 				trans.setOrigin( orig );
 				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 				kart->getRigidBody()->setWorldTransform( trans );
+			}
+
+			Real breakingForce = 0.0;
+
+			// E-brake checking if kart is on the ground or not
+			if( input->bPressed )
+			{
+				btVector3 downRay = orig - btVector3(0,20,0);
+				btCollisionWorld::ClosestRayResultCallback RayCallback(orig, downRay);
+
+				m_world->rayTest(orig, downRay, RayCallback);
+
+				if(RayCallback.hasHit())
+				{
+					btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
+					btScalar height = orig.getY() - hitEnd.getY();	// Height kart is off ground
+					
+					if(height < 0.1f)
+					{
+						breakingForce = E_BRAKE_FORCE;
+						auto event = NEWEVENT(KartHandbrake);
+						event->kart_id = kart_id;
+						event->speed = speed;
+						event->pos.x = orig.getX();
+						event->pos.y = orig.getY();
+						event->pos.z = orig.getZ();
+						events_out.push_back(event);
+					}
+				}
 			}
 
 			// Max Speed checking
@@ -498,8 +528,7 @@ void Simulation::step(double seconds)
 				input->reset_requested)
 			{
 				resetKart(kart_id);
-			}
-	
+			}	
 
 			// Print Position?
 			if (input->print_position) {
@@ -572,7 +601,6 @@ void Simulation::step(double seconds)
 	}
 
 	// Issue Collision Events
-	std::vector<Events::Event *> events_out;
 	for (auto id_report_pair : m_col_reports) {
 		auto report = id_report_pair.second;
 
@@ -603,6 +631,7 @@ void Simulation::step(double seconds)
 				auto event = NEWEVENT(KartColideArena);
 				event->pos = report.pos;
 				event->kart_id = report.kart_id;
+				event->force = report.impact;
 				events_out.push_back(event);
 			}
 			default:
@@ -610,6 +639,7 @@ void Simulation::step(double seconds)
 		}
 	}
 	m_col_reports.clear();
+
 	mb.sendMail(events_out);
 }
 
@@ -654,6 +684,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 	kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
 
+	seconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
 	Real fLerpAmt = seconds * 5.0f;
 	Clamp(fLerpAmt, 0.1f, 0.0f);
 	Vector3 vLastofs = m_karts[kart_id]->lastofs;

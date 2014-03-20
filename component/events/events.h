@@ -33,6 +33,8 @@ namespace Events {
 		AudioPlayPause,
 		KartColideKart,
 		KartColideArena,
+		KartHandbrake,
+		PauseGame,
 		Quit
 	};
 
@@ -104,6 +106,12 @@ namespace Events {
 		entity_id kart_id;
 		Vector3 pos;
 		Real force;
+	ENDEVENT;
+
+	EVENTSTRUCT(KartHandbrake)
+		entity_id kart_id;
+		Vector3 pos;
+		Real speed;
 	ENDEVENT;
 
 	EVENTSTRUCT(Reset)
