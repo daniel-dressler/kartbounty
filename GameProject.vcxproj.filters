@@ -68,9 +68,6 @@
     <ClInclude Include="component\audio\audio.h">
       <Filter>component\audio</Filter>
     </ClInclude>
-    <ClInclude Include="component\gameai\GameLogic.h">
-      <Filter>component\gameai</Filter>
-    </ClInclude>
     <ClInclude Include="component\enemyai\enemyai.h">
       <Filter>component\enemyai</Filter>
     </ClInclude>
@@ -94,6 +91,9 @@
     </ClInclude>
     <ClInclude Include="component\enemyai\graph\Node.h">
       <Filter>component\enemyai\graph</Filter>
+    </ClInclude>
+    <ClInclude Include="component\gameai\GameLogic.h">
+      <Filter>component\gameai</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -147,11 +147,11 @@
     <ClCompile Include="component\audio\audio.cpp">
       <Filter>component\audio</Filter>
     </ClCompile>
-    <ClCompile Include="component\gameai\GameLogic.cpp">
-      <Filter>component\gameai</Filter>
-    </ClCompile>
     <ClCompile Include="component\enemyai\enemyai.cpp">
       <Filter>component\enemyai</Filter>
+    </ClCompile>
+    <ClCompile Include="component\gameai\GameLogic.cpp">
+      <Filter>component\gameai</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

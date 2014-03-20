@@ -29,7 +29,7 @@ int main( int argc, char** argv )
 	//Audio *audio = new Audio();
 	GameAi *gameai = new GameAi();
 	EnemyAi *enemyai = new EnemyAi();
-	GameLogic *logic = new GameLogic();
+	//GameLogic *logic = new GameLogic();
 
 	// Act on events
 	gameai->setup();
@@ -44,7 +44,7 @@ int main( int argc, char** argv )
 	while (gameai->planFrame())
 	{
 		Real elapsed_time = gameai->getElapsedTime();
-		logic->update(elapsed_time);
+		//logic->update(elapsed_time);
 
 		input->HandleEvents();
 		enemyai->update(elapsed_time);
@@ -57,7 +57,7 @@ int main( int argc, char** argv )
 	}
 	
 	// -- Cleanup & Exit ------------------------------------------------------
-	delete logic;
+	//delete logic;
 	delete enemyai;
 	delete input;
 	delete simulation;

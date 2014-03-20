@@ -24,6 +24,8 @@ EnemyAi::EnemyAi()
 	m_mb.request( Events::EventType::AiKart );
 	m_mb.request( Events::EventType::KartCreated);
 	m_mb.request( Events::EventType::PlayerKart);
+
+	has_player_kart = false;
 	// Possible points for the car to wander about.
 	init_graph();
 }
@@ -42,13 +44,18 @@ void EnemyAi::think_of_target(struct ai_kart *kart)
 {
 	kart->target_timer = 0;
 
-	int choice = std::rand() % 10;
-	if (choice < 2)
-		get_target_roaming(kart);
-	else if (choice < 8)
-		get_target_aggressive(kart);
+	if (has_player_kart)
+	{
+		int choice = std::rand() % 10;
+		if (choice < 2)
+			get_target_roaming(kart);
+		else if (choice < 8)
+			get_target_aggressive(kart);
+		else
+			get_target_roaming(kart); //get_target_pickups(kart)
+	}
 	else
-		get_target_roaming(kart); //get_target_pickups(kart)
+		get_target_roaming(kart);
 }
 
 void EnemyAi::get_target_aggressive(struct ai_kart *kart)
@@ -98,6 +105,7 @@ void EnemyAi::update(Real elapsed_time)
 			{
 				auto kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				m_player_kart = kart_id;
+				has_player_kart = true;
 			}
 			break;
 			case Events::EventType::KartCreated:
@@ -268,7 +276,7 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 			if (kart_local->target_timer <= 0)
 				think_of_target(kart_local);
 		}
-		else
+		else // TODO: Adjust values of turning to make them smarter, less wiggling
 		{
 			//DEBUGOUT("DRIVE FORWARD!!\n");
 			

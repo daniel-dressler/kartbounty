@@ -16,6 +16,7 @@ public:
 private:
 	Events::Mailbox m_mb;
 	entity_id m_player_kart;
+	bool has_player_kart;
 
 	enum drivingMode {Reverse, Roaming, Aggressive};
 
