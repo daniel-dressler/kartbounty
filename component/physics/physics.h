@@ -1,4 +1,5 @@
 #include <map>
+#include <list>
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
@@ -35,9 +36,25 @@ namespace Physics {
 		// of reasons.
 		void substepEnforcer(btDynamicsWorld *, btScalar);
 
-
+		// Used to let AI know whom it should / could shoot and when.
 		private:
 		Events::Mailbox mb;
+
+		struct bullet
+		{
+			Vector3 poistion;
+			btVector3 direction;
+			float time_to_live; // Once this is 0, the bullet will be removed from the list by physics.
+
+			bullet() 
+			{
+				poistion = Vector3(0,0,0);
+				direction.setZero();
+				time_to_live = 0;
+			}
+		};
+		std::list<struct bullet *> list_of_bullets;
+		void handle_bullets(double);
 
 		btDiscreteDynamicsWorld *m_world;
 
@@ -107,14 +124,9 @@ namespace Physics {
 		void resetKart(entity_id id);
 		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
-		struct hit_report {
-			bool did_hit_kart;
-			bool did_hit_wall;
-			entity_id kart_hit_id;
-			// TODO: Make these Vector3
-			btVector3 impact_pos;
-			btVector3 impact_normal;
-		};
-		struct hit_report solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
+		
+
+		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
+		Events::Event* makeRerportEvent(entity_id kart_shooting , entity_id kart_shot);
 	};
 };
