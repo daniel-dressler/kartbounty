@@ -13,6 +13,7 @@ GameAi::GameAi()
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
+	m_mb->request( Events::EventType::PauseGame );
 
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
@@ -88,6 +89,11 @@ int GameAi::planFrame()
 				open_point(pickup->pos);
 			}
 			break;
+		case Events::EventType::PauseGame:
+			{
+				DEBUGOUT("Pause the game!\n");
+			}
+			break;
 		default:
 			break;
 		}
@@ -120,6 +126,9 @@ int GameAi::planFrame()
 	} else if (active_powerups <= 3) {
 		events_out.push_back(spawn_powerup(Entities::BulletPowerup));
 	}
+
+	// Update the scoreboard to be send to rendering
+	updateScoreBoard();
 
 	// Issue planned events
 	m_mb->sendMail(events_out);
@@ -180,4 +189,30 @@ Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type)
 	active_powerups++;
 	return p_event;
 }
+
+// Returns true if kart with id 'i' has a score greater than kart with id 'j'
+bool sortByScore(entity_id i, entity_id j)
+{
+	return ( GETENTITY(i, CarEntity)->gold > GETENTITY(j, CarEntity)->gold );	
+}
+
+void GameAi::updateScoreBoard()
+{
+	// Sorts the kart id list with the kart with the largest amount of gold first 
+	std::sort (kart_ids.begin(), kart_ids.end(), sortByScore);
+	//outputScoreBoard();
+}
+
+// Outputs the score borad to the console
+void GameAi::outputScoreBoard()
+{
+	for(int i = 0; i < kart_ids.size(); i++)
+	{
+		auto kart = GETENTITY(kart_ids[i], CarEntity);
+		DEBUGOUT("Id:%f|Score:%lu || ", kart_ids[i], kart->gold);
+	}
+	DEBUGOUT("\n");
+}
+
+
 

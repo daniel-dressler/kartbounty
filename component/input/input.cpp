@@ -290,6 +290,11 @@ void Input::OnJoystickButtonDown(SDL_JoyButtonEvent event){
 	case RIGHT_SHOULDER_BUTTON:
 		break;
 	case START_BUTTON:
+		{
+		std::vector<Events::Event *> pauseEvent;
+		pauseEvent.push_back( NEWEVENT( PauseGame ) );
+		m_pMailbox->sendMail( pauseEvent );
+		}
 		break;
 	case BACK_BUTTON:
 		break;

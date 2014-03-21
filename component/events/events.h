@@ -145,6 +145,9 @@ namespace Events {
 	EVENTSTRUCT(AudioPlayPause)
 	ENDEVENT;
 
+	EVENTSTRUCT(PauseGame)
+	ENDEVENT;
+
 	EVENTSTRUCT(Quit)
 	ENDEVENT;
 
