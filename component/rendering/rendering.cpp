@@ -4,7 +4,7 @@
 #include "rendering.h"
 #include "../physics/physics.h"
 
-std::list<struct Physics::Simulation::bullet> list_of_bullets;
+std::list<struct Physics::Simulation::bullet *> list_of_bullets;
 
 Renderer::Renderer()
 {
@@ -267,7 +267,7 @@ int Renderer::update( float fElapseSec )
 		case Events::EventType::BulletList:
 		{
 			auto bullet_list_event = ((Events::BulletListEvent *)event);
-			list_of_bullets = *((std::list<struct Physics::Simulation::bullet> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
+			list_of_bullets = *((std::list<struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
 
 			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
 		}
@@ -439,10 +439,39 @@ int Renderer::render()
 
 	//DEBUGOUT("RENDERING: list of bullets size: %d\n" , list_of_bullets.size())
 
+
+	// HACK!! Rendering powerups instead of bullets for now. Mostly debugging tool. But you can draw with powerups on the map, too!
 	for (auto bullet : list_of_bullets) 
 	{
+			
+		Vector4 color1;
+		Vector4 color2;
+		Vector3 pos = bullet->poistion;
+		
+		color1 = Vector4(1, 1, 1, 1);
+		color2 = Vector4(0, 0, 0, 0);
+	
+		perMesh.vColor = color1;
+		perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+		perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		perMesh.vColor = color2;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+		glDisable( GL_BLEND );
+		
 		// HACK NOTE:
-		// This is where rendering the bullets happen?
+		// This is where rendering the bullets happen.
 		// As far as I can tell, the list is updated every time a bullet is created in physics or destroyed.
 		// Once the bullet's ttl will hit 0 or a negetive number, physics will remove it
 		// There probably is a better way to pass the list from Physics to Rendering - I had to create an event and because I kept getting linking errors,

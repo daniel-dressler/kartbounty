@@ -9,7 +9,7 @@
 using namespace Physics;
 
 // How many seconds can the bullet live in the system if no collision happens to it
-#define BULLET_TTL 5.f 
+#define BULLET_TTL 5 
 #define STEP_PER_FRAME 0.1f
 
 // Callback cannot be inside class
@@ -578,6 +578,25 @@ void Simulation::step(double seconds)
 			// Print Position?
 			if (input->print_position) {
 				DEBUGOUT("Pos: %f, %f, %f\n", orig.x(), orig.y(), orig.z());
+			}
+
+			// Generate bullets for player shots
+			if (input->aPressed)
+			{
+				Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
+				auto new_bullet = new Simulation::bullet();
+
+				new_bullet->direction = kart_ent->forDirection;
+				new_bullet->poistion = kart_ent->Pos;
+				new_bullet->time_to_live = BULLET_TTL;
+			
+				//DEBUGOUT("PHYSICS:\n")
+				//DEBUGOUT("Bullet dir: %f,%f,%f \nBullet pos: %f,%f,%f \nBullet ttl: %f",  
+				//	new_bullet->direction.getX(), new_bullet->direction.getY() , new_bullet->direction.getZ(), 
+				//		new_bullet->poistion.x, new_bullet->poistion.y, new_bullet->poistion.z, new_bullet->time_to_live)
+
+
+				list_of_bullets.push_back(new_bullet);
 			}
 
 			solveBulletFiring(kart_id, MIN_ANGLE_SHOOTING, MAX_DIST_SHOOTING);
