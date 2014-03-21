@@ -35,9 +35,12 @@ namespace Events {
 		KartColideArena,
 		KartHandbrake,
 		PauseGame,
+		ShootReport,
+		Shoot,
+		BulletList,
 		Quit
 	};
-
+	
 	struct Event {
 		EventType type;
 		event_id_t id;
@@ -116,6 +119,21 @@ namespace Events {
 
 	EVENTSTRUCT(Reset)
 		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(ShootReport)
+		entity_id shooting_kart_id;
+		entity_id kart_being_hit_id;	
+	ENDEVENT;
+
+	EVENTSTRUCT(Shoot)
+		entity_id kart_id;
+		btVector3 forward;
+		Vector3 kart_pos;
+	ENDEVENT;
+
+	EVENTSTRUCT(BulletList)
+		void* list_of_bullets;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)

@@ -4,8 +4,8 @@
 
 #include "../../Standard.h"
 
-typedef uint64_t entity_id;
-typedef uint64_t powerup_id_t;
+typedef int32_t entity_id;
+typedef int32_t powerup_id_t;
 
 // Entities do not define models or
 // sounds or similar. Instead the system

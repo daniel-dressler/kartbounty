@@ -34,7 +34,7 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 12; i++) 
+	for (int i = 0; i < 2; i++) 
 	{
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
@@ -106,12 +106,15 @@ int GameAi::planFrame()
 	for (auto id : this->kart_ids) 
 	{
 		Events::Event *event;
-		if (first_kart) {
+		if (first_kart) 
+		{
 			first_kart = false;
 			auto kart_event = NEWEVENT(PlayerKart);
 			kart_event->kart_id = id;
 			event = kart_event;
-		} else {
+		} 
+		else 
+		{
 			auto kart_event = NEWEVENT(AiKart);
 			kart_event->kart_id = id;
 			event = kart_event;
@@ -120,10 +123,13 @@ int GameAi::planFrame()
 	}
 
 	// Spawn Powerups?
-	if (active_tresures <= 0) {
+	if (active_tresures <= 0) 
+	{
 		active_tresures++;
 		events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
-	} else if (active_powerups <= 3) {
+	} 
+	else if (active_powerups <= 3) 
+	{
 		events_out.push_back(spawn_powerup(Entities::BulletPowerup));
 	}
 
@@ -136,7 +142,8 @@ int GameAi::planFrame()
 	// Yield until next frame
 	Real timeForLastFrame = frame_timer.CalcSeconds();
 	Real sleepPeriod = 0.016 - timeForLastFrame;
-	if (sleepPeriod > 0.0) {
+	if (sleepPeriod > 0.0) 
+	{
 		std::chrono::milliseconds timespan( (int)( sleepPeriod * 1000.0f ) );
 		std::this_thread::sleep_for(timespan);
 	}
@@ -144,10 +151,12 @@ int GameAi::planFrame()
 	// Report FPS
 	const bool PRINT_FPS = 0;
 	static int32_t frames = 0;
-	if (PRINT_FPS) {
+	if (PRINT_FPS) 
+	{
 		frames++;
 		static Real timeAtLastFrame = 0;
-		if ( (int32_t)timeAtLastFrame != (int32_t)fps_timer.CalcSeconds()) {
+		if ( (int32_t)timeAtLastFrame != (int32_t)fps_timer.CalcSeconds()) 
+		{
 			DEBUGOUT( "FPS: %d\n", frames);
 			frames = 0;
 		}

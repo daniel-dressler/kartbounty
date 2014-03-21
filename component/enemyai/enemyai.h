@@ -32,6 +32,8 @@ private:
 		int current_target_index;
 
 		drivingMode driving_mode;
+		entity_id can_shoot;
+		float shoot_timer;
 	};
 
 	std::map<entity_id, ai_kart *> m_karts;
@@ -55,5 +57,6 @@ private:
 
 	float get_distance(Vector3 a, Vector3 b);
 	Vector3 findIntersection(Sphere s, Vector3 rayDirection, Vector3 rayOrigin);
+	void kart_shoot(entity_id kart_id);
 };
 
