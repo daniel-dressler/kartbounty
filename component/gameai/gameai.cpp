@@ -13,7 +13,7 @@ GameAi::GameAi()
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
-	m_mb->request( Events::EventType::PauseGame );
+	m_mb->request( Events::EventType::TogglePauseGame );
 
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
@@ -89,7 +89,7 @@ int GameAi::planFrame()
 				open_point(pickup->pos);
 			}
 			break;
-		case Events::EventType::PauseGame:
+		case Events::EventType::TogglePauseGame:
 			{
 				DEBUGOUT("Pause the game!\n");
 			}

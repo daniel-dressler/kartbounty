@@ -40,9 +40,12 @@ Simulation::Simulation()
 	mb.request(Events::EventType::PowerupPlacement);
 	mb.request(Events::EventType::PowerupDestroyed);
 	mb.request(Events::EventType::Shoot);
+	mb.request(Events::EventType::TogglePauseGame);
 
 	m_arena = NULL;
 	m_triangleInfoMap = NULL;
+
+	gamePaused = false;
 }
 
 Simulation::~Simulation()
@@ -648,6 +651,11 @@ void Simulation::step(double seconds)
 			resetKart(kart_id);
 		}
 		break;
+		case Events::EventType::TogglePauseGame:
+			{
+				gamePaused = !gamePaused;
+			}
+			break;
 		default:
 			break;
 		}
@@ -659,7 +667,10 @@ void Simulation::step(double seconds)
 	// and 60FPS.
 	// If we have lower real FPS the car will
 	// slow down.
-	m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
+	if(!gamePaused)
+	{
+		m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
+	}
 
 	// Update Kart Entities
 	for (auto id_kart_pair : m_karts) {

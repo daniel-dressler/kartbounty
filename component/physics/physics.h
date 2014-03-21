@@ -39,6 +39,7 @@ namespace Physics {
 		// Used to let AI know whom it should / could shoot and when.
 		private:
 		Events::Mailbox mb;
+		bool gamePaused;
 
 		struct bullet
 		{

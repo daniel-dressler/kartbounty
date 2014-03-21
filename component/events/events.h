@@ -34,7 +34,7 @@ namespace Events {
 		KartColideKart,
 		KartColideArena,
 		KartHandbrake,
-		PauseGame,
+		TogglePauseGame,
 		ShootReport,
 		Shoot,
 		BulletList,
@@ -163,7 +163,7 @@ namespace Events {
 	EVENTSTRUCT(AudioPlayPause)
 	ENDEVENT;
 
-	EVENTSTRUCT(PauseGame)
+	EVENTSTRUCT(TogglePauseGame)
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)
