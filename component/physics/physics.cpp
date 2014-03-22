@@ -176,7 +176,8 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 				report.pos.z = pos.getZ();
 			}
 		}
-	} else if (A->is_powerup) {
+	}
+	if (A->is_powerup) {
 		report.pos = A->powerup_pos;
 	} else if (B->is_powerup) {
 		report.pos = B->powerup_pos;

@@ -206,7 +206,7 @@ Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type)
 {
 	auto p_event = NEWEVENT(PowerupPlacement);
 	p_event->powerup_type = p_type;
-	p_event->pos = pick_point();
+	auto pos = p_event->pos = pick_point();
 	p_event->powerup_id = this->next_powerup_id++;
 
 	active_powerups++;
