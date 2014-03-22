@@ -39,12 +39,6 @@ namespace Physics {
 		void substepEnforcer(btDynamicsWorld *, btScalar);
 		
 
-		// Used to let AI know whom it should / could shoot and when.
-		private:
-		Events::Mailbox mb;
-
-		bool gamePaused;
-
 		struct bullet
 		{
 			Vector3 poistion;
@@ -63,6 +57,12 @@ namespace Physics {
 				bullet_next_id++;
 			}
 		};
+
+		// Used to let AI know whom it should / could shoot and when.
+		private:
+		Events::Mailbox mb;
+
+		bool gamePaused;
 
 		std::map<int, struct bullet *> list_of_bullets;
 		void handle_bullets(double);
