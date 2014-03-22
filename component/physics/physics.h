@@ -137,14 +137,14 @@ namespace Physics {
 		class btConstraintSolver*    m_solver;
 		class btDefaultCollisionConfiguration* m_collisionConfiguration;
 
-		void Simulation::actOnBulletCollision(struct Simulation::bullet * bullet, phy_obj *B);
+		void actOnBulletCollision(struct Simulation::bullet * bullet, phy_obj *B);
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
 		void UpdateGameState(double, entity_id);
 		void resetKart(entity_id id);
 		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
 		
-		float Simulation::get_distance(Vector3 a, Vector3 b);
+		float get_distance(Vector3 a, Vector3 b);
 		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
 		Events::Event* makeRerportEvent(entity_id kart_shooting , entity_id kart_shot);
 	};

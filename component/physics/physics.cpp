@@ -508,9 +508,9 @@ void Simulation::handle_bullets(double time)
 		{	
 			auto user_obj = (phy_obj *) object->getUserPointer();
 
-			boolean hit_ground = user_obj->is_arena;
-			boolean hit_powerup = user_obj->is_powerup;
-			boolean hit_kart = user_obj->is_kart;
+			bool hit_ground = user_obj->is_arena;
+			bool hit_powerup = user_obj->is_powerup;
+			bool hit_kart = user_obj->is_kart;
 
 			// If it was a kart, proceed
 			if (!hit_ground && !hit_powerup && hit_kart)
@@ -521,9 +521,9 @@ void Simulation::handle_bullets(double time)
 				// Find which kart was hit. If it was the shooting kart, ignore
 				// Notice, this is dependant on the DIFF_FOR_HIT_KART, not the raycast! 
 				// That's so that we can control hits through a constant more easily.
-				for (auto kart : m_karts)
+				for (auto kart_pair : m_karts)
 				{
-					entity_id kart_id = kart.second->kart_id;
+					entity_id kart_id = kart_pair.second->kart_id;
 					auto kart = GETENTITY(kart_id, CarEntity);
 
 					Vector3 pos = kart->Pos;
@@ -533,7 +533,7 @@ void Simulation::handle_bullets(double time)
 					float hit_y = abs(pos.y - bullet_hit_pos.y);
 					float hit_z = abs(pos.z - bullet_hit_pos.z);
 				
-					boolean hit_kart = ( hit_x < DIFF_FOR_HIT_KART ) && 
+					bool hit_kart = ( hit_x < DIFF_FOR_HIT_KART ) && 
 										( hit_y < DIFF_FOR_HIT_KART ) && 
 										( hit_z < DIFF_FOR_HIT_KART );
 
