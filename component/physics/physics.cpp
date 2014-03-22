@@ -600,38 +600,41 @@ void Simulation::step(double seconds)
 			auto kart_forward = ((Events::ShootEvent *)event)->forward;
 			auto kart_pos = ((Events::ShootEvent *)event)->kart_pos;
 
-			auto new_bullet = new Simulation::bullet();
-			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+			if (m_karts.find(kart_id) != m_karts.end())
+			{
+				btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+				auto new_bullet = new Simulation::bullet();
+			
+				new_bullet->kart_id = kart_id;
+				auto kart_ent = GETENTITY(kart_id, CarEntity);
+				btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
 
-			new_bullet->kart_id = kart_id;
-			auto kart_ent = GETENTITY(kart_id, CarEntity);
-			btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
+				auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
 
-			auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
+				// Create a little of random noice
+				int sign = rand()%2;
+				btScalar x = direction.getX();
 
-			// Create a little of random noice
-			int sign = rand()%2;
-			btScalar x = direction.getX();
+				if (sign)
+						x += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+				else
+						x -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
 
-			if (sign)
-					x += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
-			else
-					x -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+				btScalar y = direction.getY();
 
-			btScalar y = direction.getY();
+				sign = rand()%2;
+				btScalar z = direction.getZ();
+				if (sign)
+						z += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+				else
+						z -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
 
-			sign = rand()%2;
-			btScalar z = direction.getZ();
-			if (sign)
-					z += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
-			else
-					z -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+				new_bullet->direction = btVector3(x,y,z);
+				new_bullet->poistion = kart_pos;
+				new_bullet->time_to_live = BULLET_TTL;
 
-			new_bullet->direction = btVector3(x,y,z);
-			new_bullet->poistion = kart_pos;
-			new_bullet->time_to_live = BULLET_TTL;
-
-			list_of_bullets[new_bullet->bullet_id] = (new_bullet);
+				list_of_bullets[new_bullet->bullet_id] = (new_bullet);
+			}
 		}
 		break;
 		case Events::EventType::Input:
