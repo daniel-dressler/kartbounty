@@ -40,6 +40,7 @@ namespace Events {
 		Shoot,
 		BulletList,
 		ScoreBoardUpdate,
+		KartHitByBullet,
 		Quit
 	};
 	
@@ -136,6 +137,10 @@ namespace Events {
 
 	EVENTSTRUCT(BulletList)
 		void* list_of_bullets;
+	ENDEVENT;
+
+	EVENTSTRUCT(KartHitByBullet)
+		entity_id kart_id;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)

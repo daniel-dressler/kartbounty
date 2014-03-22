@@ -4,7 +4,18 @@
 
 #include "gameai.h"
 
+// Score to win
 #define FINAL_SCORE_GOAL 100000
+// How much health to substruct on bullet hit
+#define DAMAGE_FROM_BULLET 1
+// Number of karts
+#define NUM_KARTS 2
+// Big Gold Powerup
+#define BIG_GOLD_VALUE 5000
+// Small Gold Powerup
+#define SMALL_GOLD_VALUE 500
+// How much health does a kart has to start with
+#define STARTING_HEALTH 5
 
 GameAi::GameAi()
 {
@@ -16,8 +27,9 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
 	m_mb->request( Events::EventType::TogglePauseGame );
+	m_mb->request( Events::EventType::KartHitByBullet );
 	m_mb->request( Events::EventType::RoundStart );
-
+	
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
 		Vector3(1.0, 0.0, 5.5),
@@ -39,11 +51,14 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 10; i++) 
+	for (int i = 0; i < NUM_KARTS; i++) 
 	{
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
+
+		kart->health = STARTING_HEALTH;
+
 		this->kart_ids.push_back(kart_id);
 
 		// Tell people of the new kart
@@ -56,13 +71,17 @@ void GameAi::setup()
 
 int GameAi::planFrame()
 {
+	std::vector<Events::Event *> events_out;
+
 	const std::vector<Events::Event*> events_in = m_mb->checkMail();
 	for (Events::Event *event : events_in) {
-		switch( event->type ) {
-		case Events::EventType::Quit:
+		switch( event->type ) 
+		{
+			case Events::EventType::Quit:
 			return 0;
 			break;
-		case Events::EventType::PowerupPickup:
+
+			case Events::EventType::PowerupPickup:
 			{
 				auto pickup = ((Events::PowerupPickupEvent *)event);
 				auto powerup = pickup->powerup_type;
@@ -73,14 +92,17 @@ int GameAi::planFrame()
 
 				// Score or store pickup
 				auto kart = GETENTITY(kart_id, CarEntity);
-				switch (powerup) {
+				switch (powerup) 
+				{
 					case Entities::GoldCasePowerup:
 						active_tresures--;
-						kart->gold += 5000;
+						kart->gold += BIG_GOLD_VALUE;
 						break;
+
 					case Entities::GoldCoinPowerup:
-						kart->gold += 100;
+						kart->gold += SMALL_GOLD_VALUE;
 						break;
+
 					default:
 						// Player loses any unused powerups
 						kart->powerup_slot = powerup;
@@ -88,31 +110,54 @@ int GameAi::planFrame()
 				}
 			}
 			break;
-		case Events::EventType::PowerupDestroyed:
+
+			case Events::EventType::PowerupDestroyed:
 			{
 				auto pickup = ((Events::PowerupPickupEvent *)event);
 				open_point(pickup->pos);
 			}
 			break;
-		case Events::EventType::TogglePauseGame:
+
+			case Events::EventType::TogglePauseGame:
 			{
 				gamePaused = !gamePaused;
 				//DEBUGOUT("Pause the game!\n");
 			}
 			break;
-		case Events::EventType::RoundStart:
+
+			case Events::EventType::RoundStart:
 			{
 				resetGame();
 			}
 			break;
-		default:
+
+			case Events::EventType::KartHitByBullet:
+			{
+				// Apply damage to kart
+				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				auto kart = GETENTITY(kart_id, CarEntity);
+				kart->health -= DAMAGE_FROM_BULLET;
+
+				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %d", kart_id, kart->health)
+				
+				// Destroy kart if health gone
+				if (kart->health <= 0)
+				{
+					auto destroy_event = NEWEVENT(KartDestroyed);
+					destroy_event->kart_id = kart_id;
+					events_out.push_back(destroy_event);
+				}
+
+			}
+			break;
+			
+			default:
 			break;
 		}
 	}
 	m_mb->emptyMail();
 	
 	// Direct controllers to karts
-	std::vector<Events::Event *> events_out;
 	bool first_kart = true;
 	for (auto id : this->kart_ids) 
 	{
@@ -130,6 +175,7 @@ int GameAi::planFrame()
 			kart_event->kart_id = id;
 			event = kart_event;
 		}
+
 		events_out.push_back(event);
 	}
 

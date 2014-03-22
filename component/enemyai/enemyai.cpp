@@ -177,7 +177,7 @@ void EnemyAi::update(Real elapsed_time)
 					kart = m_karts[kart_id];
 				}
 				kart->shoot_timer -= elapsed_time; // decrease cooldown on shot.
-				inputEvents.push_back(move_kart(kart, elapsed_time));
+				//inputEvents.push_back(move_kart(kart, elapsed_time));
 
 			}
 			break;
