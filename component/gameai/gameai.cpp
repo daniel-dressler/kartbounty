@@ -9,13 +9,13 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 2
+#define NUM_KARTS 10
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
 #define SMALL_GOLD_VALUE 500
 // How much health does a kart has to start with
-#define STARTING_HEALTH 5
+#define STARTING_HEALTH 1
 
 GameAi::GameAi()
 {
