@@ -22,6 +22,8 @@ private:
 
 	std::vector<entity_id> kart_ids;
 
+	entity_id player1KartId;
+
 	std::vector<Vector3> m_open_points;
 	uint32_t active_powerups;
 	uint32_t active_tresures;

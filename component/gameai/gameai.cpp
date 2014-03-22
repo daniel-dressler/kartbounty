@@ -3,8 +3,10 @@
 #include <math.h>
 
 #include "gameai.h"
+#include "../entities/entities.h"
 
 #define FINAL_SCORE_GOAL 100000
+#define POWERUP_RESPAWN_TIME 5
 
 GameAi::GameAi()
 {
@@ -17,6 +19,7 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::PowerupPickup );
 	m_mb->request( Events::EventType::TogglePauseGame );
 	m_mb->request( Events::EventType::RoundStart );
+	m_mb->request( Events::EventType::Input );
 
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
@@ -46,6 +49,12 @@ void GameAi::setup()
 		entity_id kart_id = g_inventory->AddEntity(kart);
 		this->kart_ids.push_back(kart_id);
 
+		// Set the first created kart as player 1's kart
+		if(i == 0)
+		{
+			player1KartId = kart_id;
+		}
+
 		// Tell people of the new kart
 		auto new_kart_ev = NEWEVENT(KartCreated);
 		new_kart_ev->kart_id = kart_id;
@@ -57,6 +66,8 @@ void GameAi::setup()
 int GameAi::planFrame()
 {
 	const std::vector<Events::Event*> events_in = m_mb->checkMail();
+	std::vector<Events::Event *> events_out;
+	
 	for (Events::Event *event : events_in) {
 		switch( event->type ) {
 		case Events::EventType::Quit:
@@ -73,6 +84,7 @@ int GameAi::planFrame()
 
 				// Score or store pickup
 				auto kart = GETENTITY(kart_id, CarEntity);
+
 				switch (powerup) {
 					case Entities::GoldCasePowerup:
 						active_tresures--;
@@ -105,6 +117,25 @@ int GameAi::planFrame()
 				resetGame();
 			}
 			break;
+		case Events::EventType::Input:
+			{
+				auto inputEvent = ((Events::InputEvent *)event);
+
+				if(inputEvent->xPressed)		// Powerup should be activated
+				{
+					auto kart = GETENTITY(inputEvent->kart_id, CarEntity);
+					if(kart->powerup_slot != NULL)
+					{
+						Entities::powerup_t p_type = kart->powerup_slot;
+
+						auto pow_event = NEWEVENT(PowerupUsed);
+						pow_event->kart_id = inputEvent->kart_id;
+						pow_event->pos = kart->Pos;
+						pow_event->powerup_type = kart->powerup_slot;
+					}
+				}
+			}
+			break;
 		default:
 			break;
 		}
@@ -112,12 +143,11 @@ int GameAi::planFrame()
 	m_mb->emptyMail();
 	
 	// Direct controllers to karts
-	std::vector<Events::Event *> events_out;
 	bool first_kart = true;
 	for (auto id : this->kart_ids) 
 	{
 		Events::Event *event;
-		if (first_kart) 
+		if (id == player1KartId) 
 		{
 			first_kart = false;
 			auto kart_event = NEWEVENT(PlayerKart);
@@ -143,7 +173,7 @@ int GameAi::planFrame()
 		} 
 		else if (active_powerups <= 3) 
 		{
-			events_out.push_back(spawn_powerup(Entities::BulletPowerup));
+			events_out.push_back(spawn_powerup(Entities::SpeedPowerup));
 		} 
 	}
 

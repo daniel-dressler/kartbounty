@@ -681,6 +681,14 @@ void Simulation::step(double seconds)
 				gamePaused = !gamePaused;
 			}
 			break;
+		case Events::EventType::KartDestroyed:
+			{
+				// ****************************************************************
+				// @Dan:  We need code in here to handle the destruction of karts
+				auto destroyEvent = (Events::KartDestroyedEvent *)event;
+				entity_id dest_Kart_Id = destroyEvent->kart_id;
+			}
+			break;
 		default:
 			break;
 		}

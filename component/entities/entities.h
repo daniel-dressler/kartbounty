@@ -36,7 +36,8 @@ namespace Entities {
 		NullPowerup, // default
 		BulletPowerup,
 		GoldCasePowerup,
-		GoldCoinPowerup
+		GoldCoinPowerup,
+		SpeedPowerup
 	} powerup_t;
 
 	class CarEntity : public Entity {

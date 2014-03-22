@@ -444,14 +444,15 @@ void Audio::update(Real seconds){
 			break;
 		case Events::EventType::Input:
 			{
+				if(gamePaused)
+					break;
+
 				// Handle all one-off sound effects
 				Events::InputEvent *input = (Events::InputEvent *)event;
 				entity_id kart_id = input->kart_id;
 				auto kart_local = m_karts[kart_id];
 				auto kart_entity = GETENTITY(kart_id, CarEntity);
 
-				if(gamePaused)
-					break;
 				if(input->aPressed)  // Weapon fired
 				{
 					FMOD_VECTOR pos;
@@ -492,6 +493,8 @@ void Audio::update(Real seconds){
 			break;
 		case Events::EventType::KartHandbrake:
 			{
+				if(gamePaused)
+					break;
 				auto handbrakeEvent = (Events::KartHandbrakeEvent *)event;
 				auto kart_local = m_karts[handbrakeEvent->kart_id];
 
