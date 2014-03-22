@@ -13,6 +13,7 @@ public:
 	void setup();
 	int planFrame();
 	Real getElapsedTime();
+	bool gamePaused;
 
 private:
 	Events::Mailbox* m_mb;
@@ -31,4 +32,6 @@ private:
 	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t);
 	void updateScoreBoard();
 	void outputScoreBoard();
+
+	void resetGame();
 };

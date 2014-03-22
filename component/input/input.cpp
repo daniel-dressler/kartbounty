@@ -291,19 +291,24 @@ void Input::OnJoystickButtonDown(SDL_JoyButtonEvent event){
 		break;
 	case START_BUTTON:
 		{
-		std::vector<Events::Event *> pauseEvent;
-		pauseEvent.push_back( NEWEVENT( TogglePauseGame ) );
-		m_pMailbox->sendMail( pauseEvent );
+			std::vector<Events::Event *> pauseEvent;
+			pauseEvent.push_back( NEWEVENT( TogglePauseGame ) );
+			m_pMailbox->sendMail( pauseEvent );
 		}
 		break;
 	case BACK_BUTTON:
+		{
+			//std::vector<Events::Event *> resetEvent;
+			//resetEvent.push_back( NEWEVENT( RoundStart) );
+			//m_pMailbox->sendMail(resetEvent);
+		}
 		break;
 	case XBOX_BUTTON:
 		{
-		std::vector<Events::Event *> quitEvent;
-		quitEvent.push_back( NEWEVENT( Quit ) );
-		m_pMailbox->sendMail( quitEvent );
-		break;
+			std::vector<Events::Event *> quitEvent;
+			quitEvent.push_back( NEWEVENT( Quit ) );
+			m_pMailbox->sendMail( quitEvent );
+			break;
 		}
 	default:
 		break;

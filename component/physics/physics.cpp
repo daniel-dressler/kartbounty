@@ -700,6 +700,7 @@ void Simulation::step(double seconds)
 				event->pos = report.pos;
 				event->kart_id = report.kart_id;
 				event->kart_id_alt = report.kart_id_alt;
+				event->force = report.impact;
 				events_out.push_back(event);
 			}
 			break;

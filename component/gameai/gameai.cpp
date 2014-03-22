@@ -4,6 +4,8 @@
 
 #include "gameai.h"
 
+#define FINAL_SCORE_GOAL 100000
+
 GameAi::GameAi()
 {
 	active_powerups = 0;
@@ -14,6 +16,7 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
 	m_mb->request( Events::EventType::TogglePauseGame );
+	m_mb->request( Events::EventType::RoundStart );
 
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
@@ -24,6 +27,8 @@ GameAi::GameAi()
 	for (auto pt : p_positions) {
 		m_open_points.push_back(pt);
 	}
+
+	gamePaused = false;
 }
 
 GameAi::~GameAi()
@@ -34,7 +39,7 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 2; i++) 
+	for (int i = 0; i < 3; i++) 
 	{
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
@@ -91,7 +96,13 @@ int GameAi::planFrame()
 			break;
 		case Events::EventType::TogglePauseGame:
 			{
-				DEBUGOUT("Pause the game!\n");
+				gamePaused = !gamePaused;
+				//DEBUGOUT("Pause the game!\n");
+			}
+			break;
+		case Events::EventType::RoundStart:
+			{
+				resetGame();
 			}
 			break;
 		default:
@@ -123,14 +134,17 @@ int GameAi::planFrame()
 	}
 
 	// Spawn Powerups?
-	if (active_tresures <= 0) 
+	if (!gamePaused)
 	{
-		active_tresures++;
-		events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
-	} 
-	else if (active_powerups <= 3) 
-	{
-		events_out.push_back(spawn_powerup(Entities::BulletPowerup));
+		if (active_tresures <= 0) 
+		{
+			active_tresures++;
+			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
+		} 
+		else if (active_powerups <= 3) 
+		{
+			events_out.push_back(spawn_powerup(Entities::BulletPowerup));
+		} 
 	}
 
 	// Update the scoreboard to be send to rendering
@@ -209,6 +223,24 @@ void GameAi::updateScoreBoard()
 {
 	// Sorts the kart id list with the kart with the largest amount of gold first 
 	std::sort (kart_ids.begin(), kart_ids.end(), sortByScore);
+
+	std::vector<Events::Event *> events_out;
+	auto scoreBoardEvent = NEWEVENT(ScoreBoardUpdate);
+	scoreBoardEvent->kartsByScore = kart_ids;
+	events_out.push_back(scoreBoardEvent);
+	
+	// Check for end of game condition
+	if(!kart_ids.empty())
+	{
+		if(GETENTITY(kart_ids[0], CarEntity)->gold > FINAL_SCORE_GOAL)
+		{
+			// Some one has reached the goal, end the round
+			events_out.push_back(NEWEVENT(RoundEnd));
+		}
+	}
+
+	m_mb->sendMail(events_out);
+
 	//outputScoreBoard();
 }
 
@@ -221,6 +253,26 @@ void GameAi::outputScoreBoard()
 		DEBUGOUT("Id:%f|Score:%lu || ", kart_ids[i], kart->gold);
 	}
 	DEBUGOUT("\n");
+}
+
+void GameAi::resetGame()
+{
+	std::vector<Events::Event *> events_out;
+
+	// Destroy all karts
+	for (auto id : this->kart_ids) 
+	{
+		auto destroyKartEvent = NEWEVENT(KartDestroyed);
+		destroyKartEvent->kart_id = id;
+		events_out.push_back(destroyKartEvent);
+	}
+
+	this->kart_ids.clear();
+
+	m_mb->sendMail(events_out);
+
+	// Create a bunch of new ones
+	setup();
 }
 
 

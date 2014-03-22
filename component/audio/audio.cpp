@@ -17,8 +17,8 @@
 
 // Volumes
 #define MUSIC_VOLUME 0.03f
-#define SOUND_EFFECTS_VOLUME 0.15f
-#define LOW_ENGINE_NOISE_VOLUME 0.5f
+#define SOUND_EFFECTS_VOLUME 0.5f
+#define LOW_ENGINE_NOISE_VOLUME 0.2f
 
 #define MIN_HANDBRAKE_SPEED 3.0			// Min speed for handbrake audio to be played
 #define MAX_COLLISION_FORCE 5000		// Max expected collision force for scaling from [0,1] for volume
@@ -34,7 +34,10 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::KartColideArena );
+	m_pMailbox->request( Events::EventType::KartColideKart );
 	m_pMailbox->request( Events::EventType::KartHandbrake );
+	m_pMailbox->request( Events::EventType::TogglePauseGame );
+	m_pMailbox->request( Events::EventType::RoundStart );
 	primary_player = 0;
 }
 
@@ -54,8 +57,11 @@ Audio::~Audio() {
 void Audio::setup() {
 	SetupHardware();
 
+	gamePaused = false;
+
 	//// Setup music and sound effects channels
 	ERRCHECK(m_system->createChannelGroup("Effects", &m_channelGroupEffects));
+	ERRCHECK(m_system->createChannelGroup("EngineNoise", &m_channelGroupEngineSound));
 	ERRCHECK(m_system->createChannelGroup("Music", &m_channelGroupMusic));
 
 	musicVol = MUSIC_VOLUME;
@@ -337,6 +343,19 @@ void Audio::update(Real seconds){
 				ToggleMusic();
 			}
 			break;
+		case Events::EventType::TogglePauseGame:
+			{
+				gamePaused = !gamePaused;
+				m_channelGroupEngineSound->setPaused(gamePaused);
+			}
+			break;
+		case Events::EventType::RoundStart:
+			{
+				// Should add code in here to play countdown 
+
+				m_channelGroupEngineSound->setPaused(false);
+			}
+			break;
 		case Events::EventType::KartCreated:
 			{
 				entity_id kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
@@ -350,7 +369,6 @@ void Audio::update(Real seconds){
 		case Events::EventType::KartDestroyed:
 			{
 				entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
-
 				DestroyEngineSounds(m_karts[kart_id]);
 				m_karts.erase(kart_id);
 			}
@@ -368,6 +386,33 @@ void Audio::update(Real seconds){
 			{
 				entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
 				UpdateKartsPos(kart_id);
+			}
+			break;
+		case Events::EventType::KartColideKart:
+			{
+			Events::KartColideKartEvent * collisionEvent = (Events::KartColideKartEvent *)event;
+				auto kart_local = m_karts[collisionEvent->kart_id];
+				auto kart_entity = GETENTITY(collisionEvent->kart_id, CarEntity);
+
+				FMOD_VECTOR pos;
+				pos.x = kart_entity->Pos.x;
+				pos.y = kart_entity->Pos.y;
+				pos.z = kart_entity->Pos.z;
+
+				bool isPlaying = false;
+				kart_local->collisionChannel->isPlaying(&isPlaying);
+
+				if(!isPlaying)
+				{
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.WallCollision],
+						true, &kart_local->collisionChannel));
+					kart_local->collisionChannel->set3DAttributes(&pos, 0);
+					float volume = Clamp(collisionEvent->force / MAX_COLLISION_FORCE);
+					kart_local->collisionChannel->setVolume(volume);
+					kart_local->collisionChannel->setChannelGroup(m_channelGroupEffects);
+					kart_local->collisionChannel->setPaused(false);
+				}
+				//DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
 			}
 			break;
 		case Events::EventType::KartColideArena:
@@ -405,6 +450,8 @@ void Audio::update(Real seconds){
 				auto kart_local = m_karts[kart_id];
 				auto kart_entity = GETENTITY(kart_id, CarEntity);
 
+				if(gamePaused)
+					break;
 				if(input->aPressed)  // Weapon fired
 				{
 					FMOD_VECTOR pos;
