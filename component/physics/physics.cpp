@@ -8,10 +8,22 @@
 
 using namespace Physics;
 
-// How many seconds can the bullet live in the system if no collision happens to it
-#define BULLET_TTL 0.2 
-#define STEP_PER_FRAME 0.7f
+// How many sub steps to do for bullets per frame
+#define SUB_STEP_BULLET 2
+// How much the forward vector gets randomized when shooting
+#define SHOOTING_RANDOMNESS 5
+// How long the bullet "lives" before being destroyed
+#define BULLET_TTL 1.f 
+// How far does the bullet "see" each frame
+#define STEP_PER_FRAME 0.4f
+// How long in seconds does the player have a cooldown between shots
 #define PLAYER_SHOOTING_COOLDOWN 0.2
+// How far intfront of the kart the bullet spawns
+#define OFFSET_INFRONT_KART 0.3
+// How close is a colision with another kart, must be just a bit smaller then offset
+#define DIFF_FOR_HIT_KART (OFFSET_INFRONT_KART - 0.00000001)
+// How close to a powerup is considered "miss the powerup". Needed to prevent bullets coliding with powerups
+#define DIFF_FOR_HIT_POWERUP 0.8
 
 // Callback cannot be inside class
 Simulation *g_physics_subsystem = NULL;
@@ -122,26 +134,31 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 
 	// Process Rigid Body Collisions
 	int numManifolds = world->getDispatcher()->getNumManifolds();
-	for (int i = 0; i < numManifolds; i++) {
+	for (int i = 0; i < numManifolds; i++) 
+	{
 		actOnCollision(world->getDispatcher()->getManifoldByIndexInternal(i));
 	}
 
 	// Process Ghost Object Collisions
-	for (auto id_powerup_pair : m_powerups) {
+	for (auto id_powerup_pair : m_powerups)
+	{
 		auto powerup = id_powerup_pair.second;
 		btAlignedObjectArray<btCollisionObject*>& overlappingObjects =
 													powerup->powerup_body->getOverlappingPairs();
 
 		const int numObjects = overlappingObjects.size();
-		for (int i = 0; i < numObjects; i++) {
+		for (int i = 0; i < numObjects; i++) 
+		{
 			btCollisionObject *colObj=overlappingObjects[i];
 			auto local = static_cast<phy_obj *>(colObj->getUserPointer());
-			if (local != NULL) {
+			if (local != NULL) 
+			{
 				actOnCollision(NULL, powerup, local);
 			}
 		}
 	}
 }
+
 
 void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_obj *B)
 {
@@ -157,6 +174,10 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 		return;
 	}
 
+	if ( (A->is_kart && A->is_arena) || (B->is_kart && B->is_arena))
+			return ;
+	// ^ HACK TO FIX BUG. For some reason, at times a phy_obj comes here with all 3 fileds is_kart, is_arena and is_powerup as set to true.
+	// Both me and kyle would get these happen every once in a while - no idea what is the trigger for them, couldn't find what was causing it.
 
 	struct col_report report = col_report();
 	report.type = NULL_TO_NULL;
@@ -190,8 +211,9 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 		report.type = KART_TO_KART;
 
 	} else if (report.impact >= 0.0 && 
-			((A->is_kart && B->is_powerup) ||
-			(A->is_powerup && B->is_kart))) {
+			((A->is_kart && B->is_powerup ) ||
+			(A->is_powerup && B->is_kart ))) 
+	{
 		report.kart_id = A->is_kart ? A->kart_id : B->kart_id;
 		report.powerup_type = A->is_powerup ? A->powerup_type : B->powerup_type;
 		report.powerup_id = A->is_powerup ? A->powerup_id : B->powerup_id;
@@ -452,27 +474,116 @@ void Simulation::removePowerup(powerup_id_t id)
 void Simulation::handle_bullets(double time)
 {
 	std::vector<int> bullets_to_desroy ;
-	for (auto bullet_pair : list_of_bullets)
+	for (int i = 0; i<SUB_STEP_BULLET; i++)
 	{
-		auto bullet_obj = bullet_pair.second;
-		float x = bullet_obj->direction.getX() * STEP_PER_FRAME;
-		float y = bullet_obj->direction.getY() * STEP_PER_FRAME;
-		float z = bullet_obj->direction.getZ() * STEP_PER_FRAME;
+		for (auto bullet_pair : list_of_bullets)
+		{		
+			auto bullet_obj = bullet_pair.second;
+			auto old_pos = bullet_obj->poistion;
 
-		Vector3 newPos = Vector3( x,y,z );
-		bullet_obj->poistion = bullet_obj->poistion + newPos ;
-		bullet_obj->time_to_live -= time;
+			// update position for next frame
+			float x = bullet_obj->direction.getX() * STEP_PER_FRAME;
+			float y = bullet_obj->direction.getY() * STEP_PER_FRAME;
+			float z = bullet_obj->direction.getZ() * STEP_PER_FRAME;
 
-		// remember to destroy the bullet if it's ttl < 0
-		if (bullet_obj->time_to_live < 0)
-			bullets_to_desroy.push_back(bullet_obj->bullet_id);
+			Vector3 newPos = Vector3( x,y,z );
+			Vector3 pos = bullet_obj->poistion = bullet_obj->poistion + newPos ;
+			
+			// Only do this once, for the first loop-through
+			if (i==0)
+				bullet_obj->time_to_live -= time;
+
+			// cast ray and check if bullet hits anything
+			btVector3 orig = btVector3(old_pos.x, old_pos.y, old_pos.z);
+
+			// Get it's next place on the vector
+			x = bullet_obj->direction.getX() * STEP_PER_FRAME;
+			y = bullet_obj->direction.getY() * STEP_PER_FRAME;
+			z = bullet_obj->direction.getZ() * STEP_PER_FRAME;
+			newPos = Vector3( x,y,z );
+			Vector3 temp = bullet_obj->poistion + newPos;
+			btVector3 next = btVector3(temp.x, temp.y, temp.z);
+
+			btCollisionWorld::ClosestRayResultCallback RayCallback(orig, next);
+			m_world->rayTest(orig, next, RayCallback);
+
+			if(RayCallback.hasHit())
+			{
+				//DEBUGOUT("HAS HIT!!!\n")
+				btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
+				btScalar height = orig.getY() - hitEnd.getY();	// Height kart is off ground
+
+				bool hit_powerup = false;
+			
+				// Check if hit powerup
+				for (auto powerup_pair : m_powerups)
+				{
+					auto powerup = powerup_pair.second;
+			
+					Vector3 pos = powerup->powerup_pos;
+					Vector3 bullet_hit_pos = Vector3(next.getX(), next.getY(), next.getZ());
+
+					float hit_x = abs(pos.x - bullet_hit_pos.x);
+					float hit_y = abs(pos.y - bullet_hit_pos.y);
+					float hit_z = abs(pos.z - bullet_hit_pos.z);
+				
+					hit_powerup =	( hit_x < DIFF_FOR_HIT_POWERUP ) && 
+									( hit_y < DIFF_FOR_HIT_POWERUP ) && 
+									( hit_z < DIFF_FOR_HIT_POWERUP );
+
+					if (hit_powerup)
+					{
+						//DEBUGOUT("HIT POWERUP!\n")
+						break;
+					}
+				}
+
+				if (!hit_powerup)
+				{
+					// Check if hit kart
+					for (auto kart : m_karts)
+					{
+						entity_id kart_id = kart.second->kart_id;
+						auto kart = GETENTITY(kart_id, CarEntity);
+
+						Vector3 pos = kart->Pos;
+						Vector3 bullet_hit_pos = Vector3(next.getX(), next.getY(), next.getZ());
+
+						float hit_x = abs(pos.x - bullet_hit_pos.x);
+						float hit_y = abs(pos.y - bullet_hit_pos.y);
+						float hit_z = abs(pos.z - bullet_hit_pos.z);
+				
+						boolean hit_kart = ( hit_x < DIFF_FOR_HIT_KART ) && 
+										   ( hit_y < DIFF_FOR_HIT_KART ) && 
+										   ( hit_z < DIFF_FOR_HIT_KART );
+
+						if (hit_kart)
+						{
+							DEBUGOUT("HIT KART %d\n", kart_id)
+						}
+					}
+
+					// Remove the bullet that hit something, if it wasn't a powerup.
+					bullets_to_desroy.push_back(bullet_obj->bullet_id);
+				}
+			}
+
+			// remember to destroy the bullet if it's ttl < 0
+			if (bullet_obj->time_to_live < 0)
+				bullets_to_desroy.push_back(bullet_obj->bullet_id);
+		}
 	}
 
 	for (auto bullet_id : bullets_to_desroy)
+	{
+		auto bullet = list_of_bullets[bullet_id];
 		list_of_bullets.erase(bullet_id);
+		delete bullet;
+	}
 
 	//DEBUGOUT("PHYSICS: list of bullets size: %d\n" , list_of_bullets.size())
 }
+
 
 void Simulation::step(double seconds)
 {
@@ -482,9 +593,10 @@ void Simulation::step(double seconds)
 #define E_BRAKE_FORCE (2000)
 #define MAX_SPEED (30.0)
 
-#define MIN_ANGLE_SHOOTING DEGTORAD(5)
+#define MIN_ANGLE_SHOOTING DEGTORAD(2.5)
 #define MAX_DIST_SHOOTING 10
 
+// So that bullets don't collide with the kart that shoots
 	handle_bullets(seconds);
 	// Vector to hold out going mail events
 	std::vector<Events::Event *> events_out;
@@ -505,19 +617,39 @@ void Simulation::step(double seconds)
 			auto kart_ent = GETENTITY(kart_id, CarEntity);
 			btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
 
-			new_bullet->direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
-			new_bullet->poistion = kart_pos;
-			new_bullet->time_to_live = BULLET_TTL;
-			
-			list_of_bullets[new_bullet->bullet_id] = (new_bullet);
+			auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
 
+			// Create a little of random noice
+			int sign = rand()%2;
+			btScalar x = direction.getX();
+
+			if (sign)
+					x += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+			else
+					x -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+
+			btScalar y = direction.getY();
+
+			sign = rand()%2;
+			btScalar z = direction.getZ();
+			if (sign)
+					z += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+			else
+					z -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+
+			new_bullet->direction = btVector3(x,y,z);
+
+			btVector3 offset = (OFFSET_INFRONT_KART * new_bullet->direction);
+			new_bullet->poistion = kart_pos + Vector3(offset.getX(), offset.getY(), offset.getZ());
+			new_bullet->time_to_live = BULLET_TTL;
+
+			list_of_bullets[new_bullet->bullet_id] = (new_bullet);
 			//DEBUGOUT("Bullet spawn position : %f, %f, %f\n", kart_pos.x, kart_pos.y, kart_pos.z);
 			//DEBUGOUT("Kart %d generated shot.\n", kart_id) 
 		}
 		break;
 		case Events::EventType::Input:
 		{
-			
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
 			entity_id kart_id = input->kart_id;
@@ -612,10 +744,34 @@ void Simulation::step(double seconds)
 
 					btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
 
-					new_bullet->direction = (kart->getForwardVector()).rotate(Up,DEGTORAD(-90));
-					new_bullet->poistion = kart_ent->Pos;
+					auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
+
+					// Create a little of random noice
+					int sign = rand()%2;
+					btScalar x = direction.getX();
+
+					if (sign)
+						 x += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+					else
+						 x -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+
+					btScalar y = direction.getY();
+
+					sign = rand()%2;
+					btScalar z = direction.getZ();
+					if (sign)
+						 z += (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+					else
+						 z -= (((btScalar)(rand() % SHOOTING_RANDOMNESS))/100);
+
+					new_bullet->direction = btVector3(x,y,z);
+
 					new_bullet->time_to_live = BULLET_TTL;
 			
+					btVector3 offset = (OFFSET_INFRONT_KART * new_bullet->direction);
+					new_bullet->poistion = kart_ent->Pos + Vector3(offset.getX(), offset.getY(), offset.getZ());
+					new_bullet->time_to_live = BULLET_TTL;
+
 					kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
 					//DEBUGOUT("PHYSICS:\n")
 					//DEBUGOUT("Bullet dir: %f,%f,%f \nBullet pos: %f,%f,%f \nBullet ttl: %f",  
@@ -703,7 +859,8 @@ void Simulation::step(double seconds)
 	}
 
 	// Issue Collision Events
-	for (auto id_report_pair : m_col_reports) {
+	for (auto id_report_pair : m_col_reports) 
+	{
 		auto report = id_report_pair.second;
 
 		switch (report.type) {
@@ -917,18 +1074,6 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 
 	// Send out all the events of possible shooting for all karts
 	mb.sendMail(events_out);
-
-	//// Last resort shot forward
-	//if (report.did_hit_kart == false) {
-	//	auto to_point = kart1_pos + kart1_forward;
-	//	btCollisionWorld::ClosestRayResultCallback raycast_test(kart1_pos, to_point);
-	//	m_world->rayTest(kart1_pos, to_point, raycast_test);
-	//	if (raycast_test.hasHit()) {
-	//		report.did_hit_wall = true;
-	//		report.impact_pos = raycast_test.m_hitPointWorld;
-	//		report.impact_normal = raycast_test.m_hitNormalWorld;
-	//	}
-	//}
 }
 
 // Construct an event for reporting a possible target.

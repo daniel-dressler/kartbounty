@@ -10,7 +10,7 @@
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
 #define TIME_TO_FOLLOW_TARGET 15.f
-#define SHOT_COOLDOWN 1.f
+#define SHOT_COOLDOWN 1.2f
 // temp
 std::vector<Vector3> path;
 std::vector<Square> obs_sqr;
