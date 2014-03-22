@@ -23,6 +23,7 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::PowerupDestroyed );
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::BulletList );
+	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -324,6 +325,14 @@ int Renderer::update( float fElapseSec )
 			{
 				auto powerup = ((Events::PowerupDestroyedEvent *)event);
 				m_powerups.erase(powerup->powerup_id);
+			}
+			break;
+		case Events::EventType::ScoreBoardUpdate:
+			{
+				auto scoreboard = ((Events::ScoreBoardUpdateEvent *)event);
+
+				// @Phil: I guess this is where you handle drawing the scoreboard on the HUD, Kyle.
+				// The list is the ids of the karts in order from highest score to lowest
 			}
 			break;
 		default:

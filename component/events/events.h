@@ -17,6 +17,7 @@ namespace Events {
 		NullEvent,
 		Explosion,
 		RoundStart,
+		RoundEnd,
 		KartMove,
 		ArenaCollider,
 		StateUpdate,
@@ -34,10 +35,11 @@ namespace Events {
 		KartColideKart,
 		KartColideArena,
 		KartHandbrake,
-		PauseGame,
+		TogglePauseGame,
 		ShootReport,
 		Shoot,
 		BulletList,
+		ScoreBoardUpdate,
 		Quit
 	};
 	
@@ -161,6 +163,19 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(AudioPlayPause)
+	ENDEVENT;
+
+	EVENTSTRUCT(TogglePauseGame)
+	ENDEVENT;
+
+	EVENTSTRUCT(RoundStart)
+	ENDEVENT;
+
+	EVENTSTRUCT(RoundEnd)
+	ENDEVENT;
+
+	EVENTSTRUCT(ScoreBoardUpdate)
+		std::vector<entity_id> kartsByScore;		// Karts are ordered from highest score to lowest
 	ENDEVENT;
 
 	EVENTSTRUCT(Quit)

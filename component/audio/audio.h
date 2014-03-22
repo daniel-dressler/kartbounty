@@ -23,6 +23,8 @@ private:
 
 	FMOD::DSP *m_pitchShift;
 
+	bool gamePaused;
+
 	struct kart_audio {
 		FMOD::Channel *idleNoiseChannel;
 		FMOD::Channel *engineChannel;
