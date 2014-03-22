@@ -24,7 +24,7 @@ private:
 		Vector3 target_to_move;
 		Vector3 lastPos;
 
-		float target_timer;
+		float target_timer; // timer for driving around
 
 		float time_stuck;
 		entity_id kart_id;
@@ -33,7 +33,7 @@ private:
 
 		drivingMode driving_mode;
 		entity_id can_shoot;
-		float shoot_timer;
+		float shoot_timer;	// Cooldown for the next shot
 	};
 
 	std::map<entity_id, ai_kart *> m_karts;

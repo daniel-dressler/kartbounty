@@ -15,6 +15,8 @@
 #include "../events/events.h"
 #include "../entities/entities.h"
 
+static int bullet_next_id;
+
 namespace Physics {
 	class Simulation {
 		public:
@@ -35,25 +37,32 @@ namespace Physics {
 		// Needs to be public because 
 		// of reasons.
 		void substepEnforcer(btDynamicsWorld *, btScalar);
+		
 
 		// Used to let AI know whom it should / could shoot and when.
 		private:
 		Events::Mailbox mb;
-
+		
 		struct bullet
 		{
 			Vector3 poistion;
 			btVector3 direction;
 			float time_to_live; // Once this is 0, the bullet will be removed from the list by physics.
+			int bullet_id;
 
 			bullet() 
 			{
+				//bullet_id = bullet_next_id;
 				poistion = Vector3(0,0,0);
 				direction.setZero();
 				time_to_live = 0;
+
+				bullet_id = bullet_next_id;
+				bullet_next_id++;
 			}
 		};
-		std::list<struct bullet *> list_of_bullets;
+
+		std::map<int, struct bullet *> list_of_bullets;
 		void handle_bullets(double);
 
 		btDiscreteDynamicsWorld *m_world;
@@ -63,7 +72,8 @@ namespace Physics {
 		btTriangleInfoMap *m_triangleInfoMap;
 
 		std::map<entity_id, btRigidBody *> m_kart_bodies;
-		struct phy_obj {
+		struct phy_obj 
+		{
 			bool is_kart;
 			bool is_powerup;
 			bool is_arena;

@@ -4,7 +4,7 @@
 #include "rendering.h"
 #include "../physics/physics.h"
 
-std::list<struct Physics::Simulation::bullet *> list_of_bullets;
+std::map<int, struct Physics::Simulation::bullet *> list_of_bullets;
 
 Renderer::Renderer()
 {
@@ -267,7 +267,7 @@ int Renderer::update( float fElapseSec )
 		case Events::EventType::BulletList:
 		{
 			auto bullet_list_event = ((Events::BulletListEvent *)event);
-			list_of_bullets = *((std::list<struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
+			list_of_bullets = *((std::map<int, struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
 
 			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
 		}
@@ -441,11 +441,12 @@ int Renderer::render()
 
 
 	// HACK!! Rendering powerups instead of bullets for now. Mostly debugging tool. But you can draw with powerups on the map, too!
-	for (auto bullet : list_of_bullets) 
+	for (auto bullet_pair : list_of_bullets) 
 	{
 			
 		Vector4 color1;
 		Vector4 color2;
+		auto bullet = bullet_pair.second;
 		Vector3 pos = bullet->poistion;
 		
 		color1 = Vector4(1, 1, 1, 1);

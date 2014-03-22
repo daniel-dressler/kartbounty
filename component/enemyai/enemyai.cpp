@@ -622,7 +622,6 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 	Vector3 pos = kart_entity->Pos;
 
 	std::vector<Square> danger_sqr;
-	//std::vector<int> old_index;
 
 	for(Square square : obs_sqr)
 	{

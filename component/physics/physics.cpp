@@ -9,8 +9,9 @@
 using namespace Physics;
 
 // How many seconds can the bullet live in the system if no collision happens to it
-#define BULLET_TTL 5 
-#define STEP_PER_FRAME 0.1f
+#define BULLET_TTL 0.2 
+#define STEP_PER_FRAME 0.7f
+#define PLAYER_SHOOTING_COOLDOWN 0.2
 
 // Callback cannot be inside class
 Simulation *g_physics_subsystem = NULL;
@@ -381,6 +382,8 @@ int Simulation::loadWorld()
 			kart_entity->camera.orient_old.Zero();
 
 			// save forward vector	
+			kart_entity->Up = Vector3(0,1,0);
+
 			kart_entity->forDirection = (kart->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 			break;
 		}
@@ -445,16 +448,26 @@ void Simulation::removePowerup(powerup_id_t id)
 
 void Simulation::handle_bullets(double time)
 {
-	/*for (auto bullet : list_of_bullets)
+	std::vector<int> bullets_to_desroy ;
+	for (auto bullet_pair : list_of_bullets)
 	{
-		float x = bullet->direction.getX() * STEP_PER_FRAME;
-		float y = bullet->direction.getY() * STEP_PER_FRAME;
-		float z = bullet->direction.getZ() * STEP_PER_FRAME;
+		auto bullet_obj = bullet_pair.second;
+		float x = bullet_obj->direction.getX() * STEP_PER_FRAME;
+		float y = bullet_obj->direction.getY() * STEP_PER_FRAME;
+		float z = bullet_obj->direction.getZ() * STEP_PER_FRAME;
 
 		Vector3 newPos = Vector3( x,y,z );
-		bullet->poistion = bullet->poistion + newPos ;
-		bullet->time_to_live -= time;
-	}*/
+		bullet_obj->poistion = bullet_obj->poistion + newPos ;
+		bullet_obj->time_to_live -= time;
+
+		// remember to destroy the bullet if it's ttl < 0
+		if (bullet_obj->time_to_live < 0)
+			bullets_to_desroy.push_back(bullet_obj->bullet_id);
+	}
+
+	for (auto bullet_id : bullets_to_desroy)
+		list_of_bullets.erase(bullet_id);
+
 	//DEBUGOUT("PHYSICS: list of bullets size: %d\n" , list_of_bullets.size())
 }
 
@@ -484,12 +497,16 @@ void Simulation::step(double seconds)
 			auto kart_pos = ((Events::ShootEvent *)event)->kart_pos;
 
 			auto new_bullet = new Simulation::bullet();
+			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
 
-			new_bullet->direction = kart_forward;
+			auto kart_ent = GETENTITY(kart_id, CarEntity);
+			btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
+
+			new_bullet->direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
 			new_bullet->poistion = kart_pos;
 			new_bullet->time_to_live = BULLET_TTL;
 			
-			list_of_bullets.push_back(new_bullet);
+			list_of_bullets[new_bullet->bullet_id] = (new_bullet);
 
 			//DEBUGOUT("Bullet spawn position : %f, %f, %f\n", kart_pos.x, kart_pos.y, kart_pos.z);
 			//DEBUGOUT("Kart %d generated shot.\n", kart_id) 
@@ -580,23 +597,31 @@ void Simulation::step(double seconds)
 				DEBUGOUT("Pos: %f, %f, %f\n", orig.x(), orig.y(), orig.z());
 			}
 
+			Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
+			kart_ent->shoot_timer -= seconds; // Every turn reduce the cooldown remained before can shoot again
+
 			// Generate bullets for player shots
 			if (input->aPressed)
 			{
-				Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
-				auto new_bullet = new Simulation::bullet();
+				if (kart_ent->shoot_timer <= 0)
+				{
+					auto new_bullet = new Simulation::bullet();
 
-				new_bullet->direction = kart_ent->forDirection;
-				new_bullet->poistion = kart_ent->Pos;
-				new_bullet->time_to_live = BULLET_TTL;
+					btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
+
+					new_bullet->direction = (kart->getForwardVector()).rotate(Up,DEGTORAD(-90));
+					new_bullet->poistion = kart_ent->Pos;
+					new_bullet->time_to_live = BULLET_TTL;
 			
-				//DEBUGOUT("PHYSICS:\n")
-				//DEBUGOUT("Bullet dir: %f,%f,%f \nBullet pos: %f,%f,%f \nBullet ttl: %f",  
-				//	new_bullet->direction.getX(), new_bullet->direction.getY() , new_bullet->direction.getZ(), 
-				//		new_bullet->poistion.x, new_bullet->poistion.y, new_bullet->poistion.z, new_bullet->time_to_live)
+					kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
+					//DEBUGOUT("PHYSICS:\n")
+					//DEBUGOUT("Bullet dir: %f,%f,%f \nBullet pos: %f,%f,%f \nBullet ttl: %f",  
+					//	new_bullet->direction.getX(), new_bullet->direction.getY() , new_bullet->direction.getZ(), 
+					//		new_bullet->poistion.x, new_bullet->poistion.y, new_bullet->poistion.z, new_bullet->time_to_live)
 
 
-				list_of_bullets.push_back(new_bullet);
+					list_of_bullets[new_bullet->bullet_id] = (new_bullet);
+				}
 			}
 
 			solveBulletFiring(kart_id, MIN_ANGLE_SHOOTING, MAX_DIST_SHOOTING);
@@ -739,8 +764,10 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	kart->Orient.z = (Real)rot.getZ();
 	kart->Orient.w = (Real)-rot.getW();
 
-	// save forward vector
-	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+	// Save forward vector
+	btVector3 Up = btVector3(kart->Up.x,kart->Up.y,kart->Up.z) ;
+
+	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(Up,DEGTORAD(-90));
 
 	// Update the karts height above ground and what point is bellow it for rendering shadows
 	// Casts ray 20 units directly down from karts position, which is the size of our arena so 
@@ -815,7 +842,11 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 
 	auto kart1 = m_karts[firing_kart_id];
 	auto kart1_pos = kart1->vehicle->getChassisWorldTransform().getOrigin();
-	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+
+	auto kart = GETENTITY(firing_kart_id, CarEntity);
+	btVector3 Up = btVector3(kart->Up.x,kart->Up.y,kart->Up.z) ;
+
+	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(Up,DEGTORAD(-90));
 	kart1_forward.normalize();
 	kart1_pos += (kart1_forward / 3);
 

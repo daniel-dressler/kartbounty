@@ -65,6 +65,7 @@ namespace Entities {
 		btVector3 forDirection;
 		Vector3 Up;
 		float Speed;
+		float shoot_timer; // cooldown on shooting
 	};
 
 	// Thin wrapper over map
