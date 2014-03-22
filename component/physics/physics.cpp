@@ -630,6 +630,16 @@ void Simulation::step(double seconds)
 			solveBulletFiring(kart_id, MIN_ANGLE_SHOOTING, MAX_DIST_SHOOTING);
 		}
 		break;
+		case Events::EventType::KartDestroyed:
+		{
+			auto kart_event = (Events::KartDestroyedEvent *)event;
+			auto id = kart_event->kart_id;
+			auto kart = m_karts[id];
+			m_world->removeCollisionObject(kart->powerup_body);
+			delete m_karts[id];
+			m_karts.erase(id);
+		}
+		break;
 		case Events::EventType::PowerupPlacement:
 		{
 			auto powerup_event = (Events::PowerupPlacementEvent *)event;
