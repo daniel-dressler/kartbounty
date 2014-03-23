@@ -318,19 +318,23 @@ void Audio::UpdateListenerPos(){
 	ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
 }
 
-void Audio::UpdateKartsPos(entity_id kart_id){
+void Audio::UpdateKartsPos(entity_id kart_id)
+{
 
 	auto kart_entity = GETENTITY(kart_id, CarEntity);
 	auto kart = m_karts[kart_id];
 
-	FMOD_VECTOR *pos = new FMOD_VECTOR();
-	pos->x = kart_entity->Pos.x;
-	pos->y = kart_entity->Pos.y;
-	pos->z = kart_entity->Pos.z;
-	ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
-	ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
+	if (kart != NULL)
+	{
+		FMOD_VECTOR *pos = new FMOD_VECTOR();
+		pos->x = kart_entity->Pos.x;
+		pos->y = kart_entity->Pos.y;
+		pos->z = kart_entity->Pos.z;
+		ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
+		ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
 
-	delete pos;
+		delete pos;
+	}
 }
 
 void Audio::update(Real seconds){
@@ -451,44 +455,51 @@ void Audio::update(Real seconds){
 				Events::InputEvent *input = (Events::InputEvent *)event;
 				entity_id kart_id = input->kart_id;
 				auto kart_local = m_karts[kart_id];
-				auto kart_entity = GETENTITY(kart_id, CarEntity);
 
 				if(input->aPressed)  // Weapon fired
+				if (kart_local != NULL)
 				{
-					FMOD_VECTOR pos;
-					pos.x = kart_entity->Pos.x;
-					pos.y = kart_entity->Pos.y;
-					pos.z = kart_entity->Pos.z;
+					auto kart_entity = GETENTITY(kart_id, CarEntity);
 
-					bool isPlaying = false;
-					kart_local->soundsChannel->isPlaying(&isPlaying);
-
-					if(!isPlaying)
+					if(gamePaused)
+						break;
+					if(input->aPressed)  // Weapon fired
 					{
-						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun],
-							true, &(kart_local->soundsChannel)));
-						kart_local->soundsChannel->set3DAttributes(&pos, 0);
-						kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
-						kart_local->soundsChannel->setPaused(false);
+						FMOD_VECTOR pos;
+						pos.x = kart_entity->Pos.x;
+						pos.y = kart_entity->Pos.y;
+						pos.z = kart_entity->Pos.z;
+
+						bool isPlaying = false;
+						kart_local->soundsChannel->isPlaying(&isPlaying);
+
+						if(!isPlaying)
+						{
+							ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun],
+								true, &(kart_local->soundsChannel)));
+							kart_local->soundsChannel->set3DAttributes(&pos, 0);
+							kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
+							kart_local->soundsChannel->setPaused(false);
+						}
 					}
+
+					Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
+
+					float lerpAmt = clampedSeconds * 2.0f;
+					float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+					newPitch = Clamp(newPitch, 0.0f, 2.0f);
+
+					newPitch = Clamp(newPitch, 0.0f, 2.0f);
+
+					kart_local->enginePitch = newPitch;
+
+					if(newPitch > 2.0f || newPitch < 0.0f)
+					{
+						DEBUGOUT("WTF?\n");
+					}
+					// Update Kart Engine Sounds
+					ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 				}
-
-				Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
-
-				float lerpAmt = clampedSeconds * 2.0f;
-				float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
-				newPitch = Clamp(newPitch, 0.0f, 2.0f);
-
-				newPitch = Clamp(newPitch, 0.0f, 2.0f);
-
-				kart_local->enginePitch = newPitch;
-
-				if(newPitch > 2.0f || newPitch < 0.0f)
-				{
-					DEBUGOUT("WTF?\n");
-				}
-				// Update Kart Engine Sounds
-				ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 			}
 			break;
 		case Events::EventType::KartHandbrake:
@@ -498,21 +509,24 @@ void Audio::update(Real seconds){
 				auto handbrakeEvent = (Events::KartHandbrakeEvent *)event;
 				auto kart_local = m_karts[handbrakeEvent->kart_id];
 
-				FMOD_VECTOR pos;
-				pos.x = handbrakeEvent->pos.x;
-				pos.y = handbrakeEvent->pos.y;
-				pos.z = handbrakeEvent->pos.z;
-
-				bool isPlaying = false;
-				kart_local->soundsChannel->isPlaying(&isPlaying);
-				
-				if(!isPlaying && (fabs(handbrakeEvent->speed) > MIN_HANDBRAKE_SPEED))
+				if (kart_local != NULL)
 				{
-					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Skid],
-						true, &(kart_local->soundsChannel)));
-					kart_local->soundsChannel->set3DAttributes(&pos, 0);
-					kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
-					kart_local->soundsChannel->setPaused(false);
+					FMOD_VECTOR pos;
+					pos.x = handbrakeEvent->pos.x;
+					pos.y = handbrakeEvent->pos.y;
+					pos.z = handbrakeEvent->pos.z;
+
+					bool isPlaying = false;
+					kart_local->soundsChannel->isPlaying(&isPlaying);
+				
+					if(!isPlaying && (fabs(handbrakeEvent->speed) > MIN_HANDBRAKE_SPEED))
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Skid],
+							true, &(kart_local->soundsChannel)));
+						kart_local->soundsChannel->set3DAttributes(&pos, 0);
+						kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
+						kart_local->soundsChannel->setPaused(false);
+					}
 				}
 			}
 			break;
