@@ -11,7 +11,7 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 10
+#define NUM_KARTS 2
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
@@ -233,7 +233,7 @@ int GameAi::planFrame()
 	}
 
 	// Report FPS
-	const bool PRINT_FPS = 0;
+	const bool PRINT_FPS = 1;
 	static int32_t frames = 0;
 	if (PRINT_FPS) 
 	{

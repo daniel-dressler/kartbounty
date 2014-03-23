@@ -19,7 +19,7 @@ void main()
 	vec3 vNormal;
 
 	float fPower = 0;
-	if( g_vRenderParams.y > 0.5f )
+	if( g_vRenderParams.z > 0.5f )
 	{
 		fPower = 1;
 		vNormal = vec3( 0, 0, 0 );
@@ -27,10 +27,7 @@ void main()
 	else
 	{
 		texNormal.xyz = ( texNormal.xyz * 2.0f ) - 1.0f;
-		texNormal.y = -texNormal.y;
-
-		vNormal = normalize( texNormal.xyz * mat3( ps_tangent, ps_bitangent, ps_normal ) );
-		vNormal = ps_normal;
+		vNormal = normalize( mat3( ps_tangent, ps_bitangent, ps_normal ) * texNormal.xyz );
 
 		int light = 0;
 		while( light < MAX_LIGHTS )
@@ -52,7 +49,8 @@ void main()
 	}
 
 	vec3 color = g_vColor.rgb * ps_color.rgb * texDiffuse.rgb * fPower;
-	out_color  = vec4( color.xyz, texDiffuse.a );
+	out_color  = vec4( color.xyz, texDiffuse.a * ps_color.a );
+//	out_color  = vec4( ( vNormal.xyz ), 1 );
 
 	// Lighting Test
 //	out_color = vec4( fPower, fPower, fPower, 1 );

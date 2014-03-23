@@ -45,6 +45,9 @@ private:
 	GLtex				m_nrmArenaFloor;
 
 	GLmesh				m_mshKart;
+	GLmesh				m_mshKartTire;
+
+	GLmesh				m_mshBullet;
 
 	// Power ups
 	GLmesh				m_mshPowerRing1;
