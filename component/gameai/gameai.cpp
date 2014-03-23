@@ -32,6 +32,7 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::KartHitByBullet );
 	m_mb->request( Events::EventType::RoundStart );
 	m_mb->request( Events::EventType::Input );
+	m_mb->request( Events::EventType::StartMenuInput );
 
 	Vector3 p_positions[] = {
 		Vector3(0.0, 0.0, 5.5),
@@ -44,6 +45,7 @@ GameAi::GameAi()
 	}
 
 	gamePaused = false;
+	currentState = StartMenu;
 }
 
 GameAi::~GameAi()
@@ -131,11 +133,6 @@ int GameAi::planFrame()
 				//DEBUGOUT("Pause the game!\n");
 			}
 			break;
-		case Events::EventType::RoundStart:
-			{
-				resetGame();
-			}
-			break;
 		case Events::EventType::Input:
 			{
 				auto inputEvent = ((Events::InputEvent *)event);
@@ -152,6 +149,30 @@ int GameAi::planFrame()
 						//pow_event->pos = kart->Pos;
 						//pow_event->powerup_type = kart->powerup_slot;
 					}
+
+					auto startRoundEvent = NEWEVENT( RoundStart);
+					events_out.push_back(startRoundEvent);
+				}
+			}
+			break;
+		case Events::EventType::StartMenuInput:
+			{
+				auto inputEvent = ((Events::StartMenuInputEvent *)event);
+
+				if(inputEvent->bPressed)
+				{
+					return 0;
+				}
+
+				if(inputEvent->aPressed)
+				{
+					auto startRoundEvent = NEWEVENT( RoundStart);
+					events_out.push_back(startRoundEvent);
+
+					// Reset all karts
+					resetGame();
+
+					currentState = RoundStart;
 				}
 			}
 			break;
@@ -165,6 +186,8 @@ int GameAi::planFrame()
 				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %d", kart_id, kart->health);
 
 				// Reset kart if health gone
+				// There should be a slight pause before this gets triggered to show the kart exploding and to
+				// punish the kart for dying.
 				if (kart->health <= 0)
 				{
 					kart->health = STARTING_HEALTH;
@@ -182,13 +205,11 @@ int GameAi::planFrame()
 	m_mb->emptyMail();
 	
 	// Direct controllers to karts
-	bool first_kart = true;
 	for (auto id : this->kart_ids) 
 	{
 		Events::Event *event;
-		if (id == player1KartId) 
+		if (id == player1KartId && currentState != StartMenu) 
 		{
-			first_kart = false;
 			auto kart_event = NEWEVENT(PlayerKart);
 			kart_event->kart_id = id;
 			event = kart_event;
@@ -201,6 +222,12 @@ int GameAi::planFrame()
 		}
 
 		events_out.push_back(event);
+	}
+
+	if(currentState == StartMenu)
+	{
+		auto menuEvent = NEWEVENT(StartMenu);
+		events_out.push_back(menuEvent);
 	}
 
 	// Spawn Powerups?

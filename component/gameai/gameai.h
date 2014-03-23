@@ -20,6 +20,14 @@ private:
 	Timer frame_timer;
 	Timer fps_timer;
 
+	enum GameStates
+	{
+		StartMenu,
+		RoundStart,
+		RoundEnd,
+		Paused
+	} currentState;
+
 	std::vector<entity_id> kart_ids;
 
 	entity_id player1KartId;

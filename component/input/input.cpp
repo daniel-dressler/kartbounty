@@ -11,6 +11,7 @@
 Input::Input() {
 	m_pMailbox = new Events::Mailbox();	
 	m_pMailbox->request(Events::EventType::PlayerKart);
+	m_pMailbox->request(Events::EventType::StartMenu);
 }
 
 Input::~Input() {
@@ -68,35 +69,63 @@ void Input::HandleEvents(){
 		switch ( mail_event->type )
 		{
 		case Events::EventType::PlayerKart:
-		{
-			m_pCurrentInput = NEWEVENT(Input);
-			auto event_id = m_pCurrentInput->id;
-			memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-			m_pCurrentInput->id = event_id;
-
-			// What kart is this input for?
-			auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
-			m_pCurrentInput->kart_id = kart_id;
-
-			// Reset Development Tools
-			m_pCurrentInput->print_position = false;
-			m_pCurrentInput->reset_requested = false;
-
-			while( SDL_PollEvent(&sdl_event) )
 			{
-				OnEvent(&sdl_event);
+				m_pCurrentInput = NEWEVENT(Input);
+				auto event_id = m_pCurrentInput->id;
+				memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+				m_pCurrentInput->id = event_id;
+
+				// What kart is this input for?
+				auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
+				m_pCurrentInput->kart_id = kart_id;
+
+				// Reset Development Tools
+				m_pCurrentInput->print_position = false;
+				m_pCurrentInput->reset_requested = false;
+
+				while( SDL_PollEvent(&sdl_event) )
+				{
+					OnEvent(&sdl_event);
+				}
+
+				// Update previous input event
+				memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
+
+				// Send input events to mail system
+				inputEvents.push_back(m_pCurrentInput);
+
+				// Now mailbox owns the object
+				m_pCurrentInput = NULL;
+				break;
 			}
+		case Events::EventType::StartMenu:
+			{
+				m_pCurrentInput = NEWEVENT(Input);
+				auto event_id = m_pCurrentInput->id;
+				memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
+				m_pCurrentInput->id = event_id;
 
-			// Update previous input event
-			memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
+				while( SDL_PollEvent(&sdl_event) )
+				{
+					OnEvent(&sdl_event);
+				}
 
-			// Send input events to mail system
-			inputEvents.push_back(m_pCurrentInput);
+				// Update previous input event
+				memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
 
-			// Now mailbox owns the object
-			m_pCurrentInput = NULL;
+				auto menuInput = NEWEVENT( StartMenuInput );
+				menuInput->aPressed = m_pCurrentInput->aPressed;
+				menuInput->bPressed = m_pCurrentInput->bPressed;
+				menuInput->xPressed = m_pCurrentInput->xPressed;
+				menuInput->yPressed = m_pCurrentInput->yPressed;
+
+				// Send input events to mail system
+				inputEvents.push_back(menuInput);
+
+				// Now mailbox owns the object
+				m_pCurrentInput = NULL;
+			}
 			break;
-		}
 		default:
 			break;
 		}
@@ -195,13 +224,6 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_r:
 		m_pCurrentInput->reset_requested = true;
-		break;
-	case SDLK_BACKSPACE:
-		{
-			std::vector<Events::Event *> resetEvent;
-			resetEvent.push_back( NEWEVENT( RoundStart) );
-			m_pMailbox->sendMail(resetEvent);
-		}
 		break;
 	default:
 		break;

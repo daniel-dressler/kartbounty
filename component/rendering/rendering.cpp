@@ -24,6 +24,7 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::BulletList );
 	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
+	m_pMailbox->request( Events::EventType::RoundStart );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -224,6 +225,8 @@ int Renderer::setup()
 	GetState().Karts[3].vPos = Vector3( 10, 1.5, -10 );							// These two lines are temporary
 	GetState().Karts[3].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(180));
 	*/
+
+	atStartMenu = true;
 	
 	return 1;
 }
@@ -272,6 +275,11 @@ int Renderer::update( float fElapseSec )
 	{
 		switch( event->type ) 
 		{
+		case Events::EventType::RoundStart:
+			{
+				atStartMenu = false;
+			}
+			break;
 		// Each bullet has a position and a direction passed for rendering and an additional value "time to live" that physics uses, no idea if rendering needs it.
 		case Events::EventType::BulletList:
 		{
@@ -361,9 +369,18 @@ int Renderer::update( float fElapseSec )
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 	}
 
+	if(atStartMenu)		// Manually set camera to look over the entire level, ignoring the kart cameras
+	{
+		Vector3 vFocus = Vector3(0,-0.8,0);
+		perFrame.vEyePos = Vector3(0,15,-5);
+		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
+		perFrame.matProj.Perspective( DEGTORAD( 80 ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
+		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
+		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
+	}
+
 	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
 
 	Real fLightDist = 17.0f;
 	Real fLightHeight = 5.0f;

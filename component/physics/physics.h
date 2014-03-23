@@ -29,6 +29,8 @@ namespace Physics {
 		// generate our bounding boxes
 		int loadWorld();
 
+		int createKart(entity_id kart_id);
+
 		// after entity system exists this
 		// will update the entitie's locations
 		int saveoutState();

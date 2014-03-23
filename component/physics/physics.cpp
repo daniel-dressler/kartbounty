@@ -268,183 +268,191 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,
 
 extern ContactAddedCallback gContactAddedCallback;
 
-int Simulation::loadWorld()
-{
-	// Create car
 #define CAR_WIDTH (0.09f)
 #define CAR_HEIGHT (0.05f)
 #define CAR_LENGTH (0.10f)
 #define CAR_MASS (800.0f)
-	
+
+#define CON1 (CAR_WIDTH * 1.0)
+#define CON2 (CAR_LENGTH * 1.0)
+
+int Simulation::createKart(entity_id kart_id)
+{
+	auto kart_local = new phy_obj();
+	kart_local->is_kart = true;
+	kart_local->kart_id = kart_id;
+	m_karts[kart_id] = kart_local;
+
+	float wheelFriction = 30;
+	float suspensionStiffness = 10;
+	float suspensionDamping = 0.0f;
+	float suspensionCompression = 0.1f;
+	// Prevents car flipping due to sharp turns
+	float rollInfluence = 0.000;
+	btScalar suspensionRestLength(0.01f);  // Suspension Interval = rest +/- travel * 0.01
+	float suspensionTravelcm = 1;
+
+	btRaycastVehicle::btVehicleTuning tuning;
+	tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
+	tuning.m_frictionSlip = 30;
+	tuning.m_maxSuspensionForce = 5;
+	tuning.m_suspensionCompression = suspensionCompression;
+	tuning.m_suspensionDamping = suspensionDamping;
+	tuning.m_suspensionStiffness = suspensionStiffness;
+
+	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
+	btCompoundShape* compound = new btCompoundShape();
+	m_collisionShapes.push_back(chassisShape);
+	m_collisionShapes.push_back(compound);
+
+	// Start of car stuff
+
+	btTransform localTrans;
+	localTrans.setIdentity();
+	localTrans.setOrigin(btVector3(0,0.00f,0));
+	compound->addChildShape(localTrans, chassisShape);
+
+	btTransform tr;
+	tr.setIdentity();
+	tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
+
+	btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
+	m_kart_bodies[kart_id] = carChassis;
+	carChassis->setActivationState(DISABLE_DEACTIVATION);
+	carChassis->setUserPointer(kart_local);
+
+	// Air resistance
+	// 1 = 100% of speed lost per second
+	carChassis->setDamping(0.4, 0.4);
+
+	// Makes us bounce off walls
+	carChassis->setRestitution(0.9);
+	carChassis->setFriction(0.1);
+
+	btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
+
+	auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
+	kart->getRigidBody()->setMotionState(new btDefaultMotionState(tr));
+
+	kart->setCoordinateSystem(0,1,0);
+	m_world->addVehicle(kart);
+	m_karts[kart_id]->vehicle = kart;
+	m_karts[kart_id]->raycaster = vehicleRayCaster;
+
+	float connectionHeight = -0.02f;//0.15f;
+	btVector3 wheelDirectionCS0(0,-1,0);
+	btVector3 wheelAxleCS(-1,0,0);
+
+	float	wheelRadius = 0.05f;
+
+	// Setup front 2 wheels
+	bool isFrontWheel=true;
+	btVector3 connectionPointCS0(CON1,connectionHeight,CON2);
+	kart->addWheel(connectionPointCS0,wheelDirectionCS0,
+		wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
+
+	connectionPointCS0 = btVector3(-CON1,connectionHeight,CON2);
+	kart->addWheel(connectionPointCS0,wheelDirectionCS0,
+		wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
+
+	// Setup rear  2 wheels
+	isFrontWheel = false;
+
+	connectionPointCS0 = btVector3(-CON1,connectionHeight,-CON2);
+	kart->addWheel(connectionPointCS0,wheelDirectionCS0,
+		wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
+
+	connectionPointCS0 = btVector3(CON1,connectionHeight,-CON2);
+	kart->addWheel(connectionPointCS0,wheelDirectionCS0,
+		wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);	
+
+	for (int i=0; i < kart->getNumWheels(); i++)
+	{
+		btWheelInfo& wheel = kart->getWheelInfo(i);
+
+		wheel.m_maxSuspensionTravelCm = suspensionTravelcm;
+		wheel.m_suspensionStiffness =suspensionStiffness;
+		wheel.m_wheelsDampingRelaxation = suspensionDamping;
+		wheel.m_wheelsDampingCompression = suspensionCompression;
+		wheel.m_frictionSlip = wheelFriction;
+		wheel.m_rollInfluence = rollInfluence;
+
+	}
+	for (int i=0; i < kart->getNumWheels(); i++)
+	{
+		//synchronize the wheels with the (interpolated) chassis worldtransform
+		kart->updateWheelTransform(i,true);
+	}
+
+
+	Entities::CarEntity *kart_entity = GETENTITY(kart_id, CarEntity);
+
+	auto car1_ms = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
+	btTransform car1;
+	car1_ms->getWorldTransform(car1);
+
+	btVector3 pos = car1.getOrigin();
+	kart_entity->Pos.x = (Real)pos.getX();
+	kart_entity->Pos.y = (Real)pos.getY();
+	kart_entity->Pos.z = (Real)pos.getZ();
+
+	btQuaternion rot = car1.getRotation();
+	kart_entity->Orient.x = (Real)rot.getX();
+	kart_entity->Orient.y = (Real)rot.getY();
+	kart_entity->Orient.z = (Real)rot.getZ();
+	kart_entity->Orient.w = (Real)-rot.getW();
+
+	//Set initial camera value
+	kart_entity->camera.fFOV = 1;
+	kart_entity->camera.vFocus.Zero();
+	kart_entity->camera.vPos.Zero();
+	kart_entity->camera.orient_old.Zero();
+
+	// save forward vector	
+	kart_entity->Up = Vector3(0,1,0);
+
+	kart_entity->forDirection = (kart->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+
+	return 1;
+}
+
+int Simulation::loadWorld()
+{
+	// Create car	
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		switch ( event->type )
 		{
 		case Events::KartCreated:
-		{
-			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
-			auto kart_local = new phy_obj();
-			kart_local->is_kart = true;
-			kart_local->kart_id = kart_id;
-			m_karts[kart_id] = kart_local;
-			
-			float wheelFriction = 30;
-			float suspensionStiffness = 10;
-			float suspensionDamping = 0.0f;
-			float suspensionCompression = 0.1f;
-			// Prevents car flipping due to sharp turns
-			float rollInfluence = 0.000;
-			btScalar suspensionRestLength(0.01f);  // Suspension Interval = rest +/- travel * 0.01
-			float suspensionTravelcm = 1;
-			
-			btRaycastVehicle::btVehicleTuning tuning;
-			tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
-			tuning.m_frictionSlip = 30;
-			tuning.m_maxSuspensionForce = 5;
-			tuning.m_suspensionCompression = suspensionCompression;
-			tuning.m_suspensionDamping = suspensionDamping;
-			tuning.m_suspensionStiffness = suspensionStiffness;
-
-			btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
-			btCompoundShape* compound = new btCompoundShape();
-			m_collisionShapes.push_back(chassisShape);
-			m_collisionShapes.push_back(compound);
-
-			// Start of car stuff
-
-			btTransform localTrans;
-			localTrans.setIdentity();
-			localTrans.setOrigin(btVector3(0,0.00f,0));
-			compound->addChildShape(localTrans, chassisShape);
-
-			btTransform tr;
-			tr.setIdentity();
-			tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
-			
-			btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
-			m_kart_bodies[kart_id] = carChassis;
-			carChassis->setActivationState(DISABLE_DEACTIVATION);
-			carChassis->setUserPointer(kart_local);
-
-			// Air resistance
-			// 1 = 100% of speed lost per second
-			carChassis->setDamping(0.4, 0.4);
-
-			// Makes us bounce off walls
-			carChassis->setRestitution(0.9);
-			carChassis->setFriction(0.1);
-
-			btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-
-			auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
-			kart->getRigidBody()->setMotionState(new btDefaultMotionState(tr));
-
-			kart->setCoordinateSystem(0,1,0);
-			m_world->addVehicle(kart);
-			m_karts[kart_id]->vehicle = kart;
-			m_karts[kart_id]->raycaster = vehicleRayCaster;
-
-#define CON1 (CAR_WIDTH * 1.0)
-#define CON2 (CAR_LENGTH * 1.0)
-			float connectionHeight = -0.02f;//0.15f;
-			btVector3 wheelDirectionCS0(0,-1,0);
-			btVector3 wheelAxleCS(-1,0,0);
-
-			float	wheelRadius = 0.05f;
-		
-			// Setup front 2 wheels
-			bool isFrontWheel=true;
-			btVector3 connectionPointCS0(CON1,connectionHeight,CON2);
-			kart->addWheel(connectionPointCS0,wheelDirectionCS0,
-					wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
-
-			connectionPointCS0 = btVector3(-CON1,connectionHeight,CON2);
-			kart->addWheel(connectionPointCS0,wheelDirectionCS0,
-					wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
-
-			// Setup rear  2 wheels
-			isFrontWheel = false;
-
-			connectionPointCS0 = btVector3(-CON1,connectionHeight,-CON2);
-			kart->addWheel(connectionPointCS0,wheelDirectionCS0,
-					wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);
-
-			connectionPointCS0 = btVector3(CON1,connectionHeight,-CON2);
-			kart->addWheel(connectionPointCS0,wheelDirectionCS0,
-					wheelAxleCS,suspensionRestLength,wheelRadius,tuning,isFrontWheel);	
-
-			for (int i=0; i < kart->getNumWheels(); i++)
 			{
-				btWheelInfo& wheel = kart->getWheelInfo(i);
-			
-				wheel.m_maxSuspensionTravelCm = suspensionTravelcm;
-				wheel.m_suspensionStiffness =suspensionStiffness;
-				wheel.m_wheelsDampingRelaxation = suspensionDamping;
-				wheel.m_wheelsDampingCompression = suspensionCompression;
-				wheel.m_frictionSlip = wheelFriction;
-				wheel.m_rollInfluence = rollInfluence;
-
+				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				createKart(kart_id);
+				break;
 			}
-			for (int i=0; i < kart->getNumWheels(); i++)
-			{
-				//synchronize the wheels with the (interpolated) chassis worldtransform
-				kart->updateWheelTransform(i,true);
-			}
-
-
-			Entities::CarEntity *kart_entity = GETENTITY(kart_id, CarEntity);
-
-			auto car1_ms = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
-			btTransform car1;
-			car1_ms->getWorldTransform(car1);
-
-			btVector3 pos = car1.getOrigin();
-			kart_entity->Pos.x = (Real)pos.getX();
-			kart_entity->Pos.y = (Real)pos.getY();
-			kart_entity->Pos.z = (Real)pos.getZ();
-
-			btQuaternion rot = car1.getRotation();
-			kart_entity->Orient.x = (Real)rot.getX();
-			kart_entity->Orient.y = (Real)rot.getY();
-			kart_entity->Orient.z = (Real)rot.getZ();
-			kart_entity->Orient.w = (Real)-rot.getW();
-
-			//Set initial camera value
-			kart_entity->camera.fFOV = 1;
-			kart_entity->camera.vFocus.Zero();
-			kart_entity->camera.vPos.Zero();
-			kart_entity->camera.orient_old.Zero();
-
-			// save forward vector	
-			kart_entity->Up = Vector3(0,1,0);
-
-			kart_entity->forDirection = (kart->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
-			break;
-		}
 		case Events::EventType::ArenaMeshCreated:
-		{
-			btTriangleMesh *arena_mesh = ((Events::ArenaMeshCreatedEvent *)event)->arena;
-			// Add map
-			// Credit to http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?t=6662
-			// for solution to wheels bouncing off triangle edges
-			gContactAddedCallback = CustomMaterialCombinerCallback;
-			
-			btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape( arena_mesh, true, true);
-			m_collisionShapes.push_back(arenaShape);
+			{
+				btTriangleMesh *arena_mesh = ((Events::ArenaMeshCreatedEvent *)event)->arena;
+				// Add map
+				// Credit to http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?t=6662
+				// for solution to wheels bouncing off triangle edges
+				gContactAddedCallback = CustomMaterialCombinerCallback;
 
-			phy_obj *arena = new phy_obj();
-			arena->is_arena = true;
-			arena->arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
-			arena->arena->setRestitution(0.2);
-			arena->arena->setUserPointer(arena);
-			arena->arena->setContactProcessingThreshold(0.0);
-			m_arena = arena;
+				btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape( arena_mesh, true, true);
+				m_collisionShapes.push_back(arenaShape);
 
-			m_triangleInfoMap = new btTriangleInfoMap();
-			btGenerateInternalEdgeInfo(arenaShape, m_triangleInfoMap);
-			DEBUGOUT("Arena mesh in simulation\n");
-			break;
-		}
+				phy_obj *arena = new phy_obj();
+				arena->is_arena = true;
+				arena->arena = addRigidBody(0.0, btTransform(btQuaternion(0,0,0,1),btVector3(0,0,0)), arenaShape);
+				arena->arena->setRestitution(0.2);
+				arena->arena->setUserPointer(arena);
+				arena->arena->setContactProcessingThreshold(0.0);
+				m_arena = arena;
+
+				m_triangleInfoMap = new btTriangleInfoMap();
+				btGenerateInternalEdgeInfo(arenaShape, m_triangleInfoMap);
+				DEBUGOUT("Arena mesh in simulation\n");
+				break;
+			}
 		default:
 			printf("ignored event %d\n", event->type);
 			break;
@@ -603,11 +611,17 @@ void Simulation::step(double seconds)
 	{
 		switch ( event->type )
 		{
+		case Events::KartCreated:
+			{
+				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				createKart(kart_id);
+				break;
+			}
 		case Events::Shoot:
-		{
-			auto kart_id = ((Events::ShootEvent *)event)->kart_id;
-			auto kart_forward = ((Events::ShootEvent *)event)->forward;
-			auto kart_pos = ((Events::ShootEvent *)event)->kart_pos;
+			{
+				auto kart_id = ((Events::ShootEvent *)event)->kart_id;
+				auto kart_forward = ((Events::ShootEvent *)event)->forward;
+				auto kart_pos = ((Events::ShootEvent *)event)->kart_pos;
 
 			if (m_karts.find(kart_id) != m_karts.end())
 			{

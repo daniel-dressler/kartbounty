@@ -22,6 +22,8 @@ namespace Events {
 		ArenaCollider,
 		StateUpdate,
 		Input,
+		StartMenu,
+		StartMenuInput,
 		PowerupPickup,
 		PowerupPlacement,
 		PowerupDestroyed,
@@ -165,6 +167,17 @@ namespace Events {
 		// The kart producing this event
 		int kart_index;
 		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(StartMenu)
+	ENDEVENT;
+	
+	EVENTSTRUCT(StartMenuInput)
+		// Controller Buttons
+		bool xPressed;
+		bool yPressed;
+		bool bPressed;
+		bool aPressed;
 	ENDEVENT;
 
 	EVENTSTRUCT(AudioPlayPause)

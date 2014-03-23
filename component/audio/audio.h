@@ -77,6 +77,7 @@ public:
 		int MachineGun;
 		int WallCollision;
 		int Skid;
+		int KartExplode;
 	} Sounds;
 	
 	int SetupHardware();

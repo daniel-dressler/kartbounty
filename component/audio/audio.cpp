@@ -38,6 +38,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::KartHandbrake );
 	m_pMailbox->request( Events::EventType::TogglePauseGame );
 	m_pMailbox->request( Events::EventType::RoundStart );
+	m_pMailbox->request( Events::EventType::Reset );
 	primary_player = 0;
 }
 
@@ -80,6 +81,7 @@ void Audio::setup() {
 	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
 	Sounds.WallCollision = LoadSound("assets/audio/kartCollision1.wav");
 	Sounds.Skid = LoadSound("assets/audio/skid1.wav");
+	Sounds.KartExplode = LoadSound("assets/audio/kartExplode1.wav");
 
 	//StartMusic();
 	//Setup3DEnvironment();
@@ -546,6 +548,29 @@ void Audio::update(Real seconds){
 				channel->setChannelGroup(m_channelGroupEffects);
 				channel->set3DAttributes(&pos, 0);
 				channel->setPaused(false);
+			}
+			break;
+		case Events::EventType::Reset:
+			{
+				Events::ResetEvent *resetEvent = (Events::ResetEvent *)event;
+
+				auto kart_local = m_karts[resetEvent->kart_id];
+
+				if (kart_local != NULL)
+				{
+					auto kart_entity = GETENTITY(resetEvent->kart_id, CarEntity);
+
+					FMOD_VECTOR pos;
+					pos.x = kart_entity->Pos.x;
+					pos.y = kart_entity->Pos.y;
+					pos.z = kart_entity->Pos.z;
+
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.KartExplode],
+						true, &(kart_local->soundsChannel)));
+					kart_local->soundsChannel->set3DAttributes(&pos, 0);
+					kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
+					kart_local->soundsChannel->setPaused(false);
+				}
 			}
 			break;
 		}

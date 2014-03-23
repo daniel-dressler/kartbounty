@@ -76,6 +76,8 @@ private:
 	};
 	std::map<powerup_id_t, struct powerup> m_powerups;
 
+	bool atStartMenu;
+
 public:
 	int setup();
 	int update( float fElapseSec );
