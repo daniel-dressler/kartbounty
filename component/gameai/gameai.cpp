@@ -158,20 +158,20 @@ int GameAi::planFrame()
 		case Events::EventType::KartHitByBullet:
 			{
 				// Apply damage to kart
-				auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				entity_id kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
 				kart->health -= DAMAGE_FROM_BULLET;
 
-				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %d", kart_id, kart->health)
+				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %d", kart_id, kart->health);
 
-					// Destroy kart if health gone
-					if (kart->health <= 0)
-					{
-						auto destroy_event = NEWEVENT(KartDestroyed);
-						destroy_event->kart_id = kart_id;
-						events_out.push_back(destroy_event);
-					}
-
+				// Reset kart if health gone
+				if (kart->health <= 0)
+				{
+					kart->health = STARTING_HEALTH;
+					auto reset_kart_event = NEWEVENT(Reset);
+					reset_kart_event->kart_id = kart_id;
+					events_out.push_back(reset_kart_event);					
+				}
 			}
 			break;			
 		default:

@@ -595,6 +595,7 @@ void Simulation::step(double seconds)
 
 // So that bullets don't collide with the kart that shoots
 	handle_bullets(seconds);
+
 	// Vector to hold out going mail events
 	std::vector<Events::Event *> events_out;
 
