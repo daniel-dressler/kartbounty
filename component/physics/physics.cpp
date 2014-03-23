@@ -268,14 +268,15 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,
 
 extern ContactAddedCallback gContactAddedCallback;
 
+
+#define CAR_WIDTH (0.11f)
+#define CAR_HEIGHT (0.05f)
+#define CAR_LENGTH (0.16f)
+#define CAR_MASS (800.0f)
+
 int Simulation::loadWorld()
 {
-	// Create car
-#define CAR_WIDTH (0.09f)
-#define CAR_HEIGHT (0.05f)
-#define CAR_LENGTH (0.10f)
-#define CAR_MASS (800.0f)
-	
+	// Create car	
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		switch ( event->type )
@@ -344,8 +345,8 @@ int Simulation::loadWorld()
 			m_karts[kart_id]->vehicle = kart;
 			m_karts[kart_id]->raycaster = vehicleRayCaster;
 
-#define CON1 (CAR_WIDTH * 1.0)
-#define CON2 (CAR_LENGTH * 1.0)
+#define CON1 (CAR_WIDTH - 0.02)
+#define CON2 (CAR_LENGTH - 0.05)
 			float connectionHeight = -0.02f;//0.15f;
 			btVector3 wheelDirectionCS0(0,-1,0);
 			btVector3 wheelAxleCS(-1,0,0);
@@ -854,7 +855,7 @@ void Simulation::step(double seconds)
 	// slow down.
 	if(!gamePaused)
 	{
-		m_world->stepSimulation( (btScalar)seconds, 30, 0.0166666f/2 );
+		m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
 	}
 
 	// Update Kart Entities
@@ -942,13 +943,41 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	// Get tire locations
 	for( Int32 i = 0; i < 4; i++ )
 	{
-		const btTransform& wtrans = m_karts[kart_id]->vehicle->getWheelTransformWS( i );
+		btQuaternion kart_ori = trans.getRotation();
+		Quaternion q = Quaternion(kart_ori.getX(), kart_ori.getY(), kart_ori.getZ(), kart_ori.getW());
 
-		btVector3 pos = wtrans.getOrigin();
-		kart->tirePos[i].x = (Real)pos.getX();
-		kart->tirePos[i].y = (Real)pos.getY();
-		kart->tirePos[i].z = (Real)pos.getZ();
+		Matrix matOri = Matrix::GetRotateQuaternion( q );
+		Vector3 x_axis = Vector3( 1, 0, 0 ).Transform( matOri );
+		Vector3 y_axis = Vector3( 0, 1, 0 ).Transform( matOri );
+		Vector3 z_axis = Vector3( 0, 0, 1 ).Transform( matOri );
 
+		//CAR_LENGTH
+		//CAR_WIDTH
+
+		Vector3 offset_x = CON1 * x_axis;
+		Vector3 offset_y = -0.02 * y_axis;
+		Vector3 offset_z = CON2 * z_axis;
+
+		switch (i)
+		{
+			// Front wheels
+			case 0:
+				kart->tirePos[i] = kart->Pos - offset_x + offset_y + offset_z;
+				break;
+			case 1:
+				kart->tirePos[i] = kart->Pos + offset_x + offset_y + offset_z;
+				break;
+
+			// Back wheels	
+			case 2:
+				kart->tirePos[i] = kart->Pos - offset_x + offset_y - offset_z;
+				break;
+			case 3:
+				kart->tirePos[i] = kart->Pos + offset_x + offset_y - offset_z;
+				break;
+		}
+		
+		auto wtrans = m_karts[kart_id]->vehicle->getWheelTransformWS( i );
 		btQuaternion rot = wtrans.getRotation();
 		kart->tireOrient[i].x = (Real)rot.getX();
 		kart->tireOrient[i].y = (Real)rot.getY();
