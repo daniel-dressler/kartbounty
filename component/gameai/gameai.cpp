@@ -10,7 +10,6 @@ GameAi::GameAi()
 	active_tresures = 0;
 	next_powerup_id = 3;
 
-
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
@@ -34,7 +33,8 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 12; i++) 
+	{
 		std::string kart_name = "Kart #" + i;
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
@@ -44,7 +44,6 @@ void GameAi::setup()
 		auto new_kart_ev = NEWEVENT(KartCreated);
 		new_kart_ev->kart_id = kart_id;
 		events.push_back(new_kart_ev);
-
 	}
 	m_mb->sendMail(events);
 }
@@ -98,7 +97,8 @@ int GameAi::planFrame()
 	// Direct controllers to karts
 	std::vector<Events::Event *> events_out;
 	bool first_kart = true;
-	for (auto id : this->kart_ids) {
+	for (auto id : this->kart_ids) 
+	{
 		Events::Event *event;
 		if (first_kart) {
 			first_kart = false;

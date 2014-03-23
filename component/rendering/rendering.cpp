@@ -13,6 +13,7 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::Input );
 	m_pMailbox->request( Events::EventType::StateUpdate );
 	m_pMailbox->request( Events::EventType::PlayerKart );
+	m_pMailbox->request( Events::EventType::AiKart );
 	m_pMailbox->request( Events::EventType::KartCreated );
 	m_pMailbox->request( Events::EventType::KartDestroyed );
 	m_pMailbox->request( Events::EventType::PowerupPlacement );
@@ -245,6 +246,7 @@ Vector4 getNextColor()
 	return Vector4(red / largest, blue / largest, green / largest, 1);
 }
 
+bool player_kart_found = false;
 int Renderer::update( float fElapseSec )
 {
 	m_fTime += fElapseSec;
@@ -273,7 +275,25 @@ int Renderer::update( float fElapseSec )
 			{
 				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
+				
+				while (cameras.size() > 0) // Get rid of all AI kart cameras when a player is spawning.
+					cameras.pop_back();
+				
 				cameras.push_back(kart->camera);
+
+
+				player_kart_found = true;
+			}
+			break;
+		case Events::EventType::AiKart:
+			{
+				if (!player_kart_found)
+				{
+					entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
+					auto kart = GETENTITY(kart_id, CarEntity);
+
+					cameras.push_back(kart->camera);
+				}
 			}
 			break;
 		case Events::EventType::PowerupPlacement:

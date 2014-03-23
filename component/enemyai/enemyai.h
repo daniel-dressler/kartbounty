@@ -2,7 +2,7 @@
 
 #include "../../Standard.h"
 #include "../events/events.h"
-
+#include <map>
 #include "util/Sphere.h"
 
 class EnemyAi 
@@ -15,23 +15,36 @@ public:
 
 private:
 	Events::Mailbox m_mb;
+	entity_id m_player_kart;
+	bool has_player_kart;
+
+	enum drivingMode {Reverse, Roaming, Aggressive};
 
 	struct ai_kart {
 		Vector3 target_to_move;
 		Vector3 lastPos;
-		int TimeStartedTarget;
+
+		float target_timer;
+
 		float time_stuck;
 		entity_id kart_id;
-	};
-	std::map<entity_id, ai_kart *> m_karts;
+		entity_id target_kart_id;
+		int current_target_index;
 
-	Vector3 think_of_target(struct ai_kart *);
-	Vector3 get_target_roaming();
-	Vector3 get_target_aggressive();
-	Vector3 get_target_pickups();
+		drivingMode driving_mode;
+	};
+
+	std::map<entity_id, ai_kart *> m_karts;
+	std::vector<entity_id> m_kart_ids;
+
+
+	void think_of_target(struct ai_kart *);
+	void get_target_roaming(struct ai_kart *kart);
+	void get_target_aggressive(struct ai_kart *kart);
+	void get_target_pickups(struct ai_kart *kart);
 
 	Events::InputEvent *move_kart(struct ai_kart *, Real);
-	Events::InputEvent *drive(btScalar ang, btScalar dist, struct ai_kart *);
+	Events::InputEvent *drive(btScalar ang, btScalar dist, struct ai_kart *, Real elapse_time);
 	void avoid_obs(int index, bool send);
 	float avoid_obs_sqr(struct ai_kart *);
 	

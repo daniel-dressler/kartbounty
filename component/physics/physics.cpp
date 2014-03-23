@@ -1,4 +1,7 @@
 #include <iostream>
+#include <algorithm>
+#include <functional>
+#include <queue>
 
 #include "physics.h"
 
@@ -156,12 +159,17 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 			if (report.impact < pt.getAppliedImpulse()) {
 				report.impact = pt.getAppliedImpulse();
 
-				btVector3 pos = pt.getPositionWorldOnA();
+				btVector3 pos = A->is_kart ? pt.getPositionWorldOnA() :
+				                             pt.getPositionWorldOnB();
 				report.pos.x = pos.getX();
 				report.pos.y = pos.getY();
 				report.pos.z = pos.getZ();
 			}
 		}
+	} else if (A->is_powerup) {
+		report.pos = A->powerup_pos;
+	} else if (B->is_powerup) {
+		report.pos = B->powerup_pos;
 	}
 
 	if (report.impact > 10.0 && A->is_kart && B->is_kart) {
@@ -361,7 +369,7 @@ int Simulation::loadWorld()
 			kart_entity->Orient.w = (Real)-rot.getW();
 
 			//Set initial camera value
-			kart_entity->camera.fFOV = 0;
+			kart_entity->camera.fFOV = 1;
 			kart_entity->camera.vFocus.Zero();
 			kart_entity->camera.vPos.Zero();
 			kart_entity->camera.orient_old.Zero();
@@ -437,6 +445,9 @@ void Simulation::step(double seconds)
 #define E_BRAKE_FORCE (2000)
 #define MAX_SPEED (30.0)
 
+	// Vector to hold out going mail events
+	std::vector<Events::Event *> events_out;
+
 	for ( Events::Event *event : (mb.checkMail()) )
 	{
 		switch ( event->type )
@@ -456,11 +467,9 @@ void Simulation::step(double seconds)
 
 			Real steering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
-			Real breakingForce = input->bPressed ? E_BRAKE_FORCE : 0.0;
 			if (steering > 0.4 || steering < -0.4)
 				DEBUGOUT("s: %f, (): %f, ()_p: %f\n", speed, steering, fTurnPower);
 
-			// Add checking for speed to this to limit turning angle at high speeds @Kyle
 			Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;
 			
 			btTransform trans = kart->getRigidBody()->getWorldTransform();
@@ -471,6 +480,35 @@ void Simulation::step(double seconds)
 				trans.setOrigin( orig );
 				trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 				kart->getRigidBody()->setWorldTransform( trans );
+			}
+
+			Real breakingForce = 0.0;
+
+			// Check if kart is grounded for handbrake event
+			if( input->bPressed )
+			{
+				btVector3 downRay = orig - btVector3(0,20,0);
+				btCollisionWorld::ClosestRayResultCallback RayCallback(orig, downRay);
+
+				m_world->rayTest(orig, downRay, RayCallback);
+
+				if(RayCallback.hasHit())
+				{
+					btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
+					btScalar height = orig.getY() - hitEnd.getY();	// Height kart is off ground
+					
+					if(height < 0.1f)
+					{
+						breakingForce = E_BRAKE_FORCE;
+						auto event = NEWEVENT(KartHandbrake);
+						event->kart_id = kart_id;
+						event->speed = speed;
+						event->pos.x = orig.getX();
+						event->pos.y = orig.getY();
+						event->pos.z = orig.getZ();
+						events_out.push_back(event);
+					}
+				}
 			}
 
 			// Max Speed checking
@@ -491,8 +529,7 @@ void Simulation::step(double seconds)
 				input->reset_requested)
 			{
 				resetKart(kart_id);
-			}
-	
+			}	
 
 			// Print Position?
 			if (input->print_position) {
@@ -518,7 +555,7 @@ void Simulation::step(double seconds)
 
 			btTransform tr;
 			tr.setIdentity();
-			auto pos = powerup_event->pos;
+			auto pos = powerup->powerup_pos = powerup_event->pos;
 			btVector3 powerup_pos = btVector3(pos.x, pos.y, pos.z);
 			tr.setOrigin(powerup_pos);
 			body->setWorldTransform(tr);
@@ -565,7 +602,6 @@ void Simulation::step(double seconds)
 	}
 
 	// Issue Collision Events
-	std::vector<Events::Event *> events_out;
 	for (auto id_report_pair : m_col_reports) {
 		auto report = id_report_pair.second;
 
@@ -596,6 +632,7 @@ void Simulation::step(double seconds)
 				auto event = NEWEVENT(KartColideArena);
 				event->pos = report.pos;
 				event->kart_id = report.kart_id;
+				event->force = report.impact;
 				events_out.push_back(event);
 			}
 			default:
@@ -603,6 +640,7 @@ void Simulation::step(double seconds)
 		}
 	}
 	m_col_reports.clear();
+
 	mb.sendMail(events_out);
 }
 
@@ -633,8 +671,33 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	// save forward vector
 	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
 
+	// Update the karts height above ground and what point is bellow it for rendering shadows
+	// Casts ray 20 units directly down from karts position, which is the size of our arena so 
+	// we should not go higher than that.
+	btVector3 downRay = pos - btVector3(0,20,0);
+	btCollisionWorld::ClosestRayResultCallback RayCallback(pos, downRay);
+
+	m_world->rayTest(pos, downRay, RayCallback);
+
+	if(RayCallback.hasHit())
+	{
+		btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
+		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
+		kart->groundHit.x = hitEnd.getX();
+		kart->groundHit.y = hitEnd.getY();
+		kart->groundHit.z = hitEnd.getZ();
+		
+		kart->groundNormal.x = RayCallback.m_hitNormalWorld.getX();
+		kart->groundNormal.y = RayCallback.m_hitNormalWorld.getY();
+		kart->groundNormal.z = RayCallback.m_hitNormalWorld.getZ();
+	}
+
 	// Camera
 	// Performed for Ai & Player
+
+	// @Kyle: Update this code to cast ray from kart to camera to see if wall is in way (outter walls cause issues)
+	// put ray cast point slightly above the kart to not collide with smaller walls
+
 	Quaternion qOriNew = kart->Orient;
 	Quaternion qOriMod = qOriNew;
 	qOriMod.w = -qOriMod.w;
@@ -647,8 +710,9 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 	kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
 
+	seconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
 	Real fLerpAmt = seconds * 5.0f;
-
+	Clamp(fLerpAmt, 0.1f, 0.0f);
 	Vector3 vLastofs = m_karts[kart_id]->lastofs;
 	auto cameraPos = kart->camera.vPos;
 	auto cameraFocus = kart->camera.vFocus;
@@ -671,5 +735,84 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	m_karts[kart_id]->lastspeed = fSpeed;
 	kart->Speed = fSpeed;
 
+}
+
+
+Simulation::hit_report Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist)
+{
+	auto kart1 = m_karts[firing_kart_id];
+	auto kart1_pos = kart1->vehicle->getChassisWorldTransform().getOrigin();
+	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(btVector3(0,1,0),DEGTORAD(-90));
+	kart1_forward.normalize();
+	kart1_pos += (kart1_forward / 3);
+
+	struct hit_report report;
+	report.did_hit_kart = false;
+
+	// Find closest karts in cone of firing
+	std::priority_queue<btScalar, std::vector<btScalar>, std::greater<btScalar>>possible_dists;
+	std::map<btScalar, std::pair<entity_id, btVector3>>dists_to_karts;
+	for (auto kart2_pair : m_karts) {
+		auto kart2 = kart2_pair.second;
+		if (kart2->kart_id == firing_kart_id)
+			continue;
+
+		// Positions
+		auto kart2_pos = kart2->vehicle->getChassisWorldTransform().getOrigin();
+
+		// Vectors
+		auto kart1_to_kart2 = kart2_pos - kart1_pos;
+
+		// Angle
+		btScalar angle = kart1_forward.dot(kart1_to_kart2.normalized());
+		if (angle < min_angle)
+			continue;
+
+		// Distance
+		btScalar dist = kart1_to_kart2.length();
+		if (dist >= max_dist)
+			continue;
+
+		possible_dists.push(dist);
+		dists_to_karts[dist] = std::make_pair(kart2->kart_id, kart2_pos);
+	}
+
+	// Find closests kart not blocked by wall
+	while (!possible_dists.empty()) {
+		auto dist = possible_dists.top();
+		possible_dists.pop();
+		auto kart_pair = dists_to_karts[dist];
+
+		// Ray cast & test
+		btCollisionWorld::ClosestRayResultCallback raycast_test(kart1_pos, kart_pair.second);
+		m_world->rayTest(kart1_pos, kart_pair.second, raycast_test);
+
+		if (!raycast_test.hasHit())
+			continue;
+
+		auto hit_obj = (struct phy_obj *)raycast_test.m_collisionObject->getUserPointer();
+		if (hit_obj == NULL || !(hit_obj->is_kart))
+			continue;
+
+		report.did_hit_kart = true;
+		report.kart_hit_id = hit_obj->kart_id;
+		report.impact_pos = raycast_test.m_hitPointWorld;
+		report.impact_normal = raycast_test.m_hitNormalWorld;
+		break;
+	}
+
+	// Last resort shot forward
+	if (report.did_hit_kart == false) {
+		auto to_point = kart1_pos + kart1_forward;
+		btCollisionWorld::ClosestRayResultCallback raycast_test(kart1_pos, to_point);
+		m_world->rayTest(kart1_pos, to_point, raycast_test);
+		if (raycast_test.hasHit()) {
+			report.did_hit_wall = true;
+			report.impact_pos = raycast_test.m_hitPointWorld;
+			report.impact_normal = raycast_test.m_hitNormalWorld;
+		}
+	}
+
+	return report;
 }
 
