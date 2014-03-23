@@ -81,18 +81,18 @@ void Input::HandleEvents(){
 			// Reset Development Tools
 			m_pCurrentInput->print_position = false;
 			m_pCurrentInput->reset_requested = false;
-		
+
 			while( SDL_PollEvent(&sdl_event) )
 			{
 				OnEvent(&sdl_event);
 			}
-		
+
 			// Update previous input event
 			memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
-		
+
 			// Send input events to mail system
 			inputEvents.push_back(m_pCurrentInput);
-			
+
 			// Now mailbox owns the object
 			m_pCurrentInput = NULL;
 			break;
@@ -113,15 +113,15 @@ void Input::OnEvent(SDL_Event* Event)
 	case SDL_WINDOWEVENT:
 		switch (Event->window.event)
 		{
-			case SDL_WINDOWEVENT_RESIZED:
-				SDL_Window* win;
-				Int32 nWinWidth, nWinHeight;			
-				win = SDL_GetWindowFromID(Event->window.windowID);
-				SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
-				glViewport( 0, 0, nWinWidth, nWinHeight );
-				break;
-			default:
-				break;
+		case SDL_WINDOWEVENT_RESIZED:
+			SDL_Window* win;
+			Int32 nWinWidth, nWinHeight;			
+			win = SDL_GetWindowFromID(Event->window.windowID);
+			SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
+			glViewport( 0, 0, nWinWidth, nWinHeight );
+			break;
+		default:
+			break;
 		}
 		break;
 	case SDL_QUIT:
@@ -189,12 +189,19 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		m_pCurrentInput->aPressed = true;
 		break;
 
-	// Development Tools
+		// Development Tools
 	case SDLK_z:
 		m_pCurrentInput->print_position = true;
 		break;
 	case SDLK_r:
 		m_pCurrentInput->reset_requested = true;
+		break;
+	case SDLK_BACKSPACE:
+		{
+			std::vector<Events::Event *> resetEvent;
+			resetEvent.push_back( NEWEVENT( RoundStart) );
+			m_pMailbox->sendMail(resetEvent);
+		}
 		break;
 	default:
 		break;

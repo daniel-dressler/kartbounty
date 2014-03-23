@@ -516,8 +516,7 @@ void Simulation::step(double seconds)
 		}
 		break;
 		case Events::EventType::Input:
-		{
-			
+		{			
 			Events::InputEvent *input = (Events::InputEvent *)event;
 
 			entity_id kart_id = input->kart_id;
@@ -689,14 +688,6 @@ void Simulation::step(double seconds)
 		case Events::EventType::TogglePauseGame:
 			{
 				gamePaused = !gamePaused;
-			}
-			break;
-		case Events::EventType::KartDestroyed:
-			{
-				// ****************************************************************
-				// @Dan:  We need code in here to handle the destruction of karts
-				auto destroyEvent = (Events::KartDestroyedEvent *)event;
-				entity_id dest_Kart_Id = destroyEvent->kart_id;
 			}
 			break;
 		default:
