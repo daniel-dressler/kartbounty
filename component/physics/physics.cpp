@@ -273,8 +273,8 @@ extern ContactAddedCallback gContactAddedCallback;
 #define CAR_LENGTH (0.16f)
 #define CAR_MASS (800.0f)
 
-#define CON1 (CAR_WIDTH * 1.0)
-#define CON2 (CAR_LENGTH * 1.0)
+#define CON1 (CAR_WIDTH - 0.02)
+#define CON2 (CAR_LENGTH - 0.05)
 
 int Simulation::createKart(entity_id kart_id)
 {
@@ -968,7 +968,8 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		//CAR_WIDTH
 
 		Vector3 offset_x = CON1 * x_axis;
-		Vector3 offset_y = -0.02 * y_axis;
+		Vector3 offset_y;// = -0.02 * y_axis;
+		offset_y.Zero();
 		Vector3 offset_z = CON2 * z_axis;
 
 		switch (i)
