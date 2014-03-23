@@ -268,8 +268,6 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,
 
 extern ContactAddedCallback gContactAddedCallback;
 
-#define CAR_WIDTH (0.09f)
-
 #define CAR_WIDTH (0.11f)
 #define CAR_HEIGHT (0.05f)
 #define CAR_LENGTH (0.16f)
@@ -277,83 +275,6 @@ extern ContactAddedCallback gContactAddedCallback;
 
 #define CON1 (CAR_WIDTH * 1.0)
 #define CON2 (CAR_LENGTH * 1.0)
-
-int Simulation::loadWorld()
-{
-	// Create car	
-	for ( Events::Event *event : (mb.checkMail()) )
-	{
-		switch ( event->type )
-		{
-		case Events::KartCreated:
-		{
-			auto kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
-			auto kart_local = new phy_obj();
-			kart_local->is_kart = true;
-			kart_local->kart_id = kart_id;
-			m_karts[kart_id] = kart_local;
-			
-			float wheelFriction = 30;
-			float suspensionStiffness = 10;
-			float suspensionDamping = 0.0f;
-			float suspensionCompression = 0.1f;
-			// Prevents car flipping due to sharp turns
-			float rollInfluence = 0.000;
-			btScalar suspensionRestLength(0.01f);  // Suspension Interval = rest +/- travel * 0.01
-			float suspensionTravelcm = 1;
-			
-			btRaycastVehicle::btVehicleTuning tuning;
-			tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
-			tuning.m_frictionSlip = 30;
-			tuning.m_maxSuspensionForce = 5;
-			tuning.m_suspensionCompression = suspensionCompression;
-			tuning.m_suspensionDamping = suspensionDamping;
-			tuning.m_suspensionStiffness = suspensionStiffness;
-
-			btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
-			btCompoundShape* compound = new btCompoundShape();
-			m_collisionShapes.push_back(chassisShape);
-			m_collisionShapes.push_back(compound);
-
-			// Start of car stuff
-
-			btTransform localTrans;
-			localTrans.setIdentity();
-			localTrans.setOrigin(btVector3(0,0.00f,0));
-			compound->addChildShape(localTrans, chassisShape);
-
-			btTransform tr;
-			tr.setIdentity();
-			tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
-			
-			btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
-			m_kart_bodies[kart_id] = carChassis;
-			carChassis->setActivationState(DISABLE_DEACTIVATION);
-			carChassis->setUserPointer(kart_local);
-
-			// Air resistance
-			// 1 = 100% of speed lost per second
-			carChassis->setDamping(0.4, 0.4);
-
-			// Makes us bounce off walls
-			carChassis->setRestitution(0.9);
-			carChassis->setFriction(0.1);
-
-			btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
-
-			auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
-			kart->getRigidBody()->setMotionState(new btDefaultMotionState(tr));
-
-			kart->setCoordinateSystem(0,1,0);
-			m_world->addVehicle(kart);
-			m_karts[kart_id]->vehicle = kart;
-			m_karts[kart_id]->raycaster = vehicleRayCaster;
-
-#define CON1 (CAR_WIDTH - 0.02)
-#define CON2 (CAR_LENGTH - 0.05)
-			float connectionHeight = -0.02f;//0.15f;
-			btVector3 wheelDirectionCS0(0,-1,0);
-			btVector3 wheelAxleCS(-1,0,0);
 
 int Simulation::createKart(entity_id kart_id)
 {
