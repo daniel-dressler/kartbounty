@@ -387,9 +387,9 @@ int Renderer::render()
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	for( Int32 i = 0; i < 2; i++ )
+	for( Int32 i = 0; i < 1; i++ )
 	{	
-		glViewport( 0, ( nWinHeight >> 1 ) * i, nWinWidth, nWinHeight >> 1 );
+		glViewport( 0, ( nWinHeight >> 0 ) * i, nWinWidth, nWinHeight >> 0 );
 
 		glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
@@ -466,7 +466,7 @@ int Renderer::render()
 		color2 = Vector4(0, 0, 0, 0);
 	
 		perMesh.vColor = color1;
-		perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+		perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
 		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
 		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
@@ -504,32 +504,33 @@ void Renderer::_DrawArena()
 {
 	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
-
+	
 	// QUAD A
 	glCullFace( GL_BACK );
-	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.vRenderParams = Vector4( -1, 1, 0, 0 );
 	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, 1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	_DrawArenaQuad( Vector3( 1, 0, 0 ) );
 
 	// QUAD B
-	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.vRenderParams = Vector4( 1, -1, 0, 0 );
 	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( 1, 1, -1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	_DrawArenaQuad( Vector3( 0, 1, 0 ) );
 	
 	// QUAD C
 	glCullFace( GL_FRONT );
-	perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+	perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
 	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	_DrawArenaQuad( Vector3( 1, 1, 0 ) );
-
+	
 	// QUAD D
-	perMesh.vRenderParams = Vector4( -1, 0, 0, 0 );
+	perMesh.vRenderParams = Vector4( -1, -1, 0, 0 );
 	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	_DrawArenaQuad( Vector3( 0, 0, 1 ) );
+	
 }
 
 void Renderer::_DrawArenaQuad( Vector3 vColor )
