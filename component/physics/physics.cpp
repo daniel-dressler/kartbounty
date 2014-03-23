@@ -336,6 +336,8 @@ int Simulation::loadWorld()
 			btVehicleRaycaster *vehicleRayCaster = new btDefaultVehicleRaycaster(m_world);
 
 			auto kart = new btRaycastVehicle(tuning, m_kart_bodies[kart_id], vehicleRayCaster);
+			kart->getRigidBody()->setMotionState(new btDefaultMotionState(tr));
+
 			kart->setCoordinateSystem(0,1,0);
 			m_world->addVehicle(kart);
 			m_karts[kart_id]->vehicle = kart;
@@ -390,7 +392,11 @@ int Simulation::loadWorld()
 
 
 			Entities::CarEntity *kart_entity = GETENTITY(kart_id, CarEntity);
-			btTransform car1 = kart->getChassisWorldTransform();
+
+			auto car1_ms = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
+			btTransform car1;
+			car1_ms->getWorldTransform(car1);
+
 			btVector3 pos = car1.getOrigin();
 			kart_entity->Pos.x = (Real)pos.getX();
 			kart_entity->Pos.y = (Real)pos.getY();
@@ -660,7 +666,10 @@ void Simulation::step(double seconds)
 
 				Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;
 			
-				btTransform trans = kart->getRigidBody()->getWorldTransform();
+				auto car1 = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
+				btTransform trans;
+				car1->getWorldTransform(trans);
+
 				btVector3 orig = trans.getOrigin();
 				if( input->yPressed )
 				{
@@ -908,19 +917,23 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	Entities::CarEntity *kart = GETENTITY(kart_id, CarEntity);
 
 	// -- Kart position ------------------------
-	btTransform car1 = m_karts[kart_id]->vehicle->getChassisWorldTransform();
+	auto car1 = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
+	btTransform trans;
+	car1->getWorldTransform(trans);
 
 	//Vector3 vPosOld = state->Karts[kart_index].vPos;
 	Quaternion qOriOld = kart->Orient;
 	Quaternion qOriOldInv = qOriOld;
 	qOriOldInv.Invert();
 
-	btVector3 pos = car1.getOrigin();
+	
+
+	btVector3 pos = trans.getOrigin();
 	kart->Pos.x = (Real)pos.getX();
 	kart->Pos.y = (Real)pos.getY();
 	kart->Pos.z = (Real)pos.getZ();
 
-	btQuaternion rot = car1.getRotation();
+	btQuaternion rot = trans.getRotation();
 	kart->Orient.x = (Real)rot.getX();
 	kart->Orient.y = (Real)rot.getY();
 	kart->Orient.z = (Real)rot.getZ();
