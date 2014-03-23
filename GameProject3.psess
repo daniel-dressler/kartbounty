@@ -80,6 +80,9 @@
     <Report>
       <Path>GameProject140313(2).vspx</Path>
     </Report>
+    <Report>
+      <Path>GameProject140322.vspx</Path>
+    </Report>
   </Reports>
   <Launches>
     <ProjBinary>
