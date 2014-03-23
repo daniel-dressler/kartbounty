@@ -186,8 +186,16 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
 		exit(20);
 
+	
 
+	if( !LoadMesh( m_mshBullet, "assets/Bullet.msh" ) )
+		exit(21);
+
+	
 	if( !LoadMesh( m_mshKart, "assets/Kart.msh" ) )
+		exit(21);
+	
+	if( !LoadMesh( m_mshKartTire, "assets/Kart_tire.msh" ) )
 		exit(21);
 	
 	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
@@ -408,6 +416,15 @@ int Renderer::render()
 			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 			glhDrawMesh( m_eftMesh, m_mshKart );
+
+			for( int i = 0; i < 4; i++ )
+			{
+				perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->tireOrient[i] ) *
+					Matrix::GetTranslate( kart_entity->tirePos[i] );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+				glhDrawMesh( m_eftMesh, m_mshKartTire );
+			}
 		}
 
 		for (auto id_powerup_pair : m_powerups) {
@@ -461,29 +478,21 @@ int Renderer::render()
 		Vector4 color2;
 		auto bullet = bullet_pair.second;
 		Vector3 pos = bullet->poistion;
-		
-		color1 = Vector4(1, 1, 1, 1);
-		color2 = Vector4(0, 0, 0, 0);
-	
-		perMesh.vColor = color1;
-		perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
-		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
 
-		perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
-		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
-
+		Vector3 vDir = Vector3( bullet->direction.x(), bullet->direction.y(), bullet->direction.z() );
+		Vector3 vAxis = Vector3::Cross( vDir, Vector3( 0, 0, 1 ) );
+		Real fAngle = ACOS( Vector3::Dot( vDir, Vector3( 0, 0, 1 ) ) );
+			
 		glEnable( GL_BLEND );
 		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-		perMesh.vColor = color2;
+		perMesh.vColor = Vector4(1, 1, 1, 1);
+		perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
+		perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-		glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+		glhDrawMesh( m_eftMesh, m_mshBullet );
 		glDisable( GL_BLEND );
-		
+
 		// HACK NOTE:
 		// This is where rendering the bullets happen.
 		// As far as I can tell, the list is updated every time a bullet is created in physics or destroyed.

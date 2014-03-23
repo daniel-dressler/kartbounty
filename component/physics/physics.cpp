@@ -44,7 +44,7 @@ Simulation::Simulation()
 
 	g_physics_subsystem = this;
 
-	m_world->setGravity(btVector3(0,-7,0));
+	m_world->setGravity(btVector3(0,-8,0));
 
 	mb.request(Events::EventType::Input);
 	mb.request(Events::EventType::Reset);
@@ -271,8 +271,9 @@ extern ContactAddedCallback gContactAddedCallback;
 int Simulation::loadWorld()
 {
 	// Create car
-#define CAR_WIDTH (0.11f)
-#define CAR_LENGTH (0.15f)
+#define CAR_WIDTH (0.09f)
+#define CAR_HEIGHT (0.05f)
+#define CAR_LENGTH (0.10f)
 #define CAR_MASS (800.0f)
 	
 	for ( Events::Event *event : (mb.checkMail()) )
@@ -287,14 +288,14 @@ int Simulation::loadWorld()
 			kart_local->kart_id = kart_id;
 			m_karts[kart_id] = kart_local;
 			
-			float wheelFriction = 3;
+			float wheelFriction = 30;
 			float suspensionStiffness = 10;
-			float suspensionDamping = 0.5f;
-			float suspensionCompression = 0.3f;
+			float suspensionDamping = 0.0f;
+			float suspensionCompression = 0.1f;
 			// Prevents car flipping due to sharp turns
 			float rollInfluence = 0.000;
-			btScalar suspensionRestLength(0.15f);// Suspension Interval = rest +/- travel * 0.01
-			float suspensionTravelcm = 20;
+			btScalar suspensionRestLength(0.01f);  // Suspension Interval = rest +/- travel * 0.01
+			float suspensionTravelcm = 1;
 			
 			btRaycastVehicle::btVehicleTuning tuning;
 			tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
@@ -304,7 +305,7 @@ int Simulation::loadWorld()
 			tuning.m_suspensionDamping = suspensionDamping;
 			tuning.m_suspensionStiffness = suspensionStiffness;
 
-			btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_WIDTH, CAR_LENGTH));
+			btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
 			btCompoundShape* compound = new btCompoundShape();
 			m_collisionShapes.push_back(chassisShape);
 			m_collisionShapes.push_back(compound);
@@ -313,7 +314,7 @@ int Simulation::loadWorld()
 
 			btTransform localTrans;
 			localTrans.setIdentity();
-			localTrans.setOrigin(btVector3(0,0.05f, 0));
+			localTrans.setOrigin(btVector3(0,0.00f,0));
 			compound->addChildShape(localTrans, chassisShape);
 
 			btTransform tr;
@@ -345,11 +346,11 @@ int Simulation::loadWorld()
 
 #define CON1 (CAR_WIDTH * 1.0)
 #define CON2 (CAR_LENGTH * 1.0)
-			float connectionHeight = 0.10f;
+			float connectionHeight = -0.02f;//0.15f;
 			btVector3 wheelDirectionCS0(0,-1,0);
 			btVector3 wheelAxleCS(-1,0,0);
 
-			float	wheelRadius = 0.15f;
+			float	wheelRadius = 0.05f;
 		
 			// Setup front 2 wheels
 			bool isFrontWheel=true;
@@ -852,7 +853,7 @@ void Simulation::step(double seconds)
 	// slow down.
 	if(!gamePaused)
 	{
-		m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
+		m_world->stepSimulation( (btScalar)seconds, 30, 0.0166666f/2 );
 	}
 
 	// Update Kart Entities
@@ -926,8 +927,6 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	Quaternion qOriOldInv = qOriOld;
 	qOriOldInv.Invert();
 
-	
-
 	btVector3 pos = trans.getOrigin();
 	kart->Pos.x = (Real)pos.getX();
 	kart->Pos.y = (Real)pos.getY();
@@ -938,6 +937,23 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	kart->Orient.y = (Real)rot.getY();
 	kart->Orient.z = (Real)rot.getZ();
 	kart->Orient.w = (Real)-rot.getW();
+
+	// Get tire locations
+	for( Int32 i = 0; i < 4; i++ )
+	{
+		const btTransform& wtrans = m_karts[kart_id]->vehicle->getWheelTransformWS( i );
+
+		btVector3 pos = wtrans.getOrigin();
+		kart->tirePos[i].x = (Real)pos.getX();
+		kart->tirePos[i].y = (Real)pos.getY();
+		kart->tirePos[i].z = (Real)pos.getZ();
+
+		btQuaternion rot = wtrans.getRotation();
+		kart->tireOrient[i].x = (Real)rot.getX();
+		kart->tireOrient[i].y = (Real)rot.getY();
+		kart->tireOrient[i].z = (Real)rot.getZ();
+		kart->tireOrient[i].w = (Real)-rot.getW();
+	}
 
 	// Save forward vector
 	btVector3 Up = btVector3(kart->Up.x,kart->Up.y,kart->Up.z) ;

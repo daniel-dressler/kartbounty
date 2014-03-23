@@ -53,6 +53,9 @@ namespace Entities {
 		Vector3 groundHit;
 		Vector3 groundNormal;
 
+		Vector3 tirePos[4];
+		Quaternion tireOrient[4];
+
 		// Camera
 		struct Camera {
 			Real fFOV;

@@ -9,7 +9,7 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 1
+#define NUM_KARTS 2
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup

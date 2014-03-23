@@ -49,7 +49,7 @@ void main()
 	}
 
 	vec3 color = g_vColor.rgb * ps_color.rgb * texDiffuse.rgb * fPower;
-	out_color  = vec4( color.xyz, texDiffuse.a );
+	out_color  = vec4( color.xyz, texDiffuse.a * ps_color.a );
 //	out_color  = vec4( ( vNormal.xyz ), 1 );
 
 	// Lighting Test
