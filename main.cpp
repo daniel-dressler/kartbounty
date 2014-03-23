@@ -26,10 +26,9 @@ int main( int argc, char** argv )
 	init_inventory();
 	Physics::Simulation *simulation = new Physics::Simulation();
 	Input *input = new Input();
-	//Audio *audio = new Audio();
+	Audio *audio = new Audio();
 	GameAi *gameai = new GameAi();
 	EnemyAi *enemyai = new EnemyAi();
-	//GameLogic *logic = new GameLogic();
 
 	// Act on events
 	gameai->setup();
@@ -37,32 +36,30 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	input->setup();
 	enemyai->setup();
-	//audio->setup();
+	audio->setup();
 
 
 	// -- Main Loop -----------------------------------------------------------
 	while (gameai->planFrame())
 	{
 		Real elapsed_time = gameai->getElapsedTime();
-		//logic->update(elapsed_time);
 
 		input->HandleEvents();
 		enemyai->update(elapsed_time);
 
 		simulation->step(elapsed_time);
 
-		//audio->update(elapsed_time);
+		audio->update(elapsed_time);
 		renderer->update(elapsed_time);
 		renderer->render();
 	}
 	
 	// -- Cleanup & Exit ------------------------------------------------------
-	//delete logic;
 	delete enemyai;
 	delete input;
 	delete simulation;
 	delete gameai;
-	//delete audio;
+	delete audio;
 	delete renderer;
 	shutdown_inventory();
 

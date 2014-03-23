@@ -10,7 +10,7 @@
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
 #define TIME_TO_FOLLOW_TARGET 15.f
-
+#define SHOT_COOLDOWN 1.2f
 // temp
 std::vector<Vector3> path;
 std::vector<Square> obs_sqr;
@@ -24,6 +24,7 @@ EnemyAi::EnemyAi()
 	m_mb.request( Events::EventType::AiKart );
 	m_mb.request( Events::EventType::KartCreated);
 	m_mb.request( Events::EventType::PlayerKart);
+	m_mb.request( Events::EventType::ShootReport);
 
 	has_player_kart = false;
 	// Possible points for the car to wander about.
@@ -92,6 +93,31 @@ void EnemyAi::get_target_roaming(struct ai_kart *kart)
 	kart->driving_mode = drivingMode::Roaming;
 }
 
+void EnemyAi::kart_shoot(entity_id kart_id)
+{
+	//DEBUGOUT("SHOOTING OUT OF ENEMYAI\n")
+
+	auto kart_local = m_karts[kart_id];
+	auto kart_entity = GETENTITY(kart_id, CarEntity);
+
+	if (kart_local->can_shoot != -1 && kart_local->shoot_timer <=0 && kart_id != m_player_kart)
+	{
+		std::vector<Events::Event *> shootingEvents;
+
+		auto shoot_event = NEWEVENT(Shoot);
+
+		shoot_event->forward = kart_entity->forDirection;
+		shoot_event->kart_id = kart_id;
+		shoot_event->kart_pos = kart_entity->Pos;
+
+		shootingEvents.push_back(shoot_event);
+		m_mb.sendMail(shootingEvents);
+
+		kart_local->can_shoot = -1;
+		kart_local->shoot_timer = SHOT_COOLDOWN;
+	}
+}
+
 void EnemyAi::update(Real elapsed_time)
 {
 	std::vector<Events::Event *> inputEvents;
@@ -101,6 +127,16 @@ void EnemyAi::update(Real elapsed_time)
 	{
 		switch( event->type ) 
 		{
+			case Events::EventType::ShootReport:
+			{
+				entity_id kart_id = ((Events::ShootReportEvent *)event)->shooting_kart_id;
+				entity_id kart_being_shot_at = ((Events::ShootReportEvent *)event)->kart_being_hit_id;
+				//DEBUGOUT("Kart id: %d, kart being shot at: %d\n", kart_id, kart_being_shot_at)
+
+				m_karts[kart_id]->can_shoot = kart_being_shot_at;
+				kart_shoot(kart_id);
+			}
+			break;
 			case Events::EventType::PlayerKart:
 			{
 				auto kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
@@ -117,6 +153,8 @@ void EnemyAi::update(Real elapsed_time)
 				kart->kart_id = kart_id;
 				kart->time_stuck = 0;
 				kart->current_target_index = -1;
+				kart->can_shoot = -1;
+				kart->shoot_timer = 0;
 
 				m_kart_ids.push_back(kart_id);
 			}
@@ -138,10 +176,11 @@ void EnemyAi::update(Real elapsed_time)
 				{
 					kart = m_karts[kart_id];
 				}
-
+				kart->shoot_timer -= elapsed_time; // decrease cooldown on shot.
 				inputEvents.push_back(move_kart(kart, elapsed_time));
+
 			}
-				break;
+			break;
 
 			case Events::EventType::KartDestroyed:
 			{
@@ -199,7 +238,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	btScalar distance_to_target = sqrtf( pow((pos.x - target.x) , 2) 
 											+ pow((pos.z - target.y),2) );
 
-	if (distance_to_target < 1.0f) 
+	if (distance_to_target < 1.0f)
 		think_of_target(kart_local);
 
 	// check if car stuck, increase stuck timer if stuck.
@@ -583,7 +622,6 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 	Vector3 pos = kart_entity->Pos;
 
 	std::vector<Square> danger_sqr;
-	//std::vector<int> old_index;
 
 	for(Square square : obs_sqr)
 	{

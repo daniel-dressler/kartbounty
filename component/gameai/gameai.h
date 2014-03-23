@@ -13,6 +13,7 @@ public:
 	void setup();
 	int planFrame();
 	Real getElapsedTime();
+	bool gamePaused;
 
 private:
 	Events::Mailbox* m_mb;
@@ -29,4 +30,8 @@ private:
 	Vector3 pick_point();
 	void open_point(Vector3);
 	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t);
+	void updateScoreBoard();
+	void outputScoreBoard();
+
+	void resetGame();
 };

@@ -2,6 +2,9 @@
 #include <functional>
 
 #include "rendering.h"
+#include "../physics/physics.h"
+
+std::map<int, struct Physics::Simulation::bullet *> list_of_bullets;
 
 Renderer::Renderer()
 {
@@ -19,6 +22,8 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::PowerupPlacement );
 	m_pMailbox->request( Events::EventType::PowerupDestroyed );
 	m_pMailbox->request( Events::EventType::PowerupPickup );
+	m_pMailbox->request( Events::EventType::BulletList );
+	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -257,8 +262,17 @@ int Renderer::update( float fElapseSec )
 	std::vector<Entities::CarEntity::Camera> cameras;
 	for( Events::Event *event : m_pMailbox->checkMail() )
 	{
-		switch( event->type )
+		switch( event->type ) 
 		{
+		// Each bullet has a position and a direction passed for rendering and an additional value "time to live" that physics uses, no idea if rendering needs it.
+		case Events::EventType::BulletList:
+		{
+			auto bullet_list_event = ((Events::BulletListEvent *)event);
+			list_of_bullets = *((std::map<int, struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
+
+			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
+		}
+		break;
 		case Events::EventType::KartCreated:
 			{
 				auto kart_event = ((Events::KartCreatedEvent *)event);
@@ -311,6 +325,14 @@ int Renderer::update( float fElapseSec )
 			{
 				auto powerup = ((Events::PowerupDestroyedEvent *)event);
 				m_powerups.erase(powerup->powerup_id);
+			}
+			break;
+		case Events::EventType::ScoreBoardUpdate:
+			{
+				auto scoreboard = ((Events::ScoreBoardUpdateEvent *)event);
+
+				// @Phil: I guess this is where you handle drawing the scoreboard on the HUD, Kyle.
+				// The list is the ids of the karts in order from highest score to lowest
 			}
 			break;
 		default:
@@ -426,6 +448,51 @@ int Renderer::render()
 			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
 			glDisable( GL_BLEND );
 		}
+	}
+
+	//DEBUGOUT("RENDERING: list of bullets size: %d\n" , list_of_bullets.size())
+
+
+	// HACK!! Rendering powerups instead of bullets for now. Mostly debugging tool. But you can draw with powerups on the map, too!
+	for (auto bullet_pair : list_of_bullets) 
+	{
+			
+		Vector4 color1;
+		Vector4 color2;
+		auto bullet = bullet_pair.second;
+		Vector3 pos = bullet->poistion;
+		
+		color1 = Vector4(1, 1, 1, 1);
+		color2 = Vector4(0, 0, 0, 0);
+	
+		perMesh.vColor = color1;
+		perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+		perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+		perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+		perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		perMesh.vColor = color2;
+		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+		glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+		glDisable( GL_BLEND );
+		
+		// HACK NOTE:
+		// This is where rendering the bullets happen.
+		// As far as I can tell, the list is updated every time a bullet is created in physics or destroyed.
+		// Once the bullet's ttl will hit 0 or a negetive number, physics will remove it
+		// There probably is a better way to pass the list from Physics to Rendering - I had to create an event and because I kept getting linking errors,
+		// I had to avoid including physics.h in both events.h and rendering.h. Kept getting what seemed like circular includes...
+		// In order to avoid using the bullet struct (as it couldn't be included due to above mentioned reasons), 
+		// I had to resort to void* and cast it back in the update event handler. Seems like a lot of trouble to me, but I couldn't figure out how to do it in c++, lol.
+		// In any case, keep in mind that currently the list pointer is passed each step in the physics. Doesn't seem like too much overhead.
 	}
 
 	SDL_GL_SwapWindow( m_Window );

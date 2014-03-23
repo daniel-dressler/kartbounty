@@ -1,4 +1,5 @@
 #include <map>
+#include <list>
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
@@ -13,6 +14,8 @@
 
 #include "../events/events.h"
 #include "../entities/entities.h"
+
+static int bullet_next_id;
 
 namespace Physics {
 	class Simulation {
@@ -34,10 +37,35 @@ namespace Physics {
 		// Needs to be public because 
 		// of reasons.
 		void substepEnforcer(btDynamicsWorld *, btScalar);
+		
 
+		struct bullet
+		{
+			Vector3 poistion;
+			btVector3 direction;
+			float time_to_live; // Once this is 0, the bullet will be removed from the list by physics.
+			int bullet_id;
+			entity_id kart_id;
 
+			bullet() 
+			{
+				//bullet_id = bullet_next_id;
+				poistion = Vector3(0,0,0);
+				direction.setZero();
+				time_to_live = 0;
+				bullet_id = bullet_next_id;
+				bullet_next_id++;
+			}
+		};
+
+		// Used to let AI know whom it should / could shoot and when.
 		private:
 		Events::Mailbox mb;
+
+		bool gamePaused;
+
+		std::map<int, struct bullet *> list_of_bullets;
+		void handle_bullets(double);
 
 		btDiscreteDynamicsWorld *m_world;
 
@@ -46,7 +74,8 @@ namespace Physics {
 		btTriangleInfoMap *m_triangleInfoMap;
 
 		std::map<entity_id, btRigidBody *> m_kart_bodies;
-		struct phy_obj {
+		struct phy_obj 
+		{
 			bool is_kart;
 			bool is_powerup;
 			bool is_arena;
@@ -77,13 +106,17 @@ namespace Physics {
 		std::map<powerup_id_t, struct phy_obj *> m_powerups;
 		struct phy_obj *m_arena;
 
-		enum col_type_t {
+		enum col_type_t 
+		{
 			NULL_TO_NULL,
 			KART_TO_KART,
 			KART_TO_POWERUP,
-			KART_TO_ARENA
+			KART_TO_ARENA,
+			BULLET_TO_ARENA,
+			BULLET_TO_KART
 		};
-		struct col_report {
+		struct col_report 
+		{
 			entity_id kart_id;
 			col_type_t type;
 			Real impact;
@@ -93,6 +126,8 @@ namespace Physics {
 			// Powerup
 			Entities::powerup_t powerup_type;
 			powerup_id_t powerup_id;
+			// bullet
+			int bullet_id;
 		};
 		std::map<entity_id, struct col_report> m_col_reports;
 
@@ -102,19 +137,15 @@ namespace Physics {
 		class btConstraintSolver*    m_solver;
 		class btDefaultCollisionConfiguration* m_collisionConfiguration;
 
+		void actOnBulletCollision(struct Simulation::bullet * bullet, phy_obj *B);
 		btRigidBody *addRigidBody(double mass, const btTransform& startTransform, btCollisionShape* shape);
 		void UpdateGameState(double, entity_id);
 		void resetKart(entity_id id);
 		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
-		struct hit_report {
-			bool did_hit_kart;
-			bool did_hit_wall;
-			entity_id kart_hit_id;
-			// TODO: Make these Vector3
-			btVector3 impact_pos;
-			btVector3 impact_normal;
-		};
-		struct hit_report solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
+		
+		float get_distance(Vector3 a, Vector3 b);
+		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
+		Events::Event* makeRerportEvent(entity_id kart_shooting , entity_id kart_shot);
 	};
 };

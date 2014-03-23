@@ -17,8 +17,8 @@
 
 // Volumes
 #define MUSIC_VOLUME 0.03f
-#define SOUND_EFFECTS_VOLUME 0.15f
-#define LOW_ENGINE_NOISE_VOLUME 0.5f
+#define SOUND_EFFECTS_VOLUME 0.5f
+#define LOW_ENGINE_NOISE_VOLUME 0.2f
 
 #define MIN_HANDBRAKE_SPEED 3.0			// Min speed for handbrake audio to be played
 #define MAX_COLLISION_FORCE 5000		// Max expected collision force for scaling from [0,1] for volume
@@ -34,7 +34,10 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::KartColideArena );
+	m_pMailbox->request( Events::EventType::KartColideKart );
 	m_pMailbox->request( Events::EventType::KartHandbrake );
+	m_pMailbox->request( Events::EventType::TogglePauseGame );
+	m_pMailbox->request( Events::EventType::RoundStart );
 	primary_player = 0;
 }
 
@@ -54,8 +57,11 @@ Audio::~Audio() {
 void Audio::setup() {
 	SetupHardware();
 
+	gamePaused = false;
+
 	//// Setup music and sound effects channels
 	ERRCHECK(m_system->createChannelGroup("Effects", &m_channelGroupEffects));
+	ERRCHECK(m_system->createChannelGroup("EngineNoise", &m_channelGroupEngineSound));
 	ERRCHECK(m_system->createChannelGroup("Music", &m_channelGroupMusic));
 
 	musicVol = MUSIC_VOLUME;
@@ -312,19 +318,23 @@ void Audio::UpdateListenerPos(){
 	ERRCHECK(m_system->set3DListenerAttributes(0, &position, &velocity, &forward, &up));
 }
 
-void Audio::UpdateKartsPos(entity_id kart_id){
+void Audio::UpdateKartsPos(entity_id kart_id)
+{
 
 	auto kart_entity = GETENTITY(kart_id, CarEntity);
 	auto kart = m_karts[kart_id];
 
-	FMOD_VECTOR *pos = new FMOD_VECTOR();
-	pos->x = kart_entity->Pos.x;
-	pos->y = kart_entity->Pos.y;
-	pos->z = kart_entity->Pos.z;
-	ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
-	ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
+	if (kart != NULL)
+	{
+		FMOD_VECTOR *pos = new FMOD_VECTOR();
+		pos->x = kart_entity->Pos.x;
+		pos->y = kart_entity->Pos.y;
+		pos->z = kart_entity->Pos.z;
+		ERRCHECK(kart->engineChannel->set3DAttributes(pos, 0));
+		ERRCHECK(kart->idleNoiseChannel->set3DAttributes(pos, 0));
 
-	delete pos;
+		delete pos;
+	}
 }
 
 void Audio::update(Real seconds){
@@ -335,6 +345,19 @@ void Audio::update(Real seconds){
 		case Events::EventType::AudioPlayPause:
 			{
 				ToggleMusic();
+			}
+			break;
+		case Events::EventType::TogglePauseGame:
+			{
+				gamePaused = !gamePaused;
+				m_channelGroupEngineSound->setPaused(gamePaused);
+			}
+			break;
+		case Events::EventType::RoundStart:
+			{
+				// Should add code in here to play countdown 
+
+				m_channelGroupEngineSound->setPaused(false);
 			}
 			break;
 		case Events::EventType::KartCreated:
@@ -350,7 +373,6 @@ void Audio::update(Real seconds){
 		case Events::EventType::KartDestroyed:
 			{
 				entity_id kart_id = ((Events::KartDestroyedEvent *)event)->kart_id;
-
 				DestroyEngineSounds(m_karts[kart_id]);
 				m_karts.erase(kart_id);
 			}
@@ -368,6 +390,33 @@ void Audio::update(Real seconds){
 			{
 				entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
 				UpdateKartsPos(kart_id);
+			}
+			break;
+		case Events::EventType::KartColideKart:
+			{
+			Events::KartColideKartEvent * collisionEvent = (Events::KartColideKartEvent *)event;
+				auto kart_local = m_karts[collisionEvent->kart_id];
+				auto kart_entity = GETENTITY(collisionEvent->kart_id, CarEntity);
+
+				FMOD_VECTOR pos;
+				pos.x = kart_entity->Pos.x;
+				pos.y = kart_entity->Pos.y;
+				pos.z = kart_entity->Pos.z;
+
+				bool isPlaying = false;
+				kart_local->collisionChannel->isPlaying(&isPlaying);
+
+				if(!isPlaying)
+				{
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.WallCollision],
+						true, &kart_local->collisionChannel));
+					kart_local->collisionChannel->set3DAttributes(&pos, 0);
+					float volume = Clamp(collisionEvent->force / MAX_COLLISION_FORCE);
+					kart_local->collisionChannel->setVolume(volume);
+					kart_local->collisionChannel->setChannelGroup(m_channelGroupEffects);
+					kart_local->collisionChannel->setPaused(false);
+				}
+				//DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
 			}
 			break;
 		case Events::EventType::KartColideArena:
@@ -403,44 +452,50 @@ void Audio::update(Real seconds){
 				Events::InputEvent *input = (Events::InputEvent *)event;
 				entity_id kart_id = input->kart_id;
 				auto kart_local = m_karts[kart_id];
-				auto kart_entity = GETENTITY(kart_id, CarEntity);
 
-				if(input->aPressed)  // Weapon fired
+				if (kart_local != NULL)
 				{
-					FMOD_VECTOR pos;
-					pos.x = kart_entity->Pos.x;
-					pos.y = kart_entity->Pos.y;
-					pos.z = kart_entity->Pos.z;
+					auto kart_entity = GETENTITY(kart_id, CarEntity);
 
-					bool isPlaying = false;
-					kart_local->soundsChannel->isPlaying(&isPlaying);
-
-					if(!isPlaying)
+					if(gamePaused)
+						break;
+					if(input->aPressed)  // Weapon fired
 					{
-						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun],
-							true, &(kart_local->soundsChannel)));
-						kart_local->soundsChannel->set3DAttributes(&pos, 0);
-						kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
-						kart_local->soundsChannel->setPaused(false);
+						FMOD_VECTOR pos;
+						pos.x = kart_entity->Pos.x;
+						pos.y = kart_entity->Pos.y;
+						pos.z = kart_entity->Pos.z;
+
+						bool isPlaying = false;
+						kart_local->soundsChannel->isPlaying(&isPlaying);
+
+						if(!isPlaying)
+						{
+							ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.MachineGun],
+								true, &(kart_local->soundsChannel)));
+							kart_local->soundsChannel->set3DAttributes(&pos, 0);
+							kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
+							kart_local->soundsChannel->setPaused(false);
+						}
 					}
+
+					Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
+
+					float lerpAmt = clampedSeconds * 2.0f;
+					float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
+					newPitch = Clamp(newPitch, 0.0f, 2.0f);
+
+					newPitch = Clamp(newPitch, 0.0f, 2.0f);
+
+					kart_local->enginePitch = newPitch;
+
+					if(newPitch > 2.0f || newPitch < 0.0f)
+					{
+						DEBUGOUT("WTF?\n");
+					}
+					// Update Kart Engine Sounds
+					ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 				}
-
-				Real clampedSeconds = Clamp(seconds, 0.0f, 0.10f);		// This is incase frame rate really drops.
-
-				float lerpAmt = clampedSeconds * 2.0f;
-				float newPitch = Lerp(kart_local->enginePitch, input->rightTrigger * MAX_PITCH, lerpAmt);
-				newPitch = Clamp(newPitch, 0.0f, 2.0f);
-
-				newPitch = Clamp(newPitch, 0.0f, 2.0f);
-
-				kart_local->enginePitch = newPitch;
-
-				if(newPitch > 2.0f || newPitch < 0.0f)
-				{
-					DEBUGOUT("WTF?\n");
-				}
-				// Update Kart Engine Sounds
-				ERRCHECK(kart_local->engineDSP->setParameter(FMOD_DSP_PITCHSHIFT_PITCH, newPitch));
 			}
 			break;
 		case Events::EventType::KartHandbrake:
@@ -448,21 +503,24 @@ void Audio::update(Real seconds){
 				auto handbrakeEvent = (Events::KartHandbrakeEvent *)event;
 				auto kart_local = m_karts[handbrakeEvent->kart_id];
 
-				FMOD_VECTOR pos;
-				pos.x = handbrakeEvent->pos.x;
-				pos.y = handbrakeEvent->pos.y;
-				pos.z = handbrakeEvent->pos.z;
-
-				bool isPlaying = false;
-				kart_local->soundsChannel->isPlaying(&isPlaying);
-				
-				if(!isPlaying && (fabs(handbrakeEvent->speed) > MIN_HANDBRAKE_SPEED))
+				if (kart_local != NULL)
 				{
-					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Skid],
-						true, &(kart_local->soundsChannel)));
-					kart_local->soundsChannel->set3DAttributes(&pos, 0);
-					kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
-					kart_local->soundsChannel->setPaused(false);
+					FMOD_VECTOR pos;
+					pos.x = handbrakeEvent->pos.x;
+					pos.y = handbrakeEvent->pos.y;
+					pos.z = handbrakeEvent->pos.z;
+
+					bool isPlaying = false;
+					kart_local->soundsChannel->isPlaying(&isPlaying);
+				
+					if(!isPlaying && (fabs(handbrakeEvent->speed) > MIN_HANDBRAKE_SPEED))
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Skid],
+							true, &(kart_local->soundsChannel)));
+						kart_local->soundsChannel->set3DAttributes(&pos, 0);
+						kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
+						kart_local->soundsChannel->setPaused(false);
+					}
 				}
 			}
 			break;
