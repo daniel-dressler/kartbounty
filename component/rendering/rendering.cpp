@@ -433,7 +433,7 @@ int Renderer::render( float fElapseSec )
 
 			perMesh.vColor = Vector4( 0,0,0,0.3f );
 			perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) *
-				Matrix::GetTranslate( kart_entity->groundHit );
+				Matrix::GetTranslate( kart_entity->groundHit + Vector3( 0, 0.01f, 0 ) );
 			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 
