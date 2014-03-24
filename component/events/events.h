@@ -105,6 +105,7 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupActivated)
+		entity_id kart_id;
 		powerup_id_t powerup_id;
 		Vector3 pos;
 		Entities::powerup_t powerup_type;

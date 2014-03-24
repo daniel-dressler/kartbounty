@@ -106,6 +106,7 @@ void GameAi::setup()
 		entity_id kart_id = g_inventory->AddEntity(kart);
 
 		kart->health = STARTING_HEALTH;
+		kart->powerup_slot = Entities::SpeedPowerup;
 
 		this->kart_ids.push_back(kart_id);
 
@@ -186,14 +187,22 @@ int GameAi::planFrame()
 				if(inputEvent->xPressed)		// Powerup should be activated
 				{
 					auto kart = GETENTITY(inputEvent->kart_id, CarEntity);
-					if(kart->powerup_slot != NULL)
+					if(kart != NULL)
 					{
-						Entities::powerup_t p_type = kart->powerup_slot;
+						if(kart->powerup_slot != Entities::NullPowerup)
+						{
+							Entities::powerup_t p_type = kart->powerup_slot;
 
-						//auto pow_event = NEWEVENT(PowerupUsed);
-						//pow_event->kart_id = inputEvent->kart_id;
-						//pow_event->pos = kart->Pos;
-						//pow_event->powerup_type = kart->powerup_slot;
+							auto pow_event = NEWEVENT(PowerupActivated);
+							pow_event->kart_id = inputEvent->kart_id;
+							pow_event->pos = kart->Pos;
+							pow_event->powerup_type = kart->powerup_slot;
+
+							events_out.push_back(pow_event);
+
+							// Empty the power up slot
+							kart->powerup_slot = Entities::NullPowerup;
+						}
 					}
 				}
 			}
