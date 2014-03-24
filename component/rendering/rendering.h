@@ -41,8 +41,6 @@ private:
 	GLtex				m_nrmArenaFlags;
 
 	GLmesh				m_mshArenaTops;
-	GLtex				m_difArenaTops;
-	GLtex				m_nrmArenaTops;
 
 	GLmesh				m_mshArenaFloor;
 	GLtex				m_difArenaFloor;
@@ -50,6 +48,8 @@ private:
 
 	GLmesh				m_mshKart;
 	GLmesh				m_mshKartTire;
+	GLmesh				m_mshKartShadow;
+	GLtex				m_difKartShadow;
 
 	GLmesh				m_mshGold;
 	GLmesh				m_mshBullet;
@@ -61,6 +61,9 @@ private:
 
 	GLmesh				m_mshGUIStart;
 	GLtex				m_texGUIStart;
+
+	GLtex				m_difBlank;
+	GLtex				m_nrmBlank;
 
 	Vector3				m_vArenaOfs;
 
