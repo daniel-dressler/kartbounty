@@ -14,6 +14,7 @@
 #include "component/audio/audio.h"
 #endif
 
+#define PLAYAUDIO 1
 
 int main( int argc, char** argv )
 {
@@ -26,7 +27,10 @@ int main( int argc, char** argv )
 	init_inventory();
 	Physics::Simulation *simulation = new Physics::Simulation();
 	Input *input = new Input();
-	//Audio *audio = new Audio();
+#if (PLAYAUDIO)
+	Audio *audio = new Audio();  
+#endif
+
 	GameAi *gameai = new GameAi();
 	EnemyAi *enemyai = new EnemyAi();
 
@@ -36,7 +40,9 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	input->setup();
 	enemyai->setup();
-	//audio->setup();
+#if (PLAYAUDIO)
+	audio->setup();
+#endif
 
 
 	// -- Main Loop -----------------------------------------------------------
@@ -48,8 +54,9 @@ int main( int argc, char** argv )
 		enemyai->update(elapsed_time);
 
 		simulation->step(elapsed_time);
-
-		//audio->update(elapsed_time);
+#if (PLAYAUDIO)
+		audio->update(elapsed_time);
+#endif
 		renderer->update(elapsed_time);
 		renderer->render();
 	}
@@ -59,7 +66,9 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
-	//delete audio;
+#if (PLAYAUDIO)
+	delete audio;
+#endif
 	delete renderer;
 	shutdown_inventory();
 

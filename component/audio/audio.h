@@ -22,6 +22,7 @@ private:
 	FMOD::ChannelGroup *m_channelGroupEngineSound;
 
 	FMOD::DSP *m_pitchShift;
+	FMOD::Channel *roundStartChannel;
 
 	bool gamePaused;
 
@@ -45,7 +46,7 @@ private:
 	// shall be that perspective.
 	entity_id primary_player;
 
-	int LoadSound(char* file);
+	int LoadSound(char* file, FMOD_MODE mode);
 	int LoadMusic(char* file);
 
 	bool playMusic;
@@ -78,6 +79,9 @@ public:
 		int WallCollision;
 		int Skid;
 		int KartExplode;
+		int RoundStart;
+		int Boo;
+		int Cheer;
 	} Sounds;
 	
 	int SetupHardware();
