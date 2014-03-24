@@ -22,8 +22,9 @@
 #include <Windows.h>
 
 #include <crtdbg.h>
-#define DEBUGOUT( str, ... ) { char out[99999]; sprintf_s( out, 99999, str, ##__VA_ARGS__ ); OutputDebugString( out ); }
-//#define DEBUGOUT( str, ... ) {}
+
+// The value for the size of the buffer should be a multiple of 16 (we think, or 32, or at least 2)
+#define DEBUGOUT( str, ... ) { char out[16384]; sprintf_s( out, 16384, str, ##__VA_ARGS__ ); OutputDebugString( out ); }
 
 #ifdef _DEBUG
 #define INIT_PLATFORM() \
