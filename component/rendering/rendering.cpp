@@ -193,6 +193,9 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
 		exit(20);
 
+	if( !LoadMesh( m_mshGold, "assets/Gold.msh" ) )
+		exit(21);
+
 	if( !LoadMesh( m_mshBullet, "assets/Bullet.msh" ) )
 		exit(21);
 	
@@ -444,48 +447,59 @@ int Renderer::render( float fElapseSec )
 
 		for (auto id_powerup_pair : m_powerups) {
 			auto powerup = id_powerup_pair.second;
-			Vector4 color1;
-			Vector4 color2;
 			Vector3 pos = powerup.vPos;
 
-			// Could switch mesh if we had
-			// multiple models
-			switch (powerup.type) {
-				case Entities::BulletPowerup:
-					color1 = Vector4(1, 0, 0, 1);
-					color2 = Vector4(1, 1, 1, 1);
-				break;
-				default:
-					color1 = Vector4(1, 1, 0, 1);
-					color2 = Vector4(0, 0, 1, 1);
-				break;
+			if( powerup.type == Entities::GoldCasePowerup )
+			{
+				perMesh.vRenderParams = Vector4( 1, 0, 1, 0 );
+				perMesh.vColor = Vector4(1,1,1,1);
+				perMesh.matWorld = Matrix::GetTranslate( pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				glhDrawMesh( m_eftMesh, m_mshGold );
+				glDisable( GL_BLEND );
 			}
+			else
+			{
+				Vector4 color1;
+				Vector4 color2;
+				switch (powerup.type) {
+					case Entities::BulletPowerup:
+						color1 = Vector4(1, 0, 0, 1);
+						color2 = Vector4(1, 1, 1, 1);
+					break;
+					default:
+						color1 = Vector4(1, 1, 0, 1);
+						color2 = Vector4(0, 0, 1, 1);
+					break;
+				}
 
-			perMesh.vColor = color1;
-			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
-			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+				perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+				perMesh.vColor = color1;
+				perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+				perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+				glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
 
-			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+				perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+				glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
 
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-			perMesh.vColor = color2;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
-			glDisable( GL_BLEND );
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				perMesh.vColor = color2;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+				glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+				glDisable( GL_BLEND );
+			}
 		}
 	}
 
-	//DEBUGOUT("RENDERING: list of bullets size: %d\n" , list_of_bullets.size())
-
-
-	// HACK!! Rendering powerups instead of bullets for now. Mostly debugging tool. But you can draw with powerups on the map, too!
 	for (auto bullet_pair : list_of_bullets) 
 	{
 			
@@ -507,16 +521,6 @@ int Renderer::render( float fElapseSec )
 		glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 		glhDrawMesh( m_eftMesh, m_mshBullet );
 		glDisable( GL_BLEND );
-
-		// HACK NOTE:
-		// This is where rendering the bullets happen.
-		// As far as I can tell, the list is updated every time a bullet is created in physics or destroyed.
-		// Once the bullet's ttl will hit 0 or a negetive number, physics will remove it
-		// There probably is a better way to pass the list from Physics to Rendering - I had to create an event and because I kept getting linking errors,
-		// I had to avoid including physics.h in both events.h and rendering.h. Kept getting what seemed like circular includes...
-		// In order to avoid using the bullet struct (as it couldn't be included due to above mentioned reasons), 
-		// I had to resort to void* and cast it back in the update event handler. Seems like a lot of trouble to me, but I couldn't figure out how to do it in c++, lol.
-		// In any case, keep in mind that currently the list pointer is passed each step in the physics. Doesn't seem like too much overhead.
 	}
 
 	// GUI TEST

@@ -51,6 +51,7 @@ private:
 	GLmesh				m_mshKart;
 	GLmesh				m_mshKartTire;
 
+	GLmesh				m_mshGold;
 	GLmesh				m_mshBullet;
 
 	// Power ups
