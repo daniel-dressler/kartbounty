@@ -284,11 +284,13 @@ int Simulation::createKart(entity_id kart_id)
 	m_karts[kart_id] = kart_local;
 
 	float wheelFriction = 5;
-	float suspensionStiffness = 10;
-	float suspensionDamping = 0.5f;
-	float suspensionCompression = 0.3f;
+	float suspensionStiffness = 14;
+	//float suspensionCompression = 0.3f;
+	float suspensionCompression = 0.1 * 2.0 * btSqrt(suspensionStiffness);
+	float suspensionDamping = suspensionCompression + 0.2;
+
 	// Prevents car flipping due to sharp turns
-	float rollInfluence = 0.015f;
+	float rollInfluence = 0.000f;
 	btScalar suspensionRestLength(0.1f);  // Suspension Interval = rest +/- travel * 0.01
 	float suspensionTravelcm = 20;
 
