@@ -28,5 +28,8 @@ void main()
 	ps_texcoord   = vec4( vs_texcoord.xy * 0.0005f, vs_texcoord.zw );
 	ps_tangent    = normalize( mat3( g_matWorld ) * tangent );
 
+	ps_tangent.x *= g_vRenderParams.x;
+	ps_tangent.z *= g_vRenderParams.y;
+
 	ps_bitangent  = normalize( cross( ps_normal, ps_tangent ) * ( vs_tangents.y > 0 ? 1 : -1 ) );
 }

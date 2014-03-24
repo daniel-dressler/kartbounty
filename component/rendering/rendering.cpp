@@ -44,8 +44,6 @@ Renderer::~Renderer()
 	glhDestroyTexture( m_nrmArenaFlags );
 
 	glhDestroyMesh( m_mshArenaTops );
-	glhDestroyTexture( m_difArenaTops );
-	glhDestroyTexture( m_nrmArenaTops );
 
 	glhDestroyMesh( m_mshArenaFloor );
 	glhDestroyTexture( m_difArenaFloor );
@@ -188,10 +186,6 @@ int Renderer::setup()
 
 	if( !LoadMesh( m_mshArenaTops, "assets/arena_tops.msh" ) )
 		exit(18);
-	if( !glhLoadTexture( m_difArenaTops, "assets/blank.png" ) )
-		exit(19);
-	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
-		exit(20);
 
 	if( !LoadMesh( m_mshGold, "assets/Gold.msh" ) )
 		exit(21);
@@ -203,13 +197,22 @@ int Renderer::setup()
 		exit(21);
 	if( !LoadMesh( m_mshKartTire, "assets/Kart_tire.msh" ) )
 		exit(21);
-	
+	if( !LoadMesh( m_mshKartShadow, "assets/Kart_shadow.msh" ) )
+		exit(21);
+	if( !glhLoadTexture( m_difKartShadow, "assets/kart_shadow.png" ) )
+		exit(19);
+
 	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
 		exit(22);
 	if( !LoadMesh( m_mshPowerRing1, "assets/PowerRing1.msh" ) )
 		exit(23);
 	if( !LoadMesh( m_mshPowerRing2, "assets/PowerRing2.msh" ) )
 		exit(24);
+
+	if( !glhLoadTexture( m_difBlank, "assets/blank.png" ) )
+		exit(19);
+	if( !glhLoadTexture( m_nrmBlank, "assets/blank_norm.png" ) )
+		exit(20);
 
 	Real fHeight = 200.0f;
 	Real fWidth = 300.0f;
@@ -421,11 +424,32 @@ int Renderer::render( float fElapseSec )
 
 		_DrawArena();
 
-		glhEnableTexture( m_difArenaTops );
-		glhEnableTexture( m_nrmArenaTops, 1 );
-
 		for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) {
 			auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
+
+			// DRAW SHADOW
+			Vector3 vAxis = Vector3::Cross( kart_entity->groundNormal, Vector3( 0, 1, 0 ) );
+			Real fAngle = ACOS( Vector3::Dot( kart_entity->groundNormal, Vector3( 0, 1, 0 ) ) );
+
+			perMesh.vColor = Vector4( 0,0,0,0.3f );
+			perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) *
+				Matrix::GetTranslate( kart_entity->groundHit );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+			glhEnableTexture( m_difKartShadow );
+			glhEnableTexture( m_nrmBlank, 1 );
+
+			glDisable( GL_DEPTH_TEST );
+			glEnable( GL_BLEND );
+			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+			glhDrawMesh( m_eftMesh, m_mshKartShadow );
+			glDisable( GL_BLEND );
+			glEnable( GL_DEPTH_TEST );
+
+			// DRAW KART
+			glhEnableTexture( m_difBlank );
+			glhEnableTexture( m_nrmBlank, 1 );
 
 			perMesh.vColor = kart_id_pair.second.vColor;
 			perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
@@ -445,6 +469,8 @@ int Renderer::render( float fElapseSec )
 			}
 		}
 
+		glhEnableTexture( m_difBlank );
+		glhEnableTexture( m_nrmBlank, 1 );
 		for (auto id_powerup_pair : m_powerups) {
 			auto powerup = id_powerup_pair.second;
 			Vector3 pos = powerup.vPos;
@@ -599,8 +625,8 @@ void Renderer::_DrawArenaQuad( Vector3 vColor )
 	perMesh.vColor = Vector4( vColor,1 );
 	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 
-	glhEnableTexture( m_difArenaTops );
-	glhEnableTexture( m_nrmArenaTops, 1 );
+	glhEnableTexture( m_difBlank );
+	glhEnableTexture( m_nrmBlank, 1 );
 	glhDrawMesh( m_eftMesh, m_mshArenaTops );
 
 	glEnable( GL_BLEND );
