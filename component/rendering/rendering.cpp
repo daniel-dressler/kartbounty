@@ -433,19 +433,17 @@ int Renderer::render( float fElapseSec )
 
 			perMesh.vColor = Vector4( 0,0,0,0.3f );
 			perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) *
-				Matrix::GetTranslate( kart_entity->groundHit );
+				Matrix::GetTranslate( kart_entity->groundHit + Vector3( 0, 0.01f, 0 ) );
 			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
 
 			glhEnableTexture( m_difKartShadow );
 			glhEnableTexture( m_nrmBlank, 1 );
 
-			glDisable( GL_DEPTH_TEST );
 			glEnable( GL_BLEND );
 			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 			glhDrawMesh( m_eftMesh, m_mshKartShadow );
 			glDisable( GL_BLEND );
-			glEnable( GL_DEPTH_TEST );
 
 			// DRAW KART
 			glhEnableTexture( m_difBlank );
