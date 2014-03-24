@@ -348,30 +348,59 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 
 void EnemyAi::init_graph()
 {
-	path.push_back(Vector3(15.5f, 0.f, 15.5f));
-	path.push_back(Vector3(-15.5f, 0.f, 15.5f));
-	path.push_back(Vector3(15.5f, 0.f, -15.5f));
-	path.push_back(Vector3(-15.5f, 0.f, -15.5f));
-	
+	path.push_back(Vector3(0.0, 0.0, 5.5));
+
+	path.push_back(Vector3(1.0, 0.0, 5.5));
+	path.push_back(Vector3(-1.0, 0.0, 5.5));
+	path.push_back(Vector3(1.0, 0.0, -5.5));
+	path.push_back(Vector3(-1.0, 0.0, -5.5));
+
+	path.push_back(Vector3(5.5f, 0.f, 1.f));
+	path.push_back(Vector3(-5.5f, 0.f, -1.f));
+	path.push_back(Vector3(-5.5f, 0.f, 1.f));
+	path.push_back(Vector3(5.5f, 0.f, -1.f));
+
+	path.push_back(Vector3(3.22f, 0.f, 7.59f));
+	path.push_back(Vector3(-3.22f, 0.f, 7.59f));
+	path.push_back(Vector3(3.22f, 0.f, -7.59f));
+	path.push_back(Vector3(-3.22f, 0.f, -7.59f));
+
+	path.push_back(Vector3(7.59f, 0.f, 3.22f));
+	path.push_back(Vector3(-7.59f, 0.f, -3.22f));
+	path.push_back(Vector3(-7.59f, 0.f, 3.22f));
+	path.push_back(Vector3(7.59f, 0.f, -3.22f));
+
+	path.push_back(Vector3(15.5f, 2.f, 15.5f));
+	path.push_back(Vector3(-15.5f, 2.f, 15.5f));
+	path.push_back(Vector3(15.5f, 2.f, -15.5f));
+	path.push_back(Vector3(-15.5f, 2.f, -15.5f));
+
 	path.push_back(Vector3(6.5f, 0.f, 2.5f));
 	path.push_back(Vector3(-6.5f, 0.f, -2.5f));
 	path.push_back(Vector3(6.5f, 0.f, -2.5f));
-	path.push_back(Vector3(-6.5f, 0.f, 2.5f));
-	
+	path.push_back(Vector3(-6.5f, 0.f, 2.5f));	
+
 	path.push_back(Vector3(2.5f, 0.f, 6.5f));
 	path.push_back(Vector3(-2.5f, 0.f, -6.5f));
 	path.push_back(Vector3(2.5f, 0.f, -6.5f));
 	path.push_back(Vector3(-2.5f, 0.f, 6.5f));
 
-	path.push_back(Vector3(0.f, 0.f, 0.f));
-	path.push_back(Vector3(1.f, 0.f, 0.f));
-	path.push_back(Vector3(-1.f, 0.f, 0.f));
-	path.push_back(Vector3(1.f, 0.f, 1.f));
-	path.push_back(Vector3(-1.f, 0.f, -1.f));
-	path.push_back(Vector3(11.5f, 0.f, 0.f));
-	path.push_back(Vector3(-11.5f, 0.f, 0.f));
-	path.push_back(Vector3(0.f, 0.f, 11.5f));
-	path.push_back(Vector3(0.f, 0.f, -11.5f));
+	path.push_back(Vector3(0.f, 1.f, 0.f));
+
+	path.push_back(Vector3(1.5f, 1.f, 0.f));
+	path.push_back(Vector3(-1.5f, 1.f, 0.f));
+	path.push_back(Vector3(0.f, 1.f, 1.5f));
+	path.push_back(Vector3(0.f, 1.f, -1.5f));
+
+	path.push_back(Vector3(1.5f, 1.f, 1.5f));
+	path.push_back(Vector3(-1.5f, 1.f, -1.5f));
+	path.push_back(Vector3(1.5f, 1.f, -1.5f));
+	path.push_back(Vector3(-1.5f, 1.f, 1.5f));
+
+	path.push_back(Vector3(11.5f, 1.f, 0.f));
+	path.push_back(Vector3(-11.5f, 1.f, 0.f));
+	path.push_back(Vector3(0.f, 1.f, 11.5f));
+	path.push_back(Vector3(0.f, 1.f, -11.5f));
 	
 }
 

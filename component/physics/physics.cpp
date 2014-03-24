@@ -22,7 +22,7 @@ using namespace Physics;
 // How much the forward vector gets randomized when shooting
 #define SHOOTING_RANDOMNESS 5
 // How long in seconds does the player have a cooldown between shots. AI cooldwon is in enemyAI.
-#define PLAYER_SHOOTING_COOLDOWN 0.5
+#define PLAYER_SHOOTING_COOLDOWN 0.1
 // How close is a colision with another kart
 #define DIFF_FOR_HIT_KART 0.3
 
@@ -269,8 +269,8 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,
 extern ContactAddedCallback gContactAddedCallback;
 
 #define CAR_WIDTH (0.11f)
-#define CAR_HEIGHT (0.05f)
 #define CAR_LENGTH (0.16f)
+#define CAR_HEIGHT (0.11f)
 #define CAR_MASS (800.0f)
 
 #define CON1 (CAR_WIDTH - 0.02)
@@ -283,38 +283,31 @@ int Simulation::createKart(entity_id kart_id)
 	kart_local->kart_id = kart_id;
 	m_karts[kart_id] = kart_local;
 
-	float wheelFriction = 30;
-	float suspensionStiffness = 10;
-	float suspensionDamping = 0.0f;
-	float suspensionCompression = 0.1f;
+	float wheelFriction = 5;
+	float suspensionStiffness = 14;
+	float suspensionCompression = 0.1 * 2.0 * btSqrt(suspensionStiffness);
+	float suspensionDamping = suspensionCompression + 0.2;
+
 	// Prevents car flipping due to sharp turns
-	float rollInfluence = 0.000;
-	btScalar suspensionRestLength(0.01f);  // Suspension Interval = rest +/- travel * 0.01
-	float suspensionTravelcm = 1;
+	float rollInfluence = 0.000f;
+	btScalar suspensionRestLength(0.1f);  // Suspension Interval = rest +/- travel * 0.01
+	float suspensionTravelcm = 20;
 
 	btRaycastVehicle::btVehicleTuning tuning;
-	tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
-	tuning.m_frictionSlip = 30;
-	tuning.m_maxSuspensionForce = 5;
-	tuning.m_suspensionCompression = suspensionCompression;
-	tuning.m_suspensionDamping = suspensionDamping;
-	tuning.m_suspensionStiffness = suspensionStiffness;
-
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
 	m_collisionShapes.push_back(chassisShape);
 	m_collisionShapes.push_back(compound);
 
 	// Start of car stuff
-
 	btTransform localTrans;
 	localTrans.setIdentity();
-	localTrans.setOrigin(btVector3(0,0.00f,0));
+	localTrans.setOrigin(btVector3(0,0.05f,0));
 	compound->addChildShape(localTrans, chassisShape);
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,2,0));		// This sets where the car initially spawns
+	tr.setOrigin(btVector3(0,1.05,0));		// This sets where the car initially spawns
 
 	btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
 	m_kart_bodies[kart_id] = carChassis;
@@ -339,11 +332,13 @@ int Simulation::createKart(entity_id kart_id)
 	m_karts[kart_id]->vehicle = kart;
 	m_karts[kart_id]->raycaster = vehicleRayCaster;
 
-	float connectionHeight = -0.02f;//0.15f;
+
+
+	float connectionHeight = 0.10f;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
-	float	wheelRadius = 0.05f;
+	float	wheelRadius = 0.15f;
 
 	// Setup front 2 wheels
 	bool isFrontWheel=true;
@@ -968,7 +963,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		//CAR_WIDTH
 
 		Vector3 offset_x = CON1 * x_axis;
-		Vector3 offset_y;// = -0.02 * y_axis;
+		Vector3 offset_y;// = -0.02 * y_axis; <- Wheels render through floor if not 0.
 		offset_y.Zero();
 		Vector3 offset_z = CON2 * z_axis;
 
@@ -1115,7 +1110,8 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 	}
 
 	// Find closests kart not blocked by wall
-	while (!possible_dists.empty()) {
+	while (!possible_dists.empty()) 
+	{
 		auto dist = possible_dists.top();
 		possible_dists.pop();
 		auto kart_pair = dists_to_karts[dist];
