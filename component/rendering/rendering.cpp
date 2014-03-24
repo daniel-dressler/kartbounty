@@ -10,6 +10,7 @@ Renderer::Renderer()
 {
 	m_bInitComplete = 0;
 	m_Window = 0;
+	m_nSplitScreen = 1;
 	m_fTime = 0;
 
 	m_pMailbox = new Events::Mailbox();
@@ -132,8 +133,13 @@ int Renderer::setup()
 	if( !m_eftMesh.program )
 		exit(5);
 
+	m_eftGUI = glhLoadEffect( "component/rendering/VShaderGUI.glsl", NULL, "component/rendering/PShaderGUI.glsl", 0, 0 );
+	if( !m_eftGUI.program )
+		exit(5);
+
 	glhCreateBuffer( m_eftMesh, "cstPerMesh", sizeof(cstPerMesh), &m_bufPerMesh );
 	glhCreateBuffer( m_eftMesh, "cstPerFrame", sizeof(cstPerFrame), &m_bufPerFrame );
+	glhCreateBuffer( m_eftGUI, "cstGUI", sizeof(cstGUI), &m_bufGUI );
 	
 	{
 		GLchar* pData;
@@ -177,7 +183,7 @@ int Renderer::setup()
 		exit(15);
 	if( !glhLoadTexture( m_difArenaFloor, "assets/arena_floor_diff.png" ) )
 		exit(16);
-	if( !glhLoadTexture( m_nrmArenaFloor, "assets/blank_norm.png" ) )
+	if( !glhLoadTexture( m_nrmArenaFloor, "assets/arena_floor_norm.png" ) )
 		exit(17);
 
 	if( !LoadMesh( m_mshArenaTops, "assets/arena_tops.msh" ) )
@@ -187,44 +193,44 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_nrmArenaTops, "assets/blank_norm.png" ) )
 		exit(20);
 
-	
-
 	if( !LoadMesh( m_mshBullet, "assets/Bullet.msh" ) )
 		exit(21);
-
 	
 	if( !LoadMesh( m_mshKart, "assets/Kart.msh" ) )
 		exit(21);
-	
 	if( !LoadMesh( m_mshKartTire, "assets/Kart_tire.msh" ) )
 		exit(21);
 	
 	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
 		exit(22);
-	
 	if( !LoadMesh( m_mshPowerRing1, "assets/PowerRing1.msh" ) )
 		exit(23);
-	
 	if( !LoadMesh( m_mshPowerRing2, "assets/PowerRing2.msh" ) )
 		exit(24);
+
+	Real fHeight = 200.0f;
+	Real fWidth = 300.0f;
+	GLvertex aryStart[] = 
+	{ 
+		GLvertex( Vector3( -fWidth, -fHeight, 0 ), Vector2( 0, 1 ) ),
+		GLvertex( Vector3( -fWidth,  fHeight, 0 ), Vector2( 0, 0 ) ),
+		GLvertex( Vector3(  fWidth, -fHeight, 0 ), Vector2( 1, 1 ) ),
+
+		GLvertex( Vector3( -fWidth,  fHeight, 0 ), Vector2( 0, 0 ) ),
+		GLvertex( Vector3(  fWidth,  fHeight, 0 ), Vector2( 1, 0 ) ),
+		GLvertex( Vector3(  fWidth, -fHeight, 0 ), Vector2( 1, 1 ) ),
+	};
+
+	if( !glhCreateGUI( m_mshGUIStart, aryStart, 6 ) )
+		exit(25);
+	if( !glhLoadTexture( m_texGUIStart, "assets/KartStartScreen.png" ) )
+		exit(14);
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
+	glhMapTexture( m_eftGUI, "g_texDiffuse", 0 );
 
 	m_bInitComplete = 1;
-
-	// Safe to delete?
-	/*
-	GetState().Karts[1].vPos = Vector3( 10,1.5,10 );							// These two lines are temporary
-	GetState().Karts[1].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(-90));
-
-	
-	GetState().Karts[2].vPos = Vector3( -10,1.5,10 );							// These two lines are temporary
-	GetState().Karts[2].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(90));
-	
-	GetState().Karts[3].vPos = Vector3( 10, 1.5, -10 );							// These two lines are temporary
-	GetState().Karts[3].qOrient.Identity().RotateAxisAngle(Vector3(0,1,0), DEGTORAD(180));
-	*/
 
 	atStartMenu = true;
 	
@@ -263,12 +269,18 @@ Vector4 getNextColor()
 }
 
 bool player_kart_found = false;
-int Renderer::update( float fElapseSec )
+int Renderer::render( float fElapseSec )
 {
 	m_fTime += fElapseSec;
 
 	if( !m_bInitComplete )
 		return 0;
+
+	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
+	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
+
+	Int32 nWinWidth, nWinHeight;
+	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
 	std::vector<Entities::CarEntity::Camera> cameras;
 	for( Events::Event *event : m_pMailbox->checkMail() )
@@ -357,9 +369,6 @@ int Renderer::update( float fElapseSec )
 	}
 	m_pMailbox->emptyMail();
 
-	Int32 nWinWidth, nWinHeight;
-	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
-	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
 	for (Entities::CarEntity::Camera camera : cameras) {
 		Vector3 vFocus = camera.vFocus;
 		perFrame.vEyePos = camera.vPos;
@@ -368,7 +377,7 @@ int Renderer::update( float fElapseSec )
 		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 	}
-
+	
 	if(atStartMenu)		// Manually set camera to look over the entire level, ignoring the kart cameras
 	{
 		Vector3 vFocus = Vector3(0,-0.8,0);
@@ -378,7 +387,7 @@ int Renderer::update( float fElapseSec )
 		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 	}
-
+	
 	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -398,19 +407,8 @@ int Renderer::update( float fElapseSec )
 	perFrame.vLight[8] = Vector4( -fLightDist, fLightHeight, -fLightDist, fLightPower );
 	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * fSpinRadius, 2, -COS( m_fTime ) * fSpinRadius, fLightPower );
 
-	return 1;
-}
 
-int Renderer::render()
-{
-	if( !m_bInitComplete )
-		return 0;
-
-	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
-	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
-
-	Int32 nWinWidth, nWinHeight;
-	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
+	// START RENDERING
 
 	for( Int32 i = 0; i < 1; i++ )
 	{	
@@ -520,6 +518,27 @@ int Renderer::render()
 		// I had to resort to void* and cast it back in the update event handler. Seems like a lot of trouble to me, but I couldn't figure out how to do it in c++, lol.
 		// In any case, keep in mind that currently the list pointer is passed each step in the physics. Doesn't seem like too much overhead.
 	}
+
+	// GUI TEST
+	glClear( GL_DEPTH_BUFFER_BIT );
+
+	Matrix matOrtho;
+	matOrtho.Orthographic( 0, nWinWidth, 0, nWinHeight, -1, 1 );
+
+	cstGUI& guidata = *(cstGUI*)m_bufGUI.data;
+	guidata.matWorldViewProj = matOrtho;
+	glhUpdateBuffer( m_eftGUI, m_bufGUI );
+
+	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+	if(atStartMenu)
+	{
+		glhEnableTexture( m_texGUIStart );
+		glhDrawMesh( m_eftGUI, m_mshGUIStart );
+	}
+
+	glDisable( GL_BLEND );
 
 	SDL_GL_SwapWindow( m_Window );
 

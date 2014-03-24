@@ -214,5 +214,11 @@
     <None Include="component\rendering\VShader.glsl">
       <Filter>component\rendering\shaders</Filter>
     </None>
+    <None Include="component\rendering\PShaderGUI.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
+    <None Include="component\rendering\VShaderGUI.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

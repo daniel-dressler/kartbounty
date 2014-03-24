@@ -18,11 +18,15 @@ private:
 	SDL_Window*			m_Window;
 	Events::Mailbox*	m_pMailbox;
 
+	Int32				m_nSplitScreen;
+
 	Real				m_fTime;
 
 	GLeffect			m_eftMesh;
+	GLeffect			m_eftGUI;
 	GLbuffer			m_bufPerMesh;
 	GLbuffer			m_bufPerFrame;
+	GLbuffer			m_bufGUI;
 
 
 	// Arena
@@ -54,6 +58,8 @@ private:
 	GLmesh				m_mshPowerRing2;
 	GLmesh				m_mshPowerSphere;
 
+	GLmesh				m_mshGUIStart;
+	GLtex				m_texGUIStart;
 
 	Vector3				m_vArenaOfs;
 
@@ -80,8 +86,7 @@ private:
 
 public:
 	int setup();
-	int update( float fElapseSec );
-	int render();
+	int render( float fElapseSec );
 
 	Renderer();
 	~Renderer();

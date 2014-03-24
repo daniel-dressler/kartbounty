@@ -50,8 +50,7 @@ int main( int argc, char** argv )
 		simulation->step(elapsed_time);
 
 		//audio->update(elapsed_time);
-		renderer->update(elapsed_time);
-		renderer->render();
+		renderer->render(elapsed_time);
 	}
 	
 	// -- Cleanup & Exit ------------------------------------------------------

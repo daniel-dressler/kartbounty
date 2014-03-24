@@ -144,9 +144,9 @@ GLuint glhCompileShader( GLuint uType, GLsizei nSourceCount, GLchar** arySourceD
 	glGetShaderiv( shader, GL_COMPILE_STATUS, &result );
 	if( result == GL_FALSE )
 	{
-		GLchar strError[4096];
+		GLchar strError[99999];
 		GLsizei nLogSize;
-		glGetShaderInfoLog( shader, 4096, &nLogSize, strError );
+		glGetShaderInfoLog( shader, 99999, &nLogSize, strError );
 		DEBUGOUT( "%s\n", strError );
 		glDeleteShader( shader );
 		return 0;
@@ -232,7 +232,7 @@ int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSiz
 		if( pBuffer->location == effect.blocks[i*2] )
 		{
 			pBuffer->base = i*2+1;
-//			glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[i*2+1], pBuffer->buffer );
+			glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[i*2+1], pBuffer->buffer );
 			break;
 		}
 	}
@@ -242,9 +242,9 @@ int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSiz
 
 int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer )
 {
+	glUseProgram( effect.program );
 	glBindBuffer( GL_UNIFORM_BUFFER, buffer.buffer );
-//	glBufferData( GL_UNIFORM_BUFFER, buffer.size, buffer.data, GL_DYNAMIC_DRAW );
-	glBufferSubData( GL_UNIFORM_BUFFER, 0, buffer.size, buffer.data );
+	glBufferData( GL_UNIFORM_BUFFER, buffer.size, buffer.data, GL_DYNAMIC_DRAW );
 	glBindBufferBase( GL_UNIFORM_BUFFER, effect.blocks[buffer.base], buffer.buffer );
 
 	return 1;
@@ -280,13 +280,35 @@ int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata )
 	return 1;
 }
 
+int glhCreateGUI( GLmesh& glmesh, const GLvertex* aryVertices, const GLint nCount )
+{
+	glGenVertexArrays( 1, &glmesh.vao ); 
+    glBindVertexArray( glmesh.vao );
+
+	glGenBuffers( 1, &glmesh.vbuffer );
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
+	glBufferData( GL_ARRAY_BUFFER, nCount * sizeof(GLvertex), aryVertices, GL_STATIC_DRAW );
+
+	glmesh.vstride = sizeof(GLvertex);
+	glmesh.icount = nCount;
+	glmesh.type = 10;
+
+	glhPredefinedVertexLayout( 10 );
+
+	glBindVertexArray( 0 );
+
+	return 1;
+}
+
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh )
 {
 	glUseProgram( gleffect.program );
 	glBindVertexArray( glmesh.vao );
-	glDrawElements( GL_TRIANGLES, glmesh.icount, GL_UNSIGNED_SHORT, (void*)0 );
+	if( glmesh.type == 10 )
+		glDrawArrays( GL_TRIANGLES, 0, glmesh.icount );
+	else
+		glDrawElements( GL_TRIANGLES, glmesh.icount, GL_UNSIGNED_SHORT, (void*)0 );
 	glBindVertexArray( 0 );
-
 	return 1;
 }
 
@@ -316,6 +338,14 @@ void glhPredefinedVertexLayout( Int32 nType )
 		glVertexAttribPointer( 1, 2, GL_FLOAT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)8 );
 		glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE,	GL_FALSE, sizeof(SEG::VertexSS), (void*)16 );
 		glVertexAttribPointer( 3, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)20 );
+		break;
+	case 10:
+		glEnableVertexAttribArray( 0 );
+		glEnableVertexAttribArray( 1 );
+		glDisableVertexAttribArray( 2 );
+		glDisableVertexAttribArray( 3 );
+		glVertexAttribPointer( 0, 3, GL_FLOAT,	GL_FALSE, sizeof(GLvertex), (void*)0 );
+		glVertexAttribPointer( 1, 2, GL_FLOAT,	GL_FALSE, sizeof(GLvertex), (void*)12 );
 		break;
 	};
 }
@@ -372,6 +402,7 @@ int glhEnableTexture( GLtex& gltex, int nIndex )
 
 void glhMapTexture( GLeffect& gleft, char* strName, int nIndex )
 {
+	glUseProgram( gleft.program );
 	GLint texLoc;
 	texLoc = glGetUniformLocation( gleft.program, strName );
 	glUniform1i( texLoc, nIndex );

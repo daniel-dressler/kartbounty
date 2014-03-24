@@ -36,6 +36,19 @@ struct GLtex
 	GLuint	id;
 };
 
+struct GLvertex
+{
+	Vector3 vPos;
+	Vector2 vTex;
+
+	GLvertex() {}
+	GLvertex( const Vector3& vPosI, const Vector2& vTexI )
+	{
+		vPos = vPosI;
+		vTex = vTexI;
+	}
+};
+
 GLeffect glhLoadEffect( const char* strVertexShader,
 						const char* strGeometryShader,
 						const char* strPixelShader,
@@ -54,6 +67,7 @@ int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer );
 void glhDestroyBuffer( GLbuffer& buffer );
 
 int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata );
+int glhCreateGUI( GLmesh& glmesh, const GLvertex* aryVertices, const GLint nCount );
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh );
 void glhDestroyMesh( GLmesh& glmesh );
 

@@ -24,4 +24,9 @@ struct cstPerFrame
 	Vector4 vLight[MAX_LIGHTS];
 };
 
+struct cstGUI
+{
+	Matrix matWorldViewProj;
+};
+
 #endif

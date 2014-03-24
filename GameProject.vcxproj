@@ -133,8 +133,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="component\rendering\PShader.glsl" />
+    <None Include="component\rendering\PShaderGUI.glsl" />
     <None Include="component\rendering\ShaderStructs.glsl" />
     <None Include="component\rendering\VShader.glsl" />
+    <None Include="component\rendering\VShaderGUI.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
