@@ -968,7 +968,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		//CAR_WIDTH
 
 		Vector3 offset_x = CON1 * x_axis;
-		Vector3 offset_y;// = -0.02 * y_axis;
+		Vector3 offset_y;// = -0.02 * y_axis; <- Wheels render through floor if not 0.
 		offset_y.Zero();
 		Vector3 offset_z = CON2 * z_axis;
 
@@ -1115,7 +1115,8 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 	}
 
 	// Find closests kart not blocked by wall
-	while (!possible_dists.empty()) {
+	while (!possible_dists.empty()) 
+	{
 		auto dist = possible_dists.top();
 		possible_dists.pop();
 		auto kart_pair = dists_to_karts[dist];

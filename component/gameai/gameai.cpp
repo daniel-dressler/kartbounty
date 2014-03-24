@@ -23,7 +23,7 @@ GameAi::GameAi()
 {
 	active_powerups = 0;
 	active_tresures = 0;
-	next_powerup_id = 3;
+	next_powerup_id = 0;
 
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
@@ -132,10 +132,11 @@ int GameAi::planFrame()
 	for (Events::Event *event : events_in) {
 		switch( event->type ) 
 		{
-		case Events::EventType::Quit:
+			case Events::EventType::Quit:
 			return 0;
 			break;
-		case Events::EventType::PowerupPickup:
+
+			case Events::EventType::PowerupPickup:
 			{
 				auto pickup = ((Events::PowerupPickupEvent *)event);
 				auto powerup = pickup->powerup_type;
@@ -165,18 +166,21 @@ int GameAi::planFrame()
 				}
 			}
 			break;
-		case Events::EventType::PowerupDestroyed:
+
+			case Events::EventType::PowerupDestroyed:
 			{
 				auto pickup = ((Events::PowerupPickupEvent *)event);
 				open_point(pickup->pos);
 			}
 			break;
-		case Events::EventType::TogglePauseGame:
+
+			case Events::EventType::TogglePauseGame:
 			{
 				gamePaused = !gamePaused;
 			}
 			break;
-		case Events::EventType::Input:
+
+			case Events::EventType::Input:
 			{
 				auto inputEvent = ((Events::InputEvent *)event);
 
@@ -195,7 +199,8 @@ int GameAi::planFrame()
 				}
 			}
 			break;
-		case Events::EventType::StartMenuInput:
+
+			case Events::EventType::StartMenuInput:
 			{
 				auto inputEvent = ((Events::StartMenuInputEvent *)event);
 
@@ -222,7 +227,8 @@ int GameAi::planFrame()
 				}
 			}
 			break;
-		case Events::EventType::KartHitByBullet:
+
+			case Events::EventType::KartHitByBullet:
 			{
 				// Apply damage to kart
 				entity_id kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
@@ -242,7 +248,8 @@ int GameAi::planFrame()
 					events_out.push_back(reset_kart_event);					
 				}
 			}
-			break;			
+			break;		
+
 		default:
 			break;
 		}
@@ -307,10 +314,6 @@ int GameAi::planFrame()
 		if (active_tresures <= 0) 
 		{
 			active_tresures++;
-			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
-		} 
-		else if (active_powerups <= 3) 
-		{
 			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
 		} 
 	}
