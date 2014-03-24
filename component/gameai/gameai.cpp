@@ -34,15 +34,59 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::Input );
 	m_mb->request( Events::EventType::StartMenuInput );
 
-	Vector3 p_positions[] = {
-		Vector3(0.0, 0.0, 5.5),
-		Vector3(1.0, 0.0, 5.5),
-		Vector3(-1.0, 0.0, 5.5),
-		Vector3(3.22, 0.0, 7.95),
-		Vector3(-3.22, 0.0, 7.59)};
-	for (auto pt : p_positions) {
-		m_open_points.push_back(pt);
-	}
+	m_open_points.push_back(Vector3(0.0, 0.0, 5.5));
+
+	m_open_points.push_back(Vector3(1.0, 0.0, 5.5));
+	m_open_points.push_back(Vector3(-1.0, 0.0, 5.5));
+	m_open_points.push_back(Vector3(1.0, 0.0, -5.5));
+	m_open_points.push_back(Vector3(-1.0, 0.0, -5.5));
+
+	m_open_points.push_back(Vector3(5.5f, 0.f, 1.f));
+	m_open_points.push_back(Vector3(-5.5f, 0.f, -1.f));
+	m_open_points.push_back(Vector3(-5.5f, 0.f, 1.f));
+	m_open_points.push_back(Vector3(5.5f, 0.f, -1.f));
+
+	m_open_points.push_back(Vector3(3.22f, 0.f, 7.59f));
+	m_open_points.push_back(Vector3(-3.22f, 0.f, 7.59f));
+	m_open_points.push_back(Vector3(3.22f, 0.f, -7.59f));
+	m_open_points.push_back(Vector3(-3.22f, 0.f, -7.59f));
+
+	m_open_points.push_back(Vector3(7.59f, 0.f, 3.22f));
+	m_open_points.push_back(Vector3(-7.59f, 0.f, -3.22f));
+	m_open_points.push_back(Vector3(-7.59f, 0.f, 3.22f));
+	m_open_points.push_back(Vector3(7.59f, 0.f, -3.22f));
+
+	m_open_points.push_back(Vector3(15.5f, 2.f, 15.5f));
+	m_open_points.push_back(Vector3(-15.5f, 2.f, 15.5f));
+	m_open_points.push_back(Vector3(15.5f, 2.f, -15.5f));
+	m_open_points.push_back(Vector3(-15.5f, 2.f, -15.5f));
+
+	m_open_points.push_back(Vector3(6.5f, 0.f, 2.5f));
+	m_open_points.push_back(Vector3(-6.5f, 0.f, -2.5f));
+	m_open_points.push_back(Vector3(6.5f, 0.f, -2.5f));
+	m_open_points.push_back(Vector3(-6.5f, 0.f, 2.5f));	
+
+	m_open_points.push_back(Vector3(2.5f, 0.f, 6.5f));
+	m_open_points.push_back(Vector3(-2.5f, 0.f, -6.5f));
+	m_open_points.push_back(Vector3(2.5f, 0.f, -6.5f));
+	m_open_points.push_back(Vector3(-2.5f, 0.f, 6.5f));
+
+	m_open_points.push_back(Vector3(0.f, 1.f, 0.f));
+
+	m_open_points.push_back(Vector3(1.5f, 1.f, 0.f));
+	m_open_points.push_back(Vector3(-1.5f, 1.f, 0.f));
+	m_open_points.push_back(Vector3(0.f, 1.f, 1.5f));
+	m_open_points.push_back(Vector3(0.f, 1.f, -1.5f));
+
+	m_open_points.push_back(Vector3(1.5f, 1.f, 1.5f));
+	m_open_points.push_back(Vector3(-1.5f, 1.f, -1.5f));
+	m_open_points.push_back(Vector3(1.5f, 1.f, -1.5f));
+	m_open_points.push_back(Vector3(-1.5f, 1.f, 1.5f));
+
+	m_open_points.push_back(Vector3(11.5f, 1.f, 0.f));
+	m_open_points.push_back(Vector3(-11.5f, 1.f, 0.f));
+	m_open_points.push_back(Vector3(0.f, 1.f, 11.5f));
+	m_open_points.push_back(Vector3(0.f, 1.f, -11.5f));
 
 	gamePaused = false;
 	currentState = StartMenu;

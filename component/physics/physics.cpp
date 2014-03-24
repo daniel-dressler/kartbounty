@@ -339,7 +339,7 @@ int Simulation::createKart(entity_id kart_id)
 	m_karts[kart_id]->vehicle = kart;
 	m_karts[kart_id]->raycaster = vehicleRayCaster;
 
-	float connectionHeight = -0.02f;//0.15f;
+	float connectionHeight = -0.03f;//0.15f;
 	btVector3 wheelDirectionCS0(0,-1,0);
 	btVector3 wheelAxleCS(-1,0,0);
 
