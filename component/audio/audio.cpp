@@ -33,6 +33,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::AiKart );
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
 	m_pMailbox->request( Events::EventType::PowerupPickup );
+	m_pMailbox->request( Events::EventType::PowerupActivated );
 	m_pMailbox->request( Events::EventType::KartColideArena );
 	m_pMailbox->request( Events::EventType::KartColideKart );
 	m_pMailbox->request( Events::EventType::KartHandbrake );
@@ -77,12 +78,15 @@ void Audio::setup() {
 	playMusic = true;
 
 	Sounds.EngineSound = LoadSound("assets/audio/engineNoise3.wav", FMOD_3D);
-	Sounds.PowerUp = LoadSound("assets/audio/powerup2.wav", FMOD_3D);
+	Sounds.PowerUpPickUp = LoadSound("assets/audio/powerup1.wav", FMOD_3D);
+	Sounds.SpeedPowerup = LoadSound("assets/audio/powerup2.wav", FMOD_3D);
+	Sounds.GoldChestPowerup = LoadSound("assets/audio/goldChestPickup.mp3", FMOD_3D);
+	Sounds.HealthPowerup = LoadSound("assets/audio/healthpowerup.mp3", FMOD_3D);
 	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav", FMOD_3D);
 	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff", FMOD_3D);
 	Sounds.WallCollision = LoadSound("assets/audio/kartCollision1.wav", FMOD_3D);
 	Sounds.Skid = LoadSound("assets/audio/skid1.wav", FMOD_3D);
-	Sounds.KartExplode = LoadSound("assets/audio/kartExplode1.wav", FMOD_3D);
+	Sounds.KartExplode = LoadSound("assets/audio/KartExplosion.mp3", FMOD_3D);
 	Sounds.RoundStart = LoadSound("assets/audio/roundstart1.mp3", FMOD_2D);
 	Sounds.Boo = LoadSound("assets/audio/boo.mp3", FMOD_2D);
 	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
@@ -253,6 +257,8 @@ int Audio::LoadMusic(char* file){
 int Audio::LoadSound(char* file, FMOD_MODE mode){
 	FMOD::Sound *newSound;
 	FMOD::Channel *newChannel;
+
+	DEBUGOUT("Loading file %s\n", file);
 	
 	ERRCHECK(m_system->createSound(file, mode, 0, &newSound));
 
@@ -569,8 +575,50 @@ void Audio::update(Real seconds){
 				pos.z = power_pos.z;
 
 				FMOD::Channel *channel;
+				switch (pickup->powerup_type)
+				{
+				case Entities::GoldCasePowerup:
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.GoldChestPowerup], true, &channel));
+					break;
+				default:
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.PowerUpPickUp], true, &channel));
+					break;
+				}
 
-				ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.PowerUp], true, &channel));
+				channel->setChannelGroup(m_channelGroupEffects);
+				channel->set3DAttributes(&pos, 0);
+				channel->setPaused(false);
+			}
+			break;
+		case Events::EventType::PowerupActivated:
+			{
+				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+
+				// Get where the sound event happened. 
+				FMOD_VECTOR pos;
+				pos.x = powUsed->pos.x;
+				pos.y = powUsed->pos.y;
+				pos.z = powUsed->pos.z;
+
+				FMOD::Channel *channel;
+
+				switch (powUsed->powerup_type)
+				{
+				case Entities::SpeedPowerup:
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.SpeedPowerup], true, &channel));
+					}
+					break;
+				case Entities::HealthPowerup:
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.HealthPowerup], true, &channel));
+					}
+					break;
+				default:
+					break;
+				}
+
+				// Set the sounds position and start the sound playing
 				channel->setChannelGroup(m_channelGroupEffects);
 				channel->set3DAttributes(&pos, 0);
 				channel->setPaused(false);

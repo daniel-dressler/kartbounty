@@ -26,6 +26,7 @@ namespace Events {
 		StartMenuInput,
 		PowerupPickup,
 		PowerupPlacement,
+		PowerupActivated,
 		PowerupDestroyed,
 		Reset,
 		ArenaMeshCreated,
@@ -102,6 +103,13 @@ namespace Events {
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
 	ENDEVENT;
+
+	EVENTSTRUCT(PowerupActivated)
+		powerup_id_t powerup_id;
+		Vector3 pos;
+		Entities::powerup_t powerup_type;
+	ENDEVENT;
+
 
 	EVENTSTRUCT(KartColideKart)
 		entity_id kart_id;
