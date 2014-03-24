@@ -6,12 +6,11 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 5000
-#define POWERUP_RESPAWN_TIME 5
+#define FINAL_SCORE_GOAL 25000
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 3
+#define NUM_KARTS 4
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
