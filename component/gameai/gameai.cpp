@@ -6,12 +6,12 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 100000
+#define FINAL_SCORE_GOAL 5000
 #define POWERUP_RESPAWN_TIME 5
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 2
+#define NUM_KARTS 3
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
@@ -130,7 +130,6 @@ int GameAi::planFrame()
 		case Events::EventType::TogglePauseGame:
 			{
 				gamePaused = !gamePaused;
-				//DEBUGOUT("Pause the game!\n");
 			}
 			break;
 		case Events::EventType::Input:
@@ -149,9 +148,6 @@ int GameAi::planFrame()
 						//pow_event->pos = kart->Pos;
 						//pow_event->powerup_type = kart->powerup_slot;
 					}
-
-					auto startRoundEvent = NEWEVENT( RoundStart);
-					events_out.push_back(startRoundEvent);
 				}
 			}
 			break;
@@ -161,18 +157,24 @@ int GameAi::planFrame()
 
 				if(inputEvent->bPressed)
 				{
-					return 0;
+					return 0;	// Quit the game
 				}
 
 				if(inputEvent->aPressed)
 				{
-					auto startRoundEvent = NEWEVENT( RoundStart);
+					auto startRoundEvent = NEWEVENT( RoundStart );
 					events_out.push_back(startRoundEvent);
 
 					// Reset all karts
 					resetGame();
 
+					// Pause the game to allow audio to play countdown
+					// If we are starting a second round the game is already paused so we skip this
+					if(currentState == StartMenu)
+						events_out.push_back( NEWEVENT( TogglePauseGame ));	
+
 					currentState = RoundStart;
+					roundStartCountdownTimer = 2.2;  // This is how long to wait until we unpause in seconds
 				}
 			}
 			break;
@@ -229,6 +231,31 @@ int GameAi::planFrame()
 		auto menuEvent = NEWEVENT(StartMenu);
 		events_out.push_back(menuEvent);
 	}
+	else if (currentState == RoundStart)
+	{
+		// Update countdown timer
+		roundStartCountdownTimer -= frame_timer.CalcSeconds();
+
+		if(roundStartCountdownTimer < 0)
+		{
+			auto unpauseEvent = NEWEVENT( TogglePauseGame );
+			events_out.push_back(unpauseEvent);
+			currentState = RoundInProgress;
+		}
+
+		// Update the scoreboard to be sent to rendering
+		updateScoreBoard();
+	}
+	else if (currentState == RoundInProgress)
+	{
+		// Update the scoreboard to be sent to rendering
+		updateScoreBoard();
+	}
+	else if (currentState == RoundEnd)
+	{
+		auto menuEvent = NEWEVENT(StartMenu);
+		events_out.push_back(menuEvent);
+	}
 
 	// Spawn Powerups?
 	if (!gamePaused)
@@ -240,12 +267,9 @@ int GameAi::planFrame()
 		} 
 		else if (active_powerups <= 3) 
 		{
-			events_out.push_back(spawn_powerup(Entities::SpeedPowerup));
+			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
 		} 
 	}
-
-	// Update the scoreboard to be send to rendering
-	updateScoreBoard();
 
 	// Issue planned events
 	m_mb->sendMail(events_out);
@@ -316,6 +340,9 @@ bool sortByScore(entity_id i, entity_id j)
 	return ( GETENTITY(i, CarEntity)->gold > GETENTITY(j, CarEntity)->gold );	
 }
 
+
+// Sorts the list of kart id's based on score and also issues round end event if player
+// gets over the set score goal
 void GameAi::updateScoreBoard()
 {
 	// Sorts the kart id list with the kart with the largest amount of gold first 
@@ -332,7 +359,15 @@ void GameAi::updateScoreBoard()
 		if(GETENTITY(kart_ids[0], CarEntity)->gold > FINAL_SCORE_GOAL)
 		{
 			// Some one has reached the goal, end the round
-			events_out.push_back(NEWEVENT(RoundEnd));
+			events_out.push_back(NEWEVENT(TogglePauseGame));	// Pause the karts
+			auto roundEndEvent = NEWEVENT(RoundEnd);
+			if(kart_ids[0] == player1KartId)
+				roundEndEvent->playerWon = true;
+			else
+				roundEndEvent->playerWon = false;
+
+			events_out.push_back(roundEndEvent);	
+			currentState = RoundEnd;
 		}
 	}
 

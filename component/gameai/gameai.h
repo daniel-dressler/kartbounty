@@ -24,9 +24,11 @@ private:
 	{
 		StartMenu,
 		RoundStart,
-		RoundEnd,
-		Paused
+		RoundInProgress,
+		RoundEnd
 	} currentState;
+
+	Real roundStartCountdownTimer;
 
 	std::vector<entity_id> kart_ids;
 

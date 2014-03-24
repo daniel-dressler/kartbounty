@@ -38,6 +38,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::KartHandbrake );
 	m_pMailbox->request( Events::EventType::TogglePauseGame );
 	m_pMailbox->request( Events::EventType::RoundStart );
+	m_pMailbox->request( Events::EventType::RoundEnd );
 	m_pMailbox->request( Events::EventType::Reset );
 	primary_player = 0;
 }
@@ -75,13 +76,16 @@ void Audio::setup() {
 	LoadMusic("assets/audio/BrainDead.mp3");
 	playMusic = true;
 
-	//Sounds.EngineSound = LoadSound("assets/audio/
-	Sounds.PowerUp = LoadSound("assets/audio/powerup2.wav");
-	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav");
-	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff");
-	Sounds.WallCollision = LoadSound("assets/audio/kartCollision1.wav");
-	Sounds.Skid = LoadSound("assets/audio/skid1.wav");
-	Sounds.KartExplode = LoadSound("assets/audio/kartExplode1.wav");
+	Sounds.EngineSound = LoadSound("assets/audio/engineNoise3.wav", FMOD_3D);
+	Sounds.PowerUp = LoadSound("assets/audio/powerup2.wav", FMOD_3D);
+	Sounds.LowFreqEngine = LoadSound("assets/audio/engineIdleNoise1.wav", FMOD_3D);
+	Sounds.MachineGun = LoadSound("assets/audio/machineGun1.aiff", FMOD_3D);
+	Sounds.WallCollision = LoadSound("assets/audio/kartCollision1.wav", FMOD_3D);
+	Sounds.Skid = LoadSound("assets/audio/skid1.wav", FMOD_3D);
+	Sounds.KartExplode = LoadSound("assets/audio/kartExplode1.wav", FMOD_3D);
+	Sounds.RoundStart = LoadSound("assets/audio/roundstart1.mp3", FMOD_2D);
+	Sounds.Boo = LoadSound("assets/audio/boo.mp3", FMOD_2D);
+	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
 
 	//StartMusic();
 	//Setup3DEnvironment();
@@ -168,14 +172,11 @@ int Audio::SetupHardware(){
 
 void Audio::SetupEngineSounds(struct kart_audio *kart_local){
 
-	FMOD::Sound *engineSound;
 	FMOD::Channel *engineNoisechannel;
 	FMOD::Channel *idelNoiseChannel;
 	FMOD::DSP *dsp;
 
-	ERRCHECK(m_system->createSound(ENGINE_SOUND_FILE, FMOD_3D, 0, &engineSound));
-
-	ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, engineSound, true, &engineNoisechannel));
+	ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.EngineSound], true, &engineNoisechannel));
 	ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.LowFreqEngine], true, &idelNoiseChannel));
 
 	ERRCHECK(m_system->createDSPByType(FMOD_DSP_TYPE_PITCHSHIFT, &dsp));
@@ -196,7 +197,7 @@ void Audio::SetupEngineSounds(struct kart_audio *kart_local){
 	idelNoiseChannel->setVolume(LOW_ENGINE_NOISE_VOLUME);
 
 	kart_local->enginePitch = 1;
-	kart_local->engineSound = engineSound;
+	kart_local->engineSound = m_SoundList[Sounds.EngineSound];
 	kart_local->engineChannel = engineNoisechannel;
 	kart_local->idleNoiseChannel = idelNoiseChannel;
 	kart_local->engineDSP = dsp;
@@ -249,11 +250,11 @@ int Audio::LoadMusic(char* file){
 	return m_MusicList.size() - 1;
 }
 
-int Audio::LoadSound(char* file){
+int Audio::LoadSound(char* file, FMOD_MODE mode){
 	FMOD::Sound *newSound;
 	FMOD::Channel *newChannel;
 	
-	ERRCHECK(m_system->createSound(file, FMOD_3D, 0, &newSound));
+	ERRCHECK(m_system->createSound(file, mode, 0, &newSound));
 
 	m_SoundList.push_back(newSound);
 	m_SoundChannelList.push_back(newChannel);
@@ -357,9 +358,26 @@ void Audio::update(Real seconds){
 			break;
 		case Events::EventType::RoundStart:
 			{
-				// Should add code in here to play countdown 
+				// Should add code in here to play countdown
+				ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.RoundStart],
+					false, &roundStartChannel));
 
 				m_channelGroupEngineSound->setPaused(false);
+			}
+			break;
+		case Events::EventType::RoundEnd:
+			{
+				Events::RoundEndEvent *roundEnd = (Events::RoundEndEvent *)event;
+				if(roundEnd->playerWon)
+				{
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Cheer],
+						false, &roundStartChannel));
+				}
+				else
+				{
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Boo],
+						false, &roundStartChannel));
+				}				
 			}
 			break;
 		case Events::EventType::KartCreated:
@@ -398,6 +416,10 @@ void Audio::update(Real seconds){
 			{
 			Events::KartColideKartEvent * collisionEvent = (Events::KartColideKartEvent *)event;
 				auto kart_local = m_karts[collisionEvent->kart_id];
+
+				if(kart_local == NULL)	// In case we get this event for a kart that was already deleted
+					break;
+
 				auto kart_entity = GETENTITY(collisionEvent->kart_id, CarEntity);
 
 				FMOD_VECTOR pos;
@@ -418,13 +440,17 @@ void Audio::update(Real seconds){
 					kart_local->collisionChannel->setChannelGroup(m_channelGroupEffects);
 					kart_local->collisionChannel->setPaused(false);
 				}
-				//DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
+				//DEBUGOUT("Kart Colide Kart event with force: %f\n", collisionEvent->force);
 			}
 			break;
 		case Events::EventType::KartColideArena:
 			{
 				Events::KartColideArenaEvent * collisionEvent = (Events::KartColideArenaEvent *)event;
 				auto kart_local = m_karts[collisionEvent->kart_id];
+				
+				if(kart_local == NULL)
+					break;
+
 				auto kart_entity = GETENTITY(collisionEvent->kart_id, CarEntity);
 
 				FMOD_VECTOR pos;

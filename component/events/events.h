@@ -190,6 +190,7 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(RoundEnd)
+		bool playerWon;
 	ENDEVENT;
 
 	EVENTSTRUCT(ScoreBoardUpdate)
