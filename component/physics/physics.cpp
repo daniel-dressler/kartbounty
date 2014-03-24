@@ -269,7 +269,7 @@ static bool CustomMaterialCombinerCallback(btManifoldPoint& cp,
 extern ContactAddedCallback gContactAddedCallback;
 
 #define CAR_WIDTH (0.11f)
-#define CAR_LENGTH (0.15f)
+#define CAR_LENGTH (0.16f)
 #define CAR_HEIGHT (0.11f)
 #define CAR_MASS (800.0f)
 
@@ -286,7 +286,6 @@ int Simulation::createKart(entity_id kart_id)
 	//float wheelFriction = 5;
 	float wheelFriction = 15;
 	float suspensionStiffness = 14;
-	//float suspensionCompression = 0.3f;
 	float suspensionCompression = 0.1 * 2.0 * btSqrt(suspensionStiffness);
 	float suspensionDamping = suspensionCompression + 0.2;
 
@@ -296,13 +295,6 @@ int Simulation::createKart(entity_id kart_id)
 	float suspensionTravelcm = 10;
 
 	btRaycastVehicle::btVehicleTuning tuning;
-	//tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
-	//tuning.m_frictionSlip = 30;
-	//tuning.m_maxSuspensionForce = 5;
-	//tuning.m_suspensionCompression = suspensionCompression;
-	//tuning.m_suspensionDamping = suspensionDamping;
-	//tuning.m_suspensionStiffness = suspensionStiffness;
-
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
 	m_collisionShapes.push_back(chassisShape);
@@ -340,6 +332,8 @@ int Simulation::createKart(entity_id kart_id)
 	m_world->addVehicle(kart);
 	m_karts[kart_id]->vehicle = kart;
 	m_karts[kart_id]->raycaster = vehicleRayCaster;
+
+
 
 	float connectionHeight = 0.10f;
 	btVector3 wheelDirectionCS0(0,-1,0);
@@ -971,7 +965,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		//CAR_WIDTH
 
 		Vector3 offset_x = CON1 * x_axis;
-		Vector3 offset_y;// = -0.02 * y_axis;
+		Vector3 offset_y;// = -0.02 * y_axis; <- Wheels render through floor if not 0.
 		offset_y.Zero();
 		Vector3 offset_z = CON2 * z_axis;
 
@@ -1118,7 +1112,8 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 	}
 
 	// Find closests kart not blocked by wall
-	while (!possible_dists.empty()) {
+	while (!possible_dists.empty()) 
+	{
 		auto dist = possible_dists.top();
 		possible_dists.pop();
 		auto kart_pair = dists_to_karts[dist];
