@@ -73,7 +73,11 @@ public:
 	{
 		int EngineSound;
 		int EngineIdleSound;
-		int PowerUp;
+		int PowerUpPickUp;
+		int HealthPowerup;
+		int SpeedPowerup;
+		int RocketPowerup;
+		int GoldChestPowerup;
 		int LowFreqEngine;
 		int MachineGun;
 		int WallCollision;

@@ -283,7 +283,8 @@ int Simulation::createKart(entity_id kart_id)
 	kart_local->kart_id = kart_id;
 	m_karts[kart_id] = kart_local;
 
-	float wheelFriction = 5;
+	//float wheelFriction = 5;
+	float wheelFriction = 15;
 	float suspensionStiffness = 14;
 	//float suspensionCompression = 0.3f;
 	float suspensionCompression = 0.1 * 2.0 * btSqrt(suspensionStiffness);
@@ -292,7 +293,7 @@ int Simulation::createKart(entity_id kart_id)
 	// Prevents car flipping due to sharp turns
 	float rollInfluence = 0.000f;
 	btScalar suspensionRestLength(0.1f);  // Suspension Interval = rest +/- travel * 0.01
-	float suspensionTravelcm = 20;
+	float suspensionTravelcm = 10;
 
 	btRaycastVehicle::btVehicleTuning tuning;
 	//tuning.m_maxSuspensionTravelCm = suspensionRestLength * (btScalar)1.5;
@@ -593,10 +594,11 @@ void Simulation::handle_bullets(double time)
 
 void Simulation::step(double seconds)
 {
-#define STEER_MAX_ANGLE (35)
+//#define STEER_MAX_ANGLE (35)
+#define STEER_MAX_ANGLE (25)
 #define ENGINE_MAX_FORCE (3000)
 #define BRAKE_MAX_FORCE (2500)
-#define E_BRAKE_FORCE (2000)
+#define E_BRAKE_FORCE (300)
 #define MAX_SPEED (30.0)
 
 #define MIN_ANGLE_SHOOTING DEGTORAD(2.5)
@@ -678,8 +680,8 @@ void Simulation::step(double seconds)
 
 				Real steering = DEGTORAD(STEER_MAX_ANGLE) * fTurnPower;
 
-				if (steering > 0.4 || steering < -0.4)
-					DEBUGOUT("s: %f, (): %f, ()_p: %f\n", speed, steering, fTurnPower);
+				//if (steering > 0.4 || steering < -0.4)
+				//	DEBUGOUT("s: %f, (): %f, ()_p: %f\n", speed, steering, fTurnPower);
 
 				Real engineForce = ENGINE_MAX_FORCE * input->rightTrigger - BRAKE_MAX_FORCE * input->leftTrigger - speed * 2;
 			
