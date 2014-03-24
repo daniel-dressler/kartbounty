@@ -440,12 +440,10 @@ int Renderer::render( float fElapseSec )
 			glhEnableTexture( m_difKartShadow );
 			glhEnableTexture( m_nrmBlank, 1 );
 
-			glDisable( GL_DEPTH_TEST );
 			glEnable( GL_BLEND );
 			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 			glhDrawMesh( m_eftMesh, m_mshKartShadow );
 			glDisable( GL_BLEND );
-			glEnable( GL_DEPTH_TEST );
 
 			// DRAW KART
 			glhEnableTexture( m_difBlank );
