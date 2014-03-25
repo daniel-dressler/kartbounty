@@ -67,6 +67,7 @@ private:
 	// GUI
 	GLmesh				m_mshGUIStart;
 	GLtex				m_texGUIStart;
+	GLtex				m_texGUIScore;
 
 	GLtex				m_texGUINumbers;
 	GLtex				m_texGUIPlayer;
@@ -78,6 +79,7 @@ private:
 
 	void _DrawArena();
 	void _DrawArenaQuad( Vector3 vColor );
+	void _DrawScore( Int32 x, Int32 y );
 
 	// Local knowledge of karts
 	struct kart {

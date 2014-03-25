@@ -250,6 +250,8 @@ int Renderer::setup()
 		exit(25);
 	if( !glhLoadTexture( m_texGUIStart, "assets/KartStartScreen.png" ) )
 		exit(14);
+	if( !glhLoadTexture( m_texGUIScore, "assets/KartScoreScreen.png" ) )
+		exit(14);
 	if( !glhLoadTexture( m_texGUINumbers, "assets/gui_numbers.png" ) )
 		exit(14);
 	if( !glhLoadTexture( m_texGUIPlayer, "assets/gui_player.png" ) )
@@ -703,45 +705,12 @@ int Renderer::render( float fElapseSec )
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
 		break;
 	case RS_END:
+		glhEnableTexture( m_texGUIScore );
+		glhDrawMesh( m_eftGUI, m_mshGUIStart );
+		_DrawScore( 0, 0 );
 		break;
 	case RS_DRIVING:
-		{
-			GLmesh temp_mesh;
-
-			for( Int32 i = 0; i < kartsByScore.size(); i++ )
-			{
-				Int32 ofs = i * 30;
-
-				auto kart_entity = GETENTITY(kartsByScore[i], CarEntity);
-
-				Vector4 color = m_mKarts[kartsByScore[i]].vColor;
-				color.w = 0.5f;
-
-				glhCreateGUI( temp_mesh, GuiBox( GuiBox( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40 - ofs, 200, 30, color ) ), 6 );
-				glhEnableTexture( m_difBlank );
-				glhDrawMesh( m_eftGUI, temp_mesh );
-				glhDestroyMesh( temp_mesh );
-
-				glhCreateGUI( temp_mesh, GuiBox( GuiBox( -(nWinWidth>>1) + 135, (nWinHeight>>1) - 40 - ofs, 110, 30, Vector4( 1,1,1,1 ) ) ), 6 );
-				glhEnableTexture( m_texGUIPlayer );
-				glhDrawMesh( m_eftGUI, temp_mesh );
-				glhDestroyMesh( temp_mesh );
-
-				GuiBox pnum_box = GuiBox( -(nWinWidth>>1) + 205, (nWinHeight>>1) - 40 - ofs, 20, 30, Vector4( 1,1,1,1 ) );
-				pnum_box.Num( i );
-				glhCreateGUI( temp_mesh, pnum_box, 6 );
-				glhEnableTexture( m_texGUINumbers );
-				glhDrawMesh( m_eftGUI, temp_mesh );
-				glhDestroyMesh( temp_mesh );
-
-				GuiBox snum_box = GuiBox( -(nWinWidth>>1) + 40, (nWinHeight>>1) - 40 - ofs, 20, 30, Vector4( 1,1,1,1 ) );
-				snum_box.Num( kart_entity->gold );
-				glhCreateGUI( temp_mesh, snum_box, 6 );
-				glhEnableTexture( m_texGUINumbers );
-				glhDrawMesh( m_eftGUI, temp_mesh );
-				glhDestroyMesh( temp_mesh );
-			}
-		}
+		_DrawScore( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40 );
 		break;
 	}
 
@@ -815,4 +784,46 @@ void Renderer::_DrawArenaQuad( Vector3 vColor )
 	glhDrawMesh( m_eftMesh, m_mshArenaFlags );
 
 	glDisable( GL_BLEND );
+}
+
+void Renderer::_DrawScore( Int32 x, Int32 y ) // 125, 40
+{
+	Int32 nWinWidth, nWinHeight;
+	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
+
+	GLmesh temp_mesh;
+
+	for( Int32 i = 0; i < kartsByScore.size(); i++ )
+	{
+		Int32 ofs = i * 30;
+
+		auto kart_entity = GETENTITY(kartsByScore[i], CarEntity);
+
+		Vector4 color = m_mKarts[kartsByScore[i]].vColor;
+		color.w = 0.5f;
+
+		glhCreateGUI( temp_mesh, GuiBox( GuiBox( x, y - ofs, 200, 30, color ) ), 6 );
+		glhEnableTexture( m_difBlank );
+		glhDrawMesh( m_eftGUI, temp_mesh );
+		glhDestroyMesh( temp_mesh );
+
+		glhCreateGUI( temp_mesh, GuiBox( GuiBox( 10 + x, y - ofs, 110, 30, Vector4( 1,1,1,1 ) ) ), 6 );
+		glhEnableTexture( m_texGUIPlayer );
+		glhDrawMesh( m_eftGUI, temp_mesh );
+		glhDestroyMesh( temp_mesh );
+
+		GuiBox pnum_box = GuiBox( 80 + x, y - ofs, 20, 30, Vector4( 1,1,1,1 ) );
+		pnum_box.Num( i );
+		glhCreateGUI( temp_mesh, pnum_box, 6 );
+		glhEnableTexture( m_texGUINumbers );
+		glhDrawMesh( m_eftGUI, temp_mesh );
+		glhDestroyMesh( temp_mesh );
+
+		GuiBox snum_box = GuiBox( -85 + x, y - ofs, 20, 30, Vector4( 1,1,1,1 ) );
+		snum_box.Num( kart_entity->gold );
+		glhCreateGUI( temp_mesh, snum_box, 6 );
+		glhEnableTexture( m_texGUINumbers );
+		glhDrawMesh( m_eftGUI, temp_mesh );
+		glhDestroyMesh( temp_mesh );
+	}
 }
