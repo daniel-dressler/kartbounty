@@ -11,6 +11,10 @@
 #include "glhelpers.h"
 #include "ShaderStructs.h"
 
+#define RS_START	0
+#define RS_DRIVING	3
+#define RS_END		5
+
 class Renderer
 {
 private:
@@ -19,6 +23,7 @@ private:
 	Events::Mailbox*	m_pMailbox;
 
 	Int32				m_nSplitScreen;
+	Int32				m_nScreenState;
 
 	Real				m_fTime;
 
@@ -59,8 +64,12 @@ private:
 	GLmesh				m_mshPowerRing2;
 	GLmesh				m_mshPowerSphere;
 
+	// GUI
 	GLmesh				m_mshGUIStart;
 	GLtex				m_texGUIStart;
+
+	GLtex				m_texGUINumbers;
+	GLtex				m_texGUIPlayer;
 
 	GLtex				m_difBlank;
 	GLtex				m_nrmBlank;
@@ -85,8 +94,6 @@ private:
 		Vector3 vPos;
 	};
 	std::map<powerup_id_t, struct powerup> m_powerups;
-
-	bool atStartMenu;
 
 public:
 	int setup();

@@ -40,12 +40,14 @@ struct GLvertex
 {
 	Vector3 vPos;
 	Vector2 vTex;
+	Vector4 vColor;
 
 	GLvertex() {}
-	GLvertex( const Vector3& vPosI, const Vector2& vTexI )
+	GLvertex( const Vector3& vPosI, const Vector2& vTexI, const Vector4& vColorI = Vector4( 1,1,1,1 ) )
 	{
 		vPos = vPosI;
 		vTex = vTexI;
+		vColor = vColorI;
 	}
 };
 

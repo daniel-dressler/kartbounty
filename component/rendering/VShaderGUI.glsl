@@ -4,8 +4,10 @@
 
 in vec3 vs_position;
 in vec2 vs_texcoord;
+in vec4 vs_color;
 
 out vec2 ps_texcoord;
+out vec4 ps_color;
 
 layout (shared,row_major) uniform cstGUI
 {
@@ -14,6 +16,7 @@ layout (shared,row_major) uniform cstGUI
 
 void main()
 {
-	ps_texcoord = vs_texcoord;
 	gl_Position = vec4( vs_position, 1 ) * g_matWorldViewProj;
+	ps_texcoord = vs_texcoord;
+	ps_color = vs_color;
 }

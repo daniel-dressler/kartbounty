@@ -4,13 +4,44 @@
 #include "rendering.h"
 #include "../physics/physics.h"
 
+struct GuiBox
+{
+	GLvertex box[6];
+
+	void Make( Real x, Real y, Real w, Real h, const Vector4& color )
+	{
+		Real hw = w * 0.5f;
+		Real hh = h * 0.5f;
+		box[0] = GLvertex( Vector3( -hw + x, -hh + y, 0 ), Vector2( 0, 1 ), color );
+		box[1] = GLvertex( Vector3( -hw + x,  hh + y, 0 ), Vector2( 0, 0 ), color );
+		box[2] = GLvertex( Vector3(  hw + x, -hh + y, 0 ), Vector2( 1, 1 ), color );
+		box[3] = GLvertex( Vector3( -hw + x,  hh + y, 0 ), Vector2( 0, 0 ), color );
+		box[4] = GLvertex( Vector3(  hw + x,  hh + y, 0 ), Vector2( 1, 0 ), color );
+		box[5] = GLvertex( Vector3(  hw + x, -hh + y, 0 ), Vector2( 1, 1 ), color );
+	}
+
+	void Num( Int32 n )
+	{
+		const Real fSpread = 1.0f / 10.0f;
+		box[0].vTex.x = box[1].vTex.x = box[3].vTex.x = n * fSpread;
+		box[2].vTex.x = box[4].vTex.x = box[5].vTex.x = ( n + 1 ) * fSpread;
+	}
+
+	inline operator const GLvertex* () const { return (GLvertex*)this; }
+	inline GLvertex& operator[]( const int i ) { return box[i]; }
+	GuiBox( Real x, Real y, Real w, Real h, const Vector4& color = Vector4(1,1,1,1) ) { Make( x, y, w, h, color ); }
+	GuiBox() {}
+};
+
 std::map<int, struct Physics::Simulation::bullet *> list_of_bullets;
+std::vector<entity_id> kartsByScore;
 
 Renderer::Renderer()
 {
 	m_bInitComplete = 0;
 	m_Window = 0;
 	m_nSplitScreen = 1;
+	m_nScreenState = RS_START;
 	m_fTime = 0;
 
 	m_pMailbox = new Events::Mailbox();
@@ -26,6 +57,7 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::BulletList );
 	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
 	m_pMailbox->request( Events::EventType::RoundStart );
+	m_pMailbox->request( Events::EventType::RoundEnd );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
@@ -214,31 +246,22 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_nrmBlank, "assets/blank_norm.png" ) )
 		exit(20);
 
-	Real fHeight = 200.0f;
-	Real fWidth = 300.0f;
-	GLvertex aryStart[] = 
-	{ 
-		GLvertex( Vector3( -fWidth, -fHeight, 0 ), Vector2( 0, 1 ) ),
-		GLvertex( Vector3( -fWidth,  fHeight, 0 ), Vector2( 0, 0 ) ),
-		GLvertex( Vector3(  fWidth, -fHeight, 0 ), Vector2( 1, 1 ) ),
-
-		GLvertex( Vector3( -fWidth,  fHeight, 0 ), Vector2( 0, 0 ) ),
-		GLvertex( Vector3(  fWidth,  fHeight, 0 ), Vector2( 1, 0 ) ),
-		GLvertex( Vector3(  fWidth, -fHeight, 0 ), Vector2( 1, 1 ) ),
-	};
-
-	if( !glhCreateGUI( m_mshGUIStart, aryStart, 6 ) )
+	if( !glhCreateGUI( m_mshGUIStart, GuiBox( 0, 0, 600, 400 ), 6 ) )
 		exit(25);
 	if( !glhLoadTexture( m_texGUIStart, "assets/KartStartScreen.png" ) )
 		exit(14);
+	if( !glhLoadTexture( m_texGUINumbers, "assets/gui_numbers.png" ) )
+		exit(14);
+	if( !glhLoadTexture( m_texGUIPlayer, "assets/gui_player.png" ) )
+		exit(14);
+
+	
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
 	glhMapTexture( m_eftGUI, "g_texDiffuse", 0 );
 
 	m_bInitComplete = 1;
-
-	atStartMenu = true;
 	
 	return 1;
 }
@@ -294,9 +317,10 @@ int Renderer::render( float fElapseSec )
 		switch( event->type ) 
 		{
 		case Events::EventType::RoundStart:
-			{
-				atStartMenu = false;
-			}
+			m_nScreenState = RS_DRIVING;
+			break;
+		case Events::EventType::RoundEnd:
+			m_nScreenState = RS_END;
 			break;
 		// Each bullet has a position and a direction passed for rendering and an additional value "time to live" that physics uses, no idea if rendering needs it.
 		case Events::EventType::BulletList:
@@ -324,11 +348,8 @@ int Renderer::render( float fElapseSec )
 				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
 				
-				while (cameras.size() > 0) // Get rid of all AI kart cameras when a player is spawning.
-					cameras.pop_back();
-				
+				cameras.clear();
 				cameras.push_back(kart->camera);
-
 
 				player_kart_found = true;
 			}
@@ -364,9 +385,7 @@ int Renderer::render( float fElapseSec )
 		case Events::EventType::ScoreBoardUpdate:
 			{
 				auto scoreboard = ((Events::ScoreBoardUpdateEvent *)event);
-
-				// @Phil: I guess this is where you handle drawing the scoreboard on the HUD, Kyle.
-				// The list is the ids of the karts in order from highest score to lowest
+				kartsByScore = scoreboard->kartsByScore;
 			}
 			break;
 		default:
@@ -375,25 +394,6 @@ int Renderer::render( float fElapseSec )
 	}
 	m_pMailbox->emptyMail();
 
-	for (Entities::CarEntity::Camera camera : cameras) {
-		Vector3 vFocus = camera.vFocus;
-		perFrame.vEyePos = camera.vPos;
-		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-		perFrame.matProj.Perspective( DEGTORAD( camera.fFOV ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
-		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
-		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
-	}
-	
-	if(atStartMenu)		// Manually set camera to look over the entire level, ignoring the kart cameras
-	{
-		Vector3 vFocus = Vector3(0,-0.8,0);
-		perFrame.vEyePos = Vector3(0,15,-5);
-		perFrame.vEyeDir = Vector3( vFocus - perFrame.vEyePos.xyz() ).Normalize();
-		perFrame.matProj.Perspective( DEGTORAD( 80 ), (Real)nWinWidth/nWinHeight, 0.1f, 100.0f );
-		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), vFocus, Vector3( 0, 1, 0 ) );
-		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
-	}
-	
 	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -416,10 +416,145 @@ int Renderer::render( float fElapseSec )
 
 	// START RENDERING
 
-	for( Int32 i = 0; i < 1; i++ )
-	{	
-		glViewport( 0, ( nWinHeight >> 0 ) * i, nWinWidth, nWinHeight >> 0 );
+	struct RCAMERA
+	{
+		Int32 x,y,w,h,fov;
+		Vector3 eyepos, eyefocus;
+	};
+	std::vector<RCAMERA> aryCameras;
 
+	switch( m_nScreenState )
+	{
+	case RS_START:
+	case RS_END:
+		{
+			RCAMERA cam;
+			cam.x = cam.y = 0;
+			cam.w = nWinWidth;
+			cam.h = nWinHeight;
+			cam.fov = DEGTORAD( 80 );
+			cam.eyepos = Vector3(0,15,-5);
+			cam.eyefocus = Vector3(0,-0.8,0);
+			aryCameras.push_back( cam );
+		}
+		break;
+	case RS_DRIVING:
+		{
+			switch( cameras.size() )
+			{
+			case 0:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight;
+					cam.fov = DEGTORAD( 80 );
+					cam.eyepos = Vector3(0,15,-5);
+					cam.eyefocus = Vector3(0,-0.8,0);
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 1:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 2:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.y = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 3:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.w = nWinWidth>>1;
+					cam.y = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[2].fFOV );
+					cam.eyepos = cameras[2].vPos;
+					cam.eyefocus = cameras[2].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			default: // 4
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth>>1;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+					
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[2].fFOV );
+					cam.eyepos = cameras[2].vPos;
+					cam.eyefocus = cameras[2].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[3].fFOV );
+					cam.eyepos = cameras[3].vPos;
+					cam.eyefocus = cameras[3].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			}
+		}
+		break;
+	};
+
+	for( Int32 i = 0; i < aryCameras.size(); i++ )
+	{	
+		glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
+
+		Vector3 vFocus = Vector3(0,-0.8,0);
+		perFrame.vEyePos = aryCameras[i].eyepos;
+		perFrame.vEyeDir = Vector3( aryCameras[i].eyefocus - aryCameras[i].eyepos ).Normalize();
+		perFrame.matProj.Perspective( aryCameras[i].fov, (Real)aryCameras[i].w/aryCameras[i].h, 0.1f, 100.0f );
+		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), aryCameras[i].eyefocus, Vector3( 0, 1, 0 ) );
+		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
 
 		_DrawArena();
@@ -557,16 +692,61 @@ int Renderer::render( float fElapseSec )
 	guidata.matWorldViewProj = matOrtho;
 	glhUpdateBuffer( m_eftGUI, m_bufGUI );
 
+	glDisable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-	if(atStartMenu)
+	switch( m_nScreenState )
 	{
+	case RS_START:
 		glhEnableTexture( m_texGUIStart );
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
+		break;
+	case RS_END:
+		break;
+	case RS_DRIVING:
+		{
+			GLmesh temp_mesh;
+
+			for( Int32 i = 0; i < kartsByScore.size(); i++ )
+			{
+				Int32 ofs = i * 30;
+
+				auto kart_entity = GETENTITY(kartsByScore[i], CarEntity);
+
+				Vector4 color = m_mKarts[kartsByScore[i]].vColor;
+				color.w = 0.5f;
+
+				glhCreateGUI( temp_mesh, GuiBox( GuiBox( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40 - ofs, 200, 30, color ) ), 6 );
+				glhEnableTexture( m_difBlank );
+				glhDrawMesh( m_eftGUI, temp_mesh );
+				glhDestroyMesh( temp_mesh );
+
+				glhCreateGUI( temp_mesh, GuiBox( GuiBox( -(nWinWidth>>1) + 135, (nWinHeight>>1) - 40 - ofs, 110, 30, Vector4( 1,1,1,1 ) ) ), 6 );
+				glhEnableTexture( m_texGUIPlayer );
+				glhDrawMesh( m_eftGUI, temp_mesh );
+				glhDestroyMesh( temp_mesh );
+
+				GuiBox pnum_box = GuiBox( -(nWinWidth>>1) + 205, (nWinHeight>>1) - 40 - ofs, 20, 30, Vector4( 1,1,1,1 ) );
+				pnum_box.Num( i );
+				glhCreateGUI( temp_mesh, pnum_box, 6 );
+				glhEnableTexture( m_texGUINumbers );
+				glhDrawMesh( m_eftGUI, temp_mesh );
+				glhDestroyMesh( temp_mesh );
+
+				GuiBox snum_box = GuiBox( -(nWinWidth>>1) + 40, (nWinHeight>>1) - 40 - ofs, 20, 30, Vector4( 1,1,1,1 ) );
+				snum_box.Num( kart_entity->gold );
+				glhCreateGUI( temp_mesh, snum_box, 6 );
+				glhEnableTexture( m_texGUINumbers );
+				glhDrawMesh( m_eftGUI, temp_mesh );
+				glhDestroyMesh( temp_mesh );
+			}
+		}
+		break;
 	}
 
 	glDisable( GL_BLEND );
+	glEnable( GL_DEPTH_TEST );
 
 	SDL_GL_SwapWindow( m_Window );
 

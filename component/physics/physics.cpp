@@ -399,7 +399,7 @@ int Simulation::createKart(entity_id kart_id)
 	kart_entity->Orient.w = (Real)-rot.getW();
 
 	//Set initial camera value
-	kart_entity->camera.fFOV = 1;
+	kart_entity->camera.fFOV = 70;
 	kart_entity->camera.vFocus.Zero();
 	kart_entity->camera.vPos.Zero();
 	kart_entity->camera.orient_old.Zero();
@@ -468,7 +468,7 @@ void Simulation::resetKart(entity_id id)
 	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 
 	auto kart_entity = GETENTITY(id, CarEntity);
-	kart_entity->camera.fFOV = 0;
+	kart_entity->camera.fFOV = 70;
 	kart_entity->camera.vFocus.Zero();
 	kart_entity->camera.vPos.Zero();
 	kart_entity->camera.orient_old.Zero();

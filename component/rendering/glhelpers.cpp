@@ -342,10 +342,11 @@ void glhPredefinedVertexLayout( Int32 nType )
 	case 10:
 		glEnableVertexAttribArray( 0 );
 		glEnableVertexAttribArray( 1 );
-		glDisableVertexAttribArray( 2 );
+		glEnableVertexAttribArray( 2 );
 		glDisableVertexAttribArray( 3 );
 		glVertexAttribPointer( 0, 3, GL_FLOAT,	GL_FALSE, sizeof(GLvertex), (void*)0 );
 		glVertexAttribPointer( 1, 2, GL_FLOAT,	GL_FALSE, sizeof(GLvertex), (void*)12 );
+		glVertexAttribPointer( 2, 4, GL_FLOAT,	GL_FALSE, sizeof(GLvertex), (void*)20 );
 		break;
 	};
 }
