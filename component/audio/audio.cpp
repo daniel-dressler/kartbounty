@@ -9,14 +9,12 @@
 
 #define PITCHSCALE 0.1f
 #define MAX_PITCH 2.0f
-#define ENGINE_SOUND_FILE "assets/audio/engineNoise3.wav"
-
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
 
 // Volumes
-#define MUSIC_VOLUME 0.03f
+#define MUSIC_VOLUME 0.15f
 #define SOUND_EFFECTS_VOLUME 0.5f
 #define LOW_ENGINE_NOISE_VOLUME 0.2f
 
@@ -34,6 +32,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::PowerupActivated );
+	m_pMailbox->request( Events::EventType::KartHitByBullet );
 	m_pMailbox->request( Events::EventType::KartColideArena );
 	m_pMailbox->request( Events::EventType::KartColideKart );
 	m_pMailbox->request( Events::EventType::KartHandbrake );
@@ -90,8 +89,9 @@ void Audio::setup() {
 	Sounds.RoundStart = LoadSound("assets/audio/roundstart1.mp3", FMOD_2D);
 	Sounds.Boo = LoadSound("assets/audio/boo.mp3", FMOD_2D);
 	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
+	Sounds.KartBulletHit = LoadSound("assets/audio/KartBulletHit.mp3", FMOD_3D);
 
-	//StartMusic();
+	StartMusic();
 	//Setup3DEnvironment();
 }
 
@@ -480,6 +480,36 @@ void Audio::update(Real seconds){
 				//DEBUGOUT("Kart Colide Arena event with force: %f\n", collisionEvent->force);
 			}
 			break;
+		case Events::EventType::KartHitByBullet:
+			{
+				Events::KartHitByBulletEvent *impact = (Events::KartHitByBulletEvent *)event;
+				auto kart_local = m_karts[impact->kart_id];
+				
+				if(kart_local == NULL)
+					break;
+
+				auto kart_entity = GETENTITY(impact->kart_id, CarEntity);
+				if(kart_entity == NULL)
+					break;
+
+				FMOD_VECTOR pos;
+				pos.x = kart_entity->Pos.x;
+				pos.y = kart_entity->Pos.y;
+				pos.z = kart_entity->Pos.z;
+
+				bool isPlaying = false;
+				kart_local->bulletHitChannel->isPlaying(&isPlaying);
+
+				if(!isPlaying)
+				{
+					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.KartBulletHit],
+						true, &kart_local->bulletHitChannel));
+					kart_local->bulletHitChannel->set3DAttributes(&pos, 0);
+					kart_local->bulletHitChannel->setChannelGroup(m_channelGroupEffects);
+					kart_local->bulletHitChannel->setPaused(false);
+				}
+			}
+			break;
 		case Events::EventType::Input:
 			{
 				if(gamePaused)
@@ -580,6 +610,11 @@ void Audio::update(Real seconds){
 				case Entities::GoldCasePowerup:
 					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.GoldChestPowerup], true, &channel));
 					break;
+				case Entities::HealthPowerup:
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.HealthPowerup], true, &channel));
+					}
+					break;
 				default:
 					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.PowerUpPickUp], true, &channel));
 					break;
@@ -607,11 +642,6 @@ void Audio::update(Real seconds){
 				case Entities::SpeedPowerup:
 					{
 						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.SpeedPowerup], true, &channel));
-					}
-					break;
-				case Entities::HealthPowerup:
-					{
-						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.HealthPowerup], true, &channel));
 					}
 					break;
 				default:

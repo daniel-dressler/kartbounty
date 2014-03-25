@@ -3,18 +3,16 @@
 
 // Sub-System Components
 #include "component/entities/entities.h"
-#include "component/gameai/GameLogic.h"
 #include "component/gameai/gameai.h"
 #include "component/enemyai/enemyai.h"
 #include "component/rendering/rendering.h"
 #include "component/physics/physics.h"
 #include "component/input/input.h"
-#include "component/state/state.h"
 #ifdef _WIN32
 #include "component/audio/audio.h"
 #endif
 
-#define PLAYAUDIO 0
+#define PLAYAUDIO 1
 
 int main( int argc, char** argv )
 {

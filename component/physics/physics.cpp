@@ -53,6 +53,7 @@ Simulation::Simulation()
 	mb.request(Events::EventType::ArenaMeshCreated);
 	mb.request(Events::EventType::PowerupPlacement);
 	mb.request(Events::EventType::PowerupDestroyed);
+	mb.request(Events::EventType::PowerupActivated);
 	mb.request(Events::EventType::Shoot);
 	mb.request(Events::EventType::TogglePauseGame);
 
@@ -558,6 +559,7 @@ void Simulation::handle_bullets(double time)
 
 							auto hit_event = NEWEVENT(KartHitByBullet);
 							hit_event->kart_id = kart_id;
+							hit_event->source_kart_id = bullet_obj->kart_id;
 							events_out.push_back(hit_event);
 						}
 					}
@@ -589,8 +591,9 @@ void Simulation::handle_bullets(double time)
 void Simulation::step(double seconds)
 {
 //#define STEER_MAX_ANGLE (35)
-#define STEER_MAX_ANGLE (25)
+#define STEER_MAX_ANGLE (17)
 #define ENGINE_MAX_FORCE (3000)
+#define BOOST_FACTOR (2)
 #define BRAKE_MAX_FORCE (2500)
 #define E_BRAKE_FORCE (300)
 #define MAX_SPEED (30.0)
@@ -811,7 +814,8 @@ void Simulation::step(double seconds)
 			powerup->powerup_type = powerup_event->powerup_type;
 			powerup->powerup_id = id;
 
-			auto sphere = new btSphereShape(0.15);
+			// Made powerups a bit bigger
+			auto sphere = new btSphereShape(0.25);
 			m_collisionShapes.push_back(sphere);
 
 			btGhostObject *body = new btGhostObject();
@@ -840,6 +844,33 @@ void Simulation::step(double seconds)
 			removePowerup(powerup_event->powerup_id);
 		}
 		break;
+		case Events::EventType::PowerupActivated:
+		{
+			Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+			switch (powUsed->powerup_type)
+			{
+			case Entities::SpeedPowerup:
+				{
+					btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
+					if(kart != NULL)
+					{
+						auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+						if(kart_entity != NULL)
+						{
+							btRigidBody *kartBody = kart->getRigidBody();
+							btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
+							btVector3 boost = kart_entity->forDirection * boostForce;
+
+							kartBody->applyImpulse(boost, btVector3(0,0,0));
+						}
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
 		case Events::EventType::Reset:
 		{
 			Events::ResetEvent *reset_event = (Events::ResetEvent *)event;
@@ -848,10 +879,10 @@ void Simulation::step(double seconds)
 		}
 		break;
 		case Events::EventType::TogglePauseGame:
-			{
-				gamePaused = !gamePaused;
-			}
-			break;
+		{
+			gamePaused = !gamePaused;
+		}
+		break;
 		default:
 			break;
 		}
@@ -919,7 +950,6 @@ void Simulation::step(double seconds)
 	auto bullet_list_event = NEWEVENT(BulletList);
 	bullet_list_event->list_of_bullets = &list_of_bullets;
 	events_out.push_back(bullet_list_event);
-
 
 	mb.sendMail(events_out);
 }

@@ -30,6 +30,7 @@ private:
 		FMOD::Channel *idleNoiseChannel;
 		FMOD::Channel *engineChannel;
 		FMOD::Channel *collisionChannel;
+		FMOD::Channel *bulletHitChannel;
 		FMOD::Channel *soundsChannel;
 		FMOD::Sound   *engineSound;
 		FMOD::DSP     *engineDSP;
@@ -83,6 +84,7 @@ public:
 		int WallCollision;
 		int Skid;
 		int KartExplode;
+		int KartBulletHit;
 		int RoundStart;
 		int Boo;
 		int Cheer;

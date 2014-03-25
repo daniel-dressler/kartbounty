@@ -2,7 +2,6 @@
 
 #include "../../Standard.h"
 #include "../entities/entities.h"
-#include "../state/state.h"
 
 #include "input.h"
 
@@ -217,6 +216,9 @@ void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = true;
 		break;
+	case SDLK_RETURN:
+		m_pCurrentInput->xPressed = true;
+		break;
 
 		// Development Tools
 	case SDLK_z:
@@ -256,6 +258,9 @@ void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
 		break;
 	case SDLK_LSHIFT:
 		m_pCurrentInput->aPressed = false;
+		break;
+	case SDLK_RETURN:
+		m_pCurrentInput->xPressed = false;
 		break;
 	default:
 		break;
