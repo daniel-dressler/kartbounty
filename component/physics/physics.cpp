@@ -591,7 +591,7 @@ void Simulation::handle_bullets(double time)
 void Simulation::step(double seconds)
 {
 //#define STEER_MAX_ANGLE (35)
-#define STEER_MAX_ANGLE (20)
+#define STEER_MAX_ANGLE (17)
 #define ENGINE_MAX_FORCE (3000)
 #define BOOST_FACTOR (2)
 #define BRAKE_MAX_FORCE (2500)

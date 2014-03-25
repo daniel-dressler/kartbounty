@@ -14,7 +14,7 @@
 #define ROLL_OFF_SCALE 1.0f
 
 // Volumes
-#define MUSIC_VOLUME 0.03f
+#define MUSIC_VOLUME 0.15f
 #define SOUND_EFFECTS_VOLUME 0.5f
 #define LOW_ENGINE_NOISE_VOLUME 0.2f
 
@@ -91,7 +91,7 @@ void Audio::setup() {
 	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
 	Sounds.KartBulletHit = LoadSound("assets/audio/KartBulletHit.mp3", FMOD_3D);
 
-	//StartMusic();
+	StartMusic();
 	//Setup3DEnvironment();
 }
 

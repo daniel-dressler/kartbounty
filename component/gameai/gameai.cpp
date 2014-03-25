@@ -6,17 +6,17 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 25000
+#define FINAL_SCORE_GOAL 9
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
 #define NUM_KARTS 4
 // Big Gold Powerup
-#define BIG_GOLD_VALUE 5000
+#define BIG_GOLD_VALUE 1
 // Small Gold Powerup
-#define SMALL_GOLD_VALUE 500
+#define SMALL_GOLD_VALUE 1
 // Amount of gold for killing another kart
-#define KART_KILL_GOLD_VALUE 2000
+#define KART_KILL_GOLD_VALUE 2
 // How much health does a kart has to start with
 #define STARTING_HEALTH 5
 #define HEALTH_POWERUP_AMOUNT 5
