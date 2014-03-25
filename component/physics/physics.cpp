@@ -53,6 +53,7 @@ Simulation::Simulation()
 	mb.request(Events::EventType::ArenaMeshCreated);
 	mb.request(Events::EventType::PowerupPlacement);
 	mb.request(Events::EventType::PowerupDestroyed);
+	mb.request(Events::EventType::PowerupActivated);
 	mb.request(Events::EventType::Shoot);
 	mb.request(Events::EventType::TogglePauseGame);
 
@@ -835,11 +836,30 @@ void Simulation::step(double seconds)
 		}
 		break;
 		case Events::EventType::PowerupDestroyed:
-		{
-			auto powerup_event = (Events::PowerupDestroyedEvent *)event;
-			removePowerup(powerup_event->powerup_id);
-		}
-		break;
+			{
+				auto powerup_event = (Events::PowerupDestroyedEvent *)event;
+				removePowerup(powerup_event->powerup_id);
+			}
+			break;
+		case Events::EventType::PowerupActivated:
+			{
+				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+
+				btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
+				if(kart != NULL)
+				{
+					auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+					if(kart_entity != NULL)
+					{
+						btRigidBody *kartBody = kart->getRigidBody();
+						btScalar boostForce = ENGINE_MAX_FORCE * 20;
+						btVector3 boost = kart_entity->forDirection * boostForce;
+
+						kartBody->applyForce(boost, btVector3(0,0,0));
+					}
+				}
+			}
+			break;
 		case Events::EventType::Reset:
 		{
 			Events::ResetEvent *reset_event = (Events::ResetEvent *)event;
