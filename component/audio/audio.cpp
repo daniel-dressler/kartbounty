@@ -9,8 +9,6 @@
 
 #define PITCHSCALE 0.1f
 #define MAX_PITCH 2.0f
-#define ENGINE_SOUND_FILE "assets/audio/engineNoise3.wav"
-
 #define DOPPLER_SCALE 1.0f
 #define DISTANCE_FACTOR 1.0f
 #define ROLL_OFF_SCALE 1.0f
@@ -612,6 +610,11 @@ void Audio::update(Real seconds){
 				case Entities::GoldCasePowerup:
 					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.GoldChestPowerup], true, &channel));
 					break;
+				case Entities::HealthPowerup:
+					{
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.HealthPowerup], true, &channel));
+					}
+					break;
 				default:
 					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.PowerUpPickUp], true, &channel));
 					break;
@@ -639,11 +642,6 @@ void Audio::update(Real seconds){
 				case Entities::SpeedPowerup:
 					{
 						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.SpeedPowerup], true, &channel));
-					}
-					break;
-				case Entities::HealthPowerup:
-					{
-						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.HealthPowerup], true, &channel));
 					}
 					break;
 				default:

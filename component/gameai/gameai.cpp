@@ -11,7 +11,6 @@
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
 #define NUM_KARTS 4
-
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup

@@ -847,7 +847,7 @@ void Simulation::step(double seconds)
 		case Events::EventType::PowerupActivated:
 		{
 			Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
-			switch (powUsed->type)
+			switch (powUsed->powerup_type)
 			{
 			case Entities::SpeedPowerup:
 				{
