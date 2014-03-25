@@ -592,6 +592,7 @@ void Simulation::step(double seconds)
 //#define STEER_MAX_ANGLE (35)
 #define STEER_MAX_ANGLE (25)
 #define ENGINE_MAX_FORCE (3000)
+#define BOOST_FACTOR (2)
 #define BRAKE_MAX_FORCE (2500)
 #define E_BRAKE_FORCE (300)
 #define MAX_SPEED (30.0)
@@ -852,10 +853,10 @@ void Simulation::step(double seconds)
 					if(kart_entity != NULL)
 					{
 						btRigidBody *kartBody = kart->getRigidBody();
-						btScalar boostForce = ENGINE_MAX_FORCE * 20;
+						btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
 						btVector3 boost = kart_entity->forDirection * boostForce;
 
-						kartBody->applyForce(boost, btVector3(0,0,0));
+						kartBody->applyImpulse(boost, btVector3(0,0,0));
 					}
 				}
 			}
@@ -939,7 +940,6 @@ void Simulation::step(double seconds)
 	auto bullet_list_event = NEWEVENT(BulletList);
 	bullet_list_event->list_of_bullets = &list_of_bullets;
 	events_out.push_back(bullet_list_event);
-
 
 	mb.sendMail(events_out);
 }

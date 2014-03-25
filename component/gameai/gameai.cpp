@@ -16,7 +16,8 @@
 // Small Gold Powerup
 #define SMALL_GOLD_VALUE 500
 // How much health does a kart has to start with
-#define STARTING_HEALTH 1
+#define STARTING_HEALTH 5
+#define HEALTH_POWERUP_AMOUNT 5
 
 GameAi::GameAi()
 {
@@ -27,6 +28,7 @@ GameAi::GameAi()
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
+	m_mb->request( Events::EventType::PowerupActivated );
 	m_mb->request( Events::EventType::TogglePauseGame );
 	m_mb->request( Events::EventType::KartHitByBullet );
 	m_mb->request( Events::EventType::RoundStart );
@@ -168,17 +170,35 @@ int GameAi::planFrame()
 			break;
 
 			case Events::EventType::PowerupDestroyed:
+				{
+					auto pickup = ((Events::PowerupPickupEvent *)event);
+					open_point(pickup->pos);
+				}
+				break;
+
+			case Events::EventType::PowerupActivated:
 			{
-				auto pickup = ((Events::PowerupPickupEvent *)event);
-				open_point(pickup->pos);
+				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+				switch (powUsed->powerup_type)
+				{
+				case Entities::HealthPowerup:
+					{
+						auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+						kart_entity->health += HEALTH_POWERUP_AMOUNT;
+					}
+					break;
+				default:
+					break;
+				}
+				
 			}
 			break;
 
 			case Events::EventType::TogglePauseGame:
-			{
-				gamePaused = !gamePaused;
-			}
-			break;
+				{
+					gamePaused = !gamePaused;
+				}
+				break;
 
 			case Events::EventType::Input:
 			{
