@@ -559,6 +559,7 @@ void Simulation::handle_bullets(double time)
 
 							auto hit_event = NEWEVENT(KartHitByBullet);
 							hit_event->kart_id = kart_id;
+							hit_event->source_kart_id = bullet_obj->kart_id;
 							events_out.push_back(hit_event);
 						}
 					}
@@ -590,7 +591,7 @@ void Simulation::handle_bullets(double time)
 void Simulation::step(double seconds)
 {
 //#define STEER_MAX_ANGLE (35)
-#define STEER_MAX_ANGLE (25)
+#define STEER_MAX_ANGLE (20)
 #define ENGINE_MAX_FORCE (3000)
 #define BOOST_FACTOR (2)
 #define BRAKE_MAX_FORCE (2500)

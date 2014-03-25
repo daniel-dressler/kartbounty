@@ -11,10 +11,13 @@
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
 #define NUM_KARTS 4
+
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
 #define SMALL_GOLD_VALUE 500
+// Amount of gold for killing another kart
+#define KART_KILL_GOLD_VALUE 2000
 // How much health does a kart has to start with
 #define STARTING_HEALTH 5
 #define HEALTH_POWERUP_AMOUNT 5
@@ -332,7 +335,7 @@ int GameAi::planFrame()
 			case Events::EventType::KartHitByBullet:
 			{
 				// Apply damage to kart
-				entity_id kart_id = ((Events::KartCreatedEvent *)event)->kart_id;
+				entity_id kart_id = ((Events::KartHitByBulletEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
 				kart->health -= DAMAGE_FROM_BULLET;
 
@@ -343,6 +346,10 @@ int GameAi::planFrame()
 				// punish the kart for dying.
 				if (kart->health <= 0)
 				{
+					// Add points to the kart that shot the bullet
+					auto shootingKart = GETENTITY(((Events::KartHitByBulletEvent *)event)->source_kart_id, CarEntity);
+					shootingKart->gold += KART_KILL_GOLD_VALUE;
+
 					kart->health = STARTING_HEALTH;
 					auto reset_kart_event = NEWEVENT(Reset);
 					reset_kart_event->kart_id = kart_id;

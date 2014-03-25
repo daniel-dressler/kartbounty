@@ -152,6 +152,7 @@ namespace Events {
 
 	EVENTSTRUCT(KartHitByBullet)
 		entity_id kart_id;
+		entity_id source_kart_id;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
