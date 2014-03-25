@@ -81,7 +81,6 @@
     <ClCompile Include="component\entities\entities.cpp" />
     <ClCompile Include="component\events\events.cpp" />
     <ClCompile Include="component\gameai\gameai.cpp" />
-    <ClCompile Include="component\gameai\GameLogic.cpp" />
     <ClCompile Include="component\input\input.cpp" />
     <ClCompile Include="component\physics\physics.cpp" />
     <ClCompile Include="component\rendering\glhelpers.cpp" />
@@ -93,7 +92,6 @@
     <ClCompile Include="component\rendering\SELib\SEStdMath.cpp" />
     <ClCompile Include="component\rendering\SELib\SETimer.cpp" />
     <ClCompile Include="component\rendering\SELib\SEVector.cpp" />
-    <ClCompile Include="component\state\state.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Standard.cpp" />
   </ItemGroup>
@@ -110,7 +108,6 @@
     <ClInclude Include="component\entities\entities.h" />
     <ClInclude Include="component\events\events.h" />
     <ClInclude Include="component\gameai\gameai.h" />
-    <ClInclude Include="component\gameai\GameLogic.h" />
     <ClInclude Include="component\input\input.h" />
     <ClInclude Include="component\physics\physics.h" />
     <ClInclude Include="component\rendering\glhelpers.h" />
@@ -128,7 +125,6 @@
     <ClInclude Include="component\rendering\SELib\SETimer.h" />
     <ClInclude Include="component\rendering\SELib\SEVector.h" />
     <ClInclude Include="component\rendering\ShaderStructs.h" />
-    <ClInclude Include="component\state\state.h" />
     <ClInclude Include="Standard.h" />
   </ItemGroup>
   <ItemGroup>

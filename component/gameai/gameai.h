@@ -3,7 +3,6 @@
 
 #include "../../Standard.h"
 #include "../events/events.h"
-#include "../state/state.h"
 
 class GameAi 
 {
@@ -14,6 +13,14 @@ public:
 	int planFrame();
 	Real getElapsedTime();
 	bool gamePaused;
+
+	struct local_powerup_to_spawn
+	{
+		entity_id powerup_id;
+		Entities::powerup_t powerup_type;
+		float timer_to_respawn;
+		Vector3 pos;
+	};
 
 private:
 	Events::Mailbox* m_mb;
@@ -30,6 +37,8 @@ private:
 
 	Real roundStartCountdownTimer;
 
+	std::map<entity_id, GameAi::local_powerup_to_spawn *> m_to_spawn_vec;
+
 	std::vector<entity_id> kart_ids;
 
 	entity_id player1KartId;
@@ -41,9 +50,13 @@ private:
 
 	Vector3 pick_point();
 	void open_point(Vector3);
-	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t);
+	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t p_type, Vector3 pos);
 	void updateScoreBoard();
 	void outputScoreBoard();
+
+	void add_to_future_respawn(Events::PowerupPickupEvent *);
+	void GameAi::handle_powerups_not_gold(double time_elapsed);
+	void GameAi::init_powerups_not_gold();
 
 	void resetGame();
 };

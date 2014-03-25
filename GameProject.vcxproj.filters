@@ -50,9 +50,6 @@
     <ClInclude Include="component\rendering\rendering.h">
       <Filter>component\rendering</Filter>
     </ClInclude>
-    <ClInclude Include="component\state\state.h">
-      <Filter>component\state</Filter>
-    </ClInclude>
     <ClInclude Include="component\input\input.h">
       <Filter>component\input</Filter>
     </ClInclude>
@@ -92,9 +89,6 @@
     <ClInclude Include="component\enemyai\graph\Node.h">
       <Filter>component\enemyai\graph</Filter>
     </ClInclude>
-    <ClInclude Include="component\gameai\GameLogic.h">
-      <Filter>component\gameai</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -129,9 +123,6 @@
     <ClCompile Include="component\rendering\rendering.cpp">
       <Filter>component\rendering</Filter>
     </ClCompile>
-    <ClCompile Include="component\state\state.cpp">
-      <Filter>component\state</Filter>
-    </ClCompile>
     <ClCompile Include="component\input\input.cpp">
       <Filter>component\input</Filter>
     </ClCompile>
@@ -149,9 +140,6 @@
     </ClCompile>
     <ClCompile Include="component\enemyai\enemyai.cpp">
       <Filter>component\enemyai</Filter>
-    </ClCompile>
-    <ClCompile Include="component\gameai\GameLogic.cpp">
-      <Filter>component\gameai</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -175,9 +163,6 @@
     </Filter>
     <Filter Include="component\rendering\opengl">
       <UniqueIdentifier>{cf5d07dd-948b-438e-953f-818acc6a34e4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="component\state">
-      <UniqueIdentifier>{0f0f9d34-8db7-4ea4-8596-dc5cec81926d}</UniqueIdentifier>
     </Filter>
     <Filter Include="component\input">
       <UniqueIdentifier>{1a452350-b85b-49ea-80fb-c3eca13ab3f3}</UniqueIdentifier>

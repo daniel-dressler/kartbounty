@@ -10,7 +10,7 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 4
+#define NUM_KARTS 1
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
@@ -18,6 +18,8 @@
 // How much health does a kart has to start with
 #define STARTING_HEALTH 5
 #define HEALTH_POWERUP_AMOUNT 5
+// timer to spawn powerups that aren't gold, in seconds
+#define TIME_TO_SPAWN_POWERUPS 3
 
 GameAi::GameAi()
 {
@@ -123,7 +125,73 @@ void GameAi::setup()
 		new_kart_ev->kart_id = kart_id;
 		events.push_back(new_kart_ev);
 	}
+
+	init_powerups_not_gold();
+
 	m_mb->sendMail(events);
+}
+
+void GameAi::add_to_future_respawn(Events::PowerupPickupEvent * event)
+{
+	auto to_spawn = new local_powerup_to_spawn();
+	to_spawn->powerup_id = event->powerup_id;
+	to_spawn->powerup_type = event->powerup_type;
+	to_spawn->timer_to_respawn = TIME_TO_SPAWN_POWERUPS;
+	to_spawn->pos = event->pos;
+	m_to_spawn_vec[to_spawn->powerup_id] = to_spawn;
+}
+
+void GameAi::init_powerups_not_gold()
+{
+	std::vector<Vector3> powerup_location;
+	std::vector<Events::Event *> events_out;
+	powerup_location.push_back(Vector3(12,1,0));
+	powerup_location.push_back(Vector3(-12,1,0));
+	powerup_location.push_back(Vector3(0,1,12));
+	powerup_location.push_back(Vector3(0,1,-12));
+
+	for (Vector3 pos: powerup_location)
+	{
+		int type_num = rand() %2;
+		if (type_num == 0)
+			events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
+		else
+			events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+	}
+
+	m_mb->sendMail(events_out);
+}
+
+void GameAi::handle_powerups_not_gold(double time_elapsed)
+{
+	std::vector<Events::Event *> events_out;
+	std::vector<entity_id> to_delete;
+	for (auto to_spawn_pair : m_to_spawn_vec)
+	{
+		auto to_spawn = to_spawn_pair.second;
+		auto pos = to_spawn->pos;
+		to_spawn->timer_to_respawn -= time_elapsed;
+		if (to_spawn->timer_to_respawn <= 0)
+		{
+			to_delete.push_back( to_spawn->powerup_id );
+			int type_num = rand() %2;
+			if (type_num == 0)
+				events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
+			else
+				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+		}
+	}
+	
+	// If spawned, remove struct from to_spawn
+	for (auto id : to_delete)
+	{
+		auto current = m_to_spawn_vec[id];
+		delete current;
+		m_to_spawn_vec.erase(id);
+	}
+
+	if (events_out.size() > 0)
+		m_mb->sendMail(events_out);
 }
 
 int GameAi::planFrame()
@@ -144,61 +212,66 @@ int GameAi::planFrame()
 				auto powerup = pickup->powerup_type;
 				entity_id kart_id = pickup->kart_id;
 
-				// Return point to pool
-				open_point(pickup->pos);
-
 				// Score or store pickup
 				auto kart = GETENTITY(kart_id, CarEntity);
 
 				switch (powerup) 
 				{
-				case Entities::GoldCasePowerup:
-					active_tresures--;
-					kart->gold += BIG_GOLD_VALUE;
-					break;
+					case Entities::GoldCasePowerup:
+						// Return point to pool
+						open_point(pickup->pos);
 
-				case Entities::GoldCoinPowerup:
-					kart->gold += SMALL_GOLD_VALUE;
-					break;
+						active_tresures--;
+						kart->gold += BIG_GOLD_VALUE;
+						break;
 
-				default:
-					// Player loses any unused powerups
-					kart->powerup_slot = powerup;
-					break;
+					case Entities::GoldCoinPowerup:
+						kart->gold += SMALL_GOLD_VALUE;
+						break;
+
+					default:
+						// Player loses any unused powerups
+						kart->powerup_slot = powerup;
+						add_to_future_respawn(pickup);
+						break;
 				}
 			}
 			break;
 
+			// This never actually happens, lol
 			case Events::EventType::PowerupDestroyed:
-				{
-					auto pickup = ((Events::PowerupPickupEvent *)event);
+			{
+				auto pickup = ((Events::PowerupDestroyedEvent *)event);
+				if (pickup->powerup_type == Entities::GoldCasePowerup)
 					open_point(pickup->pos);
-				}
-				break;
+			
+			}
+			break;
 
 			case Events::EventType::PowerupActivated:
 			{
 				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
 				switch (powUsed->powerup_type)
 				{
-				case Entities::HealthPowerup:
+					case Entities::HealthPowerup:
 					{
 						auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
 						kart_entity->health += HEALTH_POWERUP_AMOUNT;
 					}
 					break;
-				default:
-					break;
+
+					default:
+						break;
 				}
 				
 			}
 			break;
 
 			case Events::EventType::TogglePauseGame:
-				{
-					gamePaused = !gamePaused;
-				}
-				break;
+			{
+				gamePaused = !gamePaused;
+			}
+			break;
 
 			case Events::EventType::Input:
 			{
@@ -342,9 +415,13 @@ int GameAi::planFrame()
 		if (active_tresures <= 0) 
 		{
 			active_tresures++;
-			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup));
+			auto pos = pick_point();
+			events_out.push_back(spawn_powerup(Entities::GoldCasePowerup, pos));
 		} 
 	}
+
+	// handle powerups
+	handle_powerups_not_gold(frame_timer.CalcSeconds());
 
 	// Issue planned events
 	m_mb->sendMail(events_out);
@@ -398,11 +475,11 @@ void GameAi::open_point(Vector3 pt)
 	m_open_points.push_back(pt);
 }
 
-Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type)
+Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
 {
 	auto p_event = NEWEVENT(PowerupPlacement);
 	p_event->powerup_type = p_type;
-	auto pos = p_event->pos = pick_point();
+	p_event->pos = pos;
 	p_event->powerup_id = this->next_powerup_id++;
 
 	active_powerups++;

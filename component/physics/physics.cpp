@@ -813,7 +813,8 @@ void Simulation::step(double seconds)
 			powerup->powerup_type = powerup_event->powerup_type;
 			powerup->powerup_id = id;
 
-			auto sphere = new btSphereShape(0.15);
+			// Made powerups a bit bigger
+			auto sphere = new btSphereShape(0.25);
 			m_collisionShapes.push_back(sphere);
 
 			btGhostObject *body = new btGhostObject();
@@ -837,30 +838,30 @@ void Simulation::step(double seconds)
 		}
 		break;
 		case Events::EventType::PowerupDestroyed:
-			{
-				auto powerup_event = (Events::PowerupDestroyedEvent *)event;
-				removePowerup(powerup_event->powerup_id);
-			}
-			break;
+		{
+			auto powerup_event = (Events::PowerupDestroyedEvent *)event;
+			removePowerup(powerup_event->powerup_id);
+		}
+		break;
 		case Events::EventType::PowerupActivated:
+		{
+			Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+
+			btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
+			if(kart != NULL)
 			{
-				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
-
-				btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
-				if(kart != NULL)
+				auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+				if(kart_entity != NULL)
 				{
-					auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
-					if(kart_entity != NULL)
-					{
-						btRigidBody *kartBody = kart->getRigidBody();
-						btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
-						btVector3 boost = kart_entity->forDirection * boostForce;
+					btRigidBody *kartBody = kart->getRigidBody();
+					btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
+					btVector3 boost = kart_entity->forDirection * boostForce;
 
-						kartBody->applyImpulse(boost, btVector3(0,0,0));
-					}
+					kartBody->applyImpulse(boost, btVector3(0,0,0));
 				}
 			}
-			break;
+		}
+		break;
 		case Events::EventType::Reset:
 		{
 			Events::ResetEvent *reset_event = (Events::ResetEvent *)event;
@@ -869,10 +870,10 @@ void Simulation::step(double seconds)
 		}
 		break;
 		case Events::EventType::TogglePauseGame:
-			{
-				gamePaused = !gamePaused;
-			}
-			break;
+		{
+			gamePaused = !gamePaused;
+		}
+		break;
 		default:
 			break;
 		}
