@@ -847,19 +847,27 @@ void Simulation::step(double seconds)
 		case Events::EventType::PowerupActivated:
 		{
 			Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
-
-			btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
-			if(kart != NULL)
+			switch (powUsed->type)
 			{
-				auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
-				if(kart_entity != NULL)
+			case Entities::SpeedPowerup:
 				{
-					btRigidBody *kartBody = kart->getRigidBody();
-					btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
-					btVector3 boost = kart_entity->forDirection * boostForce;
+					btRaycastVehicle *kart = m_karts[powUsed->kart_id]->vehicle;
+					if(kart != NULL)
+					{
+						auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+						if(kart_entity != NULL)
+						{
+							btRigidBody *kartBody = kart->getRigidBody();
+							btScalar boostForce = ENGINE_MAX_FORCE * BOOST_FACTOR;
+							btVector3 boost = kart_entity->forDirection * boostForce;
 
-					kartBody->applyImpulse(boost, btVector3(0,0,0));
+							kartBody->applyImpulse(boost, btVector3(0,0,0));
+						}
+					}
 				}
+				break;
+			default:
+				break;
 			}
 		}
 		break;

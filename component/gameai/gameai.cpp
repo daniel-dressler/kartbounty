@@ -368,7 +368,7 @@ int GameAi::planFrame()
 	for (auto id : this->kart_ids) 
 	{
 		Events::Event *event;
-		if (id == player1KartId && currentState != StartMenu) 
+		if (id == player1KartId && (currentState != StartMenu || currentState != RoundEnd) )
 		{
 			auto kart_event = NEWEVENT(PlayerKart);
 			kart_event->kart_id = id;
