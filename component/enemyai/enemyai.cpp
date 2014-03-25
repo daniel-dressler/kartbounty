@@ -10,7 +10,31 @@
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
 #define TIME_TO_FOLLOW_TARGET 15.f
-#define SHOT_COOLDOWN 1.2f
+#define TIME_TO_FOLLOW_GOLD 30.f
+#define SHOT_COOLDOWN 0.2f
+#define DIST_TO_TARGET_RETHINK_NEW_TARGET 0.1f
+
+#define AI_FORWARD_SPEED 0.7f
+
+// Behaviour templates
+
+//if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
+// This is the first check. If below, just drive to a random spot. Keep low, I think?
+#define JUST_DRIVE_BEHAVIOUR_TRESHOLD 1
+
+// else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
+// This is the seconds check. If below, select a (semi)random kart to attack and go for it. Chooses player 66% of the time to look "alive".
+#define AGRESSIVE_BEHAVIOUR_TRESHOLD 1
+
+// The rest of the cases
+// This makes the karts chase the gold pickups
+#define SEEK_GOLD_TRESHOLD 10
+
+// int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
+// FULL_BEHAVIOUR_TRESHHOLD is the total sum of all the treshholds.
+#define FULL_BEHAVIOUR_TRESHHOLD ( JUST_DRIVE_BEHAVIOUR_TRESHOLD + AGRESSIVE_BEHAVIOUR_TRESHOLD + SEEK_GOLD_TRESHOLD)			
+		
+
 // temp
 std::vector<Vector3> path;
 std::vector<Square> obs_sqr;
@@ -25,6 +49,7 @@ EnemyAi::EnemyAi()
 	m_mb.request( Events::EventType::KartCreated);
 	m_mb.request( Events::EventType::PlayerKart);
 	m_mb.request( Events::EventType::ShootReport);
+	m_mb.request( Events::EventType::PowerupPlacement);
 
 	has_player_kart = false;
 	// Possible points for the car to wander about.
@@ -47,16 +72,32 @@ void EnemyAi::think_of_target(struct ai_kart *kart)
 
 	if (has_player_kart)
 	{
-		int choice = std::rand() % 10;
-		if (choice < 2)
+		int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
+		if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
 			get_target_roaming(kart);
-		else if (choice < 8)
+		else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
 			get_target_aggressive(kart);
 		else
-			get_target_roaming(kart); //get_target_pickups(kart)
+			get_target_pickups(kart); 
 	}
 	else
-		get_target_roaming(kart);
+	{
+		int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
+		if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
+			get_target_roaming(kart);
+		else
+			get_target_pickups(kart); 
+	}
+}
+
+void EnemyAi::get_target_pickups(struct ai_kart *kart)
+{
+
+	kart->target_timer = TIME_TO_FOLLOW_GOLD;
+	kart->target_to_move = EnemyAi::gold_position;
+	kart->driving_mode = drivingMode::Gold;
+
+	//DEBUGOUT("Kart %lu decided to go after kart %lu\n", kart->kart_id, kart->target_kart_id)
 }
 
 void EnemyAi::get_target_aggressive(struct ai_kart *kart)
@@ -64,16 +105,18 @@ void EnemyAi::get_target_aggressive(struct ai_kart *kart)
 	int isPlayer = std::rand() % 3;
 	kart->target_kart_id = m_player_kart;
 
-	// if 0, choose random kart. Else, follow the player!
-	if (isPlayer == 0)
-	{
-		int rand = (std::rand() % m_kart_ids.size());
+	// ALWAYS ATTACK PLAYER. Fun stuff.
 
-		while (m_kart_ids[rand] == kart->kart_id)
-			rand = (std::rand() % m_kart_ids.size());
+	//// if 0, choose random kart. Else, follow the player!
+	//if (isPlayer == 0)
+	//{
+	//	int rand = (std::rand() % m_kart_ids.size());
 
-		kart->target_kart_id = m_kart_ids.at(rand);
-	}
+	//	while (m_kart_ids[rand] == kart->kart_id)
+	//		rand = (std::rand() % m_kart_ids.size());
+
+	//	kart->target_kart_id = m_kart_ids.at(rand);
+	//}
 	kart->target_timer = TIME_TO_FOLLOW_TARGET;
 	kart->driving_mode = drivingMode::Aggressive;
 
@@ -127,6 +170,16 @@ void EnemyAi::update(Real elapsed_time)
 	{
 		switch( event->type ) 
 		{
+			case Events::EventType::PowerupPlacement:
+			{
+				auto powerup_event = (Events::PowerupPlacementEvent *)event;
+				if (powerup_event->powerup_type == Entities::GoldCasePowerup)
+				{
+					EnemyAi::gold_position = powerup_event->pos;
+				}
+			}
+			break;
+
 			case Events::EventType::ShootReport:
 			{
 				entity_id kart_id = ((Events::ShootReportEvent *)event)->shooting_kart_id;
@@ -211,21 +264,21 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	// increment it's timer by time
 	kart_local->target_timer -= elapsed_time;
 
-	if (kart_local->target_timer <= 0 && kart_local->driving_mode == drivingMode::Aggressive)
+	if (kart_local->target_timer <= 0 && (kart_local->driving_mode == drivingMode::Aggressive || kart_local->driving_mode == drivingMode::Gold))
 	{
 		DEBUGOUT("Timer for agressive ran out, rethink!\n")
 		think_of_target(kart_local);
 	}
 
-	if (kart_local->driving_mode == drivingMode::Aggressive)
+	if (kart_local->driving_mode == drivingMode::Gold)
 	{
-		//DEBUGOUT("KART %d is still targetting %d agressivly!!!\n", kart_local->kart_id, kart_local->target_kart_id)
+		kart_local->target_to_move = gold_position;
+	}
+	else if (kart_local->driving_mode == drivingMode::Aggressive)
+	{
 		auto target_kart_entity = GETENTITY(kart_local->target_kart_id, CarEntity);
 		kart_local->target_to_move = target_kart_entity->Pos;
 	}
-
-	//DEBUGOUT("Stuck value %f for %d\n", kart_local->time_stuck, kart_local->kart_id)
-	//DEBUGOUT("Time : %f\n", kart_local->target_timer)
 
 	auto kart_entity = GETENTITY(kart_local->kart_id, CarEntity);
 	Vector3 target_3 = kart_local->target_to_move;
@@ -238,7 +291,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	btScalar distance_to_target = sqrtf( pow((pos.x - target.x) , 2) 
 											+ pow((pos.z - target.y),2) );
 
-	if (distance_to_target < 1.0f)
+	if (distance_to_target < DIST_TO_TARGET_RETHINK_NEW_TARGET)
 		think_of_target(kart_local);
 
 	// check if car stuck, increase stuck timer if stuck.
@@ -261,12 +314,13 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 		kart_local->time_stuck = 0;
 		directions->reset_requested = true;
 	}
-	
-	
-	//DEBUGOUT("angle: %f, dist: %f\n", RADTODEG(diff_in_angles), distance_to_target);
 
 	// update old pos
 	kart_local->lastPos = pos;
+
+	// HACK for now, make ai use their powerups right away
+	directions->xPressed = true;
+
 	return directions;
 }
 
@@ -319,7 +373,7 @@ Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_k
 		{
 			//DEBUGOUT("DRIVE FORWARD!!\n");
 			
-			directions->rightTrigger = .9f;
+			directions->rightTrigger = AI_FORWARD_SPEED;
 			directions->leftTrigger = 0;
 
 			if (abs(diff_ang) < 0.7f  && abs(diff_ang) > 0.05f )

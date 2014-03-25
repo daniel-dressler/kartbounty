@@ -18,7 +18,7 @@ private:
 	entity_id m_player_kart;
 	bool has_player_kart;
 
-	enum drivingMode {Reverse, Roaming, Aggressive};
+	enum drivingMode {Reverse, Roaming, Aggressive, Gold};
 
 	struct ai_kart {
 		Vector3 target_to_move;
@@ -30,7 +30,6 @@ private:
 		entity_id kart_id;
 		entity_id target_kart_id;
 		int current_target_index;
-
 		drivingMode driving_mode;
 		entity_id can_shoot;
 		float shoot_timer;	// Cooldown for the next shot
@@ -43,6 +42,8 @@ private:
 	void think_of_target(struct ai_kart *);
 	void get_target_roaming(struct ai_kart *kart);
 	void get_target_aggressive(struct ai_kart *kart);
+
+	Vector3 gold_position;
 	void get_target_pickups(struct ai_kart *kart);
 
 	Events::InputEvent *move_kart(struct ai_kart *, Real);

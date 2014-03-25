@@ -10,7 +10,7 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 1
+#define NUM_KARTS 4
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 5000
 // Small Gold Powerup
@@ -44,10 +44,10 @@ GameAi::GameAi()
 	m_open_points.push_back(Vector3(1.0, 0.0, -5.5));
 	m_open_points.push_back(Vector3(-1.0, 0.0, -5.5));
 
-	m_open_points.push_back(Vector3(5.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(-5.5f, 0.f, -1.f));
-	m_open_points.push_back(Vector3(-5.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(5.5f, 0.f, -1.f));
+	m_open_points.push_back(Vector3(6.5f, 0.f, 1.f));
+	m_open_points.push_back(Vector3(-6.5f, 0.f, -1.f));
+	m_open_points.push_back(Vector3(-6.5f, 0.f, 1.f));
+	m_open_points.push_back(Vector3(6.5f, 0.f, -1.f));
 
 	m_open_points.push_back(Vector3(3.22f, 0.f, 7.59f));
 	m_open_points.push_back(Vector3(-3.22f, 0.f, 7.59f));
