@@ -55,8 +55,8 @@ private:
 	void outputScoreBoard();
 
 	void add_to_future_respawn(Events::PowerupPickupEvent *);
-	void GameAi::handle_powerups_not_gold(double time_elapsed);
-	void GameAi::init_powerups_not_gold();
+	void handle_powerups_not_gold(double time_elapsed);
+	void init_powerups_not_gold();
 
 	void resetGame();
 };

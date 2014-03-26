@@ -905,6 +905,7 @@ void Simulation::step(double seconds)
 	}
 
 	// Issue Collision Events
+	std::map<powerup_id_t, bool> takenPowerups;
 	for (auto id_report_pair : m_col_reports) 
 	{
 		auto report = id_report_pair.second;
@@ -912,6 +913,9 @@ void Simulation::step(double seconds)
 		switch (report.type) {
 			case KART_TO_POWERUP:
 			{
+				if (takenPowerups[report.powerup_id])
+					break;
+
 				auto event = NEWEVENT(PowerupPickup);
 				event->pos = report.pos;
 				event->kart_id = report.kart_id;
@@ -919,6 +923,7 @@ void Simulation::step(double seconds)
 				event->powerup_id = report.powerup_id;
 				events_out.push_back(event);
 
+				takenPowerups[report.powerup_id] = true;
 				removePowerup(report.powerup_id);
 			}
 			break;
