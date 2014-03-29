@@ -11,6 +11,12 @@ Input::Input() {
 	m_pMailbox = new Events::Mailbox();	
 	m_pMailbox->request(Events::EventType::PlayerKart);
 	m_pMailbox->request(Events::EventType::StartMenu);
+
+	// Load database of joystick to controller mappings
+	SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
+
+	// Disable Joystick updates over events
+	//SDL_JoystickEventState(SDL_IGNORE);
 }
 
 Input::~Input() {
@@ -31,16 +37,6 @@ void Input::setup() {
 
 	// Setup previous input event struct
 	m_pPreviousInput = NEWEVENT(Input);
-	m_pPreviousInput->rightTrigger = 0;
-	m_pPreviousInput->leftTrigger = 0;
-	m_pPreviousInput->leftThumbStickRL = 0;
-	m_pPreviousInput->rightThumbStickRL = 0;
-	m_pPreviousInput->aPressed = false;
-	m_pPreviousInput->bPressed = false;
-	m_pPreviousInput->xPressed = false;
-	m_pPreviousInput->yPressed = false;
-	m_pPreviousInput->print_position = false;
-	m_pPreviousInput->reset_requested = false;
 }
 
 void Input::OpenJoysticks(){
@@ -50,6 +46,8 @@ void Input::OpenJoysticks(){
 	SDL_JoystickEventState(SDL_ENABLE);
 	for (int i = 0; i < SDL_NumJoysticks(); i++)
 	{
+		m_free_joysticks.push_back(i);
+
 		auto joystick = SDL_JoystickOpen(i);
 		int number_of_buttons;
 		number_of_buttons = SDL_JoystickNumButtons(joystick);
@@ -61,7 +59,7 @@ void Input::OpenJoysticks(){
 void Input::HandleEvents(){
 
 	SDL_Event sdl_event;
-	std::vector<Events::Event *> inputEvents;
+	std::vector<Events::Event *> outEvents;
 
 	for ( Events::Event *mail_event : (m_pMailbox->checkMail()) )
 	{
@@ -69,48 +67,78 @@ void Input::HandleEvents(){
 		{
 		case Events::EventType::PlayerKart:
 			{
-				m_pCurrentInput = NEWEVENT(Input);
-				auto event_id = m_pCurrentInput->id;
-				memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-				m_pCurrentInput->id = event_id;
-
 				// What kart is this input for?
 				auto kart_id = ((Events::PlayerKartEvent *)mail_event)->kart_id;
-				m_pCurrentInput->kart_id = kart_id;
+
+				// Is kart matched to joystick yet?
+				player_kart *kart_local = NULL;
+				if (m_players.count(kart_id) == 0) {
+					player_kart *kart_local = new player_kart();
+					m_players[kart_id] = kart_local;
+					kart_local->last_input = NEWEVENT(Input);
+					kart_local->controller = NULL;
+					kart_local->haptic = NULL;
+					kart_local->joystick = NULL;
+				} else {
+					kart_local = m_players[kart_id];
+				}
+
+				// Does player have a controller?
+				if (kart_local->joystick == NULL) {
+					// Get next free joysick
+					if (m_free_joysticks.size() > 0) {
+						int free_joystick = m_free_joysticks[0];
+						m_free_joysticks.erase(m_free_joysticks.begin());
+						kart_local->joystick = SDL_JoystickOpen(free_joystick);
+						kart_local->haptic = SDL_HapticOpenFromJoystick(kart_local->joystick);
+						if (SDL_IsGameController(free_joystick)) {
+							kart_local->controller = SDL_GameControllerOpen(free_joystick);
+						}
+
+						m_taken_joysticks[free_joystick] = kart_id;
+					} else {
+						DEBUGOUT("Warning: Could not get joystick for player of kart %d\n", kart_id);
+					}
+				}
+
+				// Input to be sent
+				auto input = NEWEVENT(Input);
+				auto event_id = input->id;
+				memcpy(input, kart_local->last_input, sizeof(*input));
+				input->id = event_id;
 
 				// Reset Development Tools
-				m_pCurrentInput->print_position = false;
-				m_pCurrentInput->reset_requested = false;
+				input->print_position = false;
+				input->reset_requested = false;
 
 				while( SDL_PollEvent(&sdl_event) )
 				{
-					OnEvent(&sdl_event);
+					OnEvent(&sdl_event, &outEvents, input);
 				}
 
-				// Update previous input event
-				memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
+				if (kart_local->controller) {
+					PollController(kart_local->controller, &outEvents, input);
+				} else if (kart_local->joystick) {
+					PollJoystick(kart_local->joystick, &outEvents, input);
+				}
 
-				// Send input events to mail system
-				inputEvents.push_back(m_pCurrentInput);
+				// Save current input
+				memcpy(kart_local->last_input, input, sizeof(*input));
 
-				// Now mailbox owns the object
-				m_pCurrentInput = NULL;
+				// Send input
+				outEvents.push_back(input);
+
 				break;
 			}
 		case Events::EventType::StartMenu:
 			{
-				m_pCurrentInput = NEWEVENT(Input);
-				auto event_id = m_pCurrentInput->id;
-				memcpy(m_pCurrentInput, m_pPreviousInput, sizeof(Events::InputEvent));
-				m_pCurrentInput->id = event_id;
+				// TODO: Daniel, fix this
+				auto input = NEWEVENT(Input);
 
 				while( SDL_PollEvent(&sdl_event) )
 				{
-					OnEvent(&sdl_event);
+					OnEvent(&sdl_event, &outEvents, input);
 				}
-
-				// Update previous input event
-				memcpy(m_pPreviousInput, m_pCurrentInput, sizeof(Events::InputEvent));
 
 				auto menuInput = NEWEVENT( StartMenuInput );
 				menuInput->aPressed = m_pCurrentInput->aPressed;
@@ -119,10 +147,7 @@ void Input::HandleEvents(){
 				menuInput->yPressed = m_pCurrentInput->yPressed;
 
 				// Send input events to mail system
-				inputEvents.push_back(menuInput);
-
-				// Now mailbox owns the object
-				m_pCurrentInput = NULL;
+				outEvents.push_back(input);
 			}
 			break;
 		default:
@@ -131,20 +156,20 @@ void Input::HandleEvents(){
 	}
 	m_pMailbox->emptyMail();
 
-	m_pMailbox->sendMail(inputEvents);
+	m_pMailbox->sendMail(outEvents);
 }
 
-void Input::OnEvent(SDL_Event* Event) 
+void Input::OnEvent(SDL_Event* event, std::vector<Events::Event *> *eventQueue, Events::InputEvent *outInput) 
 {
-	switch (Event->type)
+	switch (event->type)
 	{
 	case SDL_WINDOWEVENT:
-		switch (Event->window.event)
+		switch (event->window.event)
 		{
 		case SDL_WINDOWEVENT_RESIZED:
 			SDL_Window* win;
 			Int32 nWinWidth, nWinHeight;			
-			win = SDL_GetWindowFromID(Event->window.windowID);
+			win = SDL_GetWindowFromID(event->window.windowID);
 			SDL_GetWindowSize( win, &nWinWidth, &nWinHeight );
 			glViewport( 0, 0, nWinWidth, nWinHeight );
 			break;
@@ -154,25 +179,23 @@ void Input::OnEvent(SDL_Event* Event)
 		break;
 	case SDL_QUIT:
 		{
-			std::vector<Events::Event *> quitEvent;
-			quitEvent.push_back( NEWEVENT( Quit ) );
-			m_pMailbox->sendMail( quitEvent );
+			eventQueue->push_back( NEWEVENT( Quit ) );
 		}
 		break;
 	case SDL_JOYBUTTONDOWN:
-		OnJoystickButtonDown(Event->jbutton);
+		OnJoystickButtonDown(event->jbutton);
 		break;
 	case SDL_JOYBUTTONUP:
-		OnJoystickButtonUp(Event->jbutton);
+		OnJoystickButtonUp(event->jbutton);
 		break;
 	case SDL_KEYDOWN:
-		OnKeyDown(Event->key.keysym.sym, Event->key.keysym.mod, Event->key.type);
+		OnKeyDown(event, eventQueue, outInput);
 		break;
 	case SDL_KEYUP:
-		OnKeyUp(Event->key.keysym.sym, Event->key.keysym.mod, Event->key.type);
+		OnKeyUp(event, eventQueue, outInput);
 		break;
 	case SDL_JOYAXISMOTION:
-		OnJoystickAxisMotion(Event->jaxis);
+		OnJoystickAxisMotion(event->jaxis);
 		break;
 	default:
 		//DEBUGOUT("SDL Event type:%i\n", Event->type);
@@ -180,94 +203,167 @@ void Input::OnEvent(SDL_Event* Event)
 	}
 }
 
-void Input::OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type){
+void Input::OnKeyDown(SDL_Event* event, std::vector<Events::Event *> *eventQueue, Events::InputEvent *outInput){
+	SDL_Keycode keycode = event->key.keysym.sym;
 
 	// Handle key press for sending InputEvent to physics
 	switch (keycode)
 	{
 	case SDLK_ESCAPE :	//This should pause the game but for now it just exits the program
 		{
-			std::vector<Events::Event *> quitEvent;
-			quitEvent.push_back( NEWEVENT( Quit ) );
-			m_pMailbox->sendMail( quitEvent );
+			eventQueue->push_back( NEWEVENT( Quit ) );
 			break;
 		}
 	case SDLK_a:
-		m_pCurrentInput->leftThumbStickRL = -1;
+		outInput->leftThumbStickRL = -1;
 		break;
 	case SDLK_d:
-		m_pCurrentInput->leftThumbStickRL = 1;
+		outInput->leftThumbStickRL = 1;
 		break;
 	case SDLK_RIGHT:
-		m_pCurrentInput->leftThumbStickRL = 1;
+		outInput->leftThumbStickRL = 1;
 		break;
 	case SDLK_LEFT:
-		m_pCurrentInput->leftThumbStickRL = -1;
+		outInput->leftThumbStickRL = -1;
 		break;
 	case SDLK_w:
-		m_pCurrentInput->rightTrigger = 1;
+		outInput->rightTrigger = 1;
 		break;
 	case SDLK_s:
-		m_pCurrentInput->leftTrigger = 1;
+		outInput->leftTrigger = 1;
 		break;
 	case SDLK_SPACE:
-		m_pCurrentInput->bPressed = true;
+		outInput->bPressed = true;
 		break;
 	case SDLK_LSHIFT:
-		m_pCurrentInput->aPressed = true;
+		outInput->aPressed = true;
 		break;
 	case SDLK_RETURN:
-		m_pCurrentInput->xPressed = true;
+		outInput->xPressed = true;
 		break;
 
 		// Development Tools
 	case SDLK_z:
-		m_pCurrentInput->print_position = true;
+		outInput->print_position = true;
 		break;
 	case SDLK_r:
-		m_pCurrentInput->reset_requested = true;
+		outInput->reset_requested = true;
 		break;
 	default:
 		break;
 	}
 }
 
-void Input::OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type){
+void Input::OnKeyUp(SDL_Event* event, std::vector<Events::Event *> *eventQueue, Events::InputEvent *outInput){
+	SDL_Keycode keycode = event->key.keysym.sym;
+
 	switch (keycode)
 	{
 	case SDLK_a:
-		m_pCurrentInput->leftThumbStickRL = 0;
+		outInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_d:
-		m_pCurrentInput->leftThumbStickRL = 0;
+		outInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_w:
-		m_pCurrentInput->rightTrigger = 0.01;
+		outInput->rightTrigger = 0.01;
 		break;
 	case SDLK_s:
-		m_pCurrentInput->leftTrigger = 0;
+		outInput->leftTrigger = 0;
 		break;
 	case SDLK_LEFT:
-		m_pCurrentInput->leftThumbStickRL = 0;
+		outInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_RIGHT:
-		m_pCurrentInput->leftThumbStickRL = 0;
+		outInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_SPACE:
-		m_pCurrentInput->bPressed = false;
+		outInput->bPressed = false;
 		break;
 	case SDLK_LSHIFT:
-		m_pCurrentInput->aPressed = false;
+		outInput->aPressed = false;
 		break;
 	case SDLK_RETURN:
-		m_pCurrentInput->xPressed = false;
+		outInput->xPressed = false;
 		break;
 	default:
 		break;
 	}
 }
 
+
+void Input::PollController(SDL_GameController* controller,
+		std::vector<Events::Event *> *eventQueue, Events::InputEvent *out){
+
+	#define POLL(button) \
+		(1 == SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_ ## button))
+
+	out->aPressed = POLL(A);
+	out->xPressed = POLL(X);
+	out->bPressed = POLL(B);
+	out->yPressed = POLL(Y);
+
+	if (POLL(START)) {
+		eventQueue->push_back(NEWEVENT(TogglePauseGame));
+	}
+
+	if (POLL(BACK)) {
+		//eventQueue.push_back(NEWEVENT(RoundStart));
+	}
+
+	if (POLL(GUIDE)) {
+		eventQueue->push_back(NEWEVENT(Quit));
+	}
+
+	#undef POLL
+	#define POLL(axis) \
+		SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_ ## axis)
+
+	// TODO: add deadzone
+	out->leftTrigger = POLL(TRIGGERLEFT);
+	out->rightTrigger = POLL(TRIGGERRIGHT);
+	out->leftThumbStickRL = POLL(LEFTX);
+
+	#undef POLL
+}
+
+void Input::PollJoystick(SDL_Joystick* joystick,
+		std::vector<Events::Event *> *eventQueue, Events::InputEvent *out){
+
+	#define POLL(button) \
+		(1 == SDL_JoystickGetButton(joystick, button))
+
+	out->aPressed = POLL(A_BUTTON);
+	out->xPressed = POLL(X_BUTTON);
+	out->bPressed = POLL(B_BUTTON);
+	out->yPressed = POLL(Y_BUTTON);
+
+	if (POLL(START_BUTTON)) {
+		eventQueue->push_back(NEWEVENT(TogglePauseGame));
+	}
+
+	if (POLL(BACK_BUTTON)) {
+		//eventQueue->push_back(NEWEVENT(RoundStart));
+	}
+
+	if (POLL(XBOX_BUTTON)) {
+		eventQueue->push_back(NEWEVENT(Quit));
+	}
+
+	#undef POLL
+	#define POLL(axis) \
+		SDL_JoystickGetAxis(joystick, axis)
+
+	// TODO: add deadzone
+	out->leftTrigger = POLL(LEFT_TRIGGER_AXIS);
+	out->rightTrigger = POLL(RIGHT_TRIGGER_AXIS);
+	out->leftThumbStickRL = POLL(LEFT_STICK_LEFT_RIGHT_AXIS);
+
+	#undef POLL
+}
+
 void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
+	return;
 
 	// Used to scale joystick inputs to range of -1 to 1
 	Sint16 scaleFactor = 32767;
@@ -304,6 +400,7 @@ void Input::OnJoystickAxisMotion(SDL_JoyAxisEvent event){
 }
 
 void Input::OnJoystickButtonDown(SDL_JoyButtonEvent event){
+	return;
 	//DEBUGOUT("Joystick button: %i\n", event.button);
 	switch (event.button)
 	{
