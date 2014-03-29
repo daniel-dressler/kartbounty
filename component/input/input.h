@@ -9,23 +9,19 @@
 class Input {
 
 private:
-	std::vector<SDL_Joystick *> m_mJoysticks;
-	std::vector<SDL_Haptic *> m_mHaptics;
-	std::vector<SDL_GameController *> m_mControllers;
-	Events::Mailbox *m_pMailbox;
-	Events::InputEvent *m_pCurrentInput;
-	Events::InputEvent *m_pPreviousInput;
+	Events::Mailbox m_Mailbox;
 
 	struct player_kart {
 		SDL_Joystick *joystick;
 		SDL_Haptic *haptic;
 		SDL_GameController *controller;
 		SDL_JoystickID joystick_id;
-		Events::InputEvent *last_input;
 	};
 	std::map<entity_id, player_kart *>m_players;
 	std::map<int, entity_id>m_taken_joysticks;
 	std::vector<int>m_free_joysticks;
+
+	Events::InputEvent *lastKbInput;
 
 public:
 
@@ -57,26 +53,19 @@ public:
 #define MIN_JOY_MOVEMENT_THRESHOLD 500
 #define JOYSTICK_DEADZONE 3000
 
-	//Joystick Events
-	void OnJoystickAxisMotion(SDL_JoyAxisEvent event);
-	void OnJoystickButtonDown(SDL_JoyButtonEvent event);
-	void OnJoystickButtonUp(SDL_JoyButtonEvent event);
-
 	Input();
 
 	~Input();
 
-	void OpenJoysticks();
+	void setup();
 
 	void HandleEvents();
-	void setup();
 
 	// Keyboard events
 	void OnKeyDown(SDL_Event* Event, std::vector<Events::Event *> *, Events::InputEvent *);
-	void OnKeyUp(SDL_Event* Event, std::vector<Events::Event *> *, Events::InputEvent *);
+	void OnKeyUp(SDL_Event* Event, Events::InputEvent *);
 
-	
-	void OnEvent(SDL_Event* Event, std::vector<Events::Event *> *, Events::InputEvent *);
+	// Joysticks & Controllers
 	void PollController(SDL_GameController *, std::vector<Events::Event *> *, Events::InputEvent *);
 	void PollJoystick(SDL_Joystick *, std::vector<Events::Event *> *, Events::InputEvent *);
 

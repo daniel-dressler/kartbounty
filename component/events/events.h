@@ -175,7 +175,6 @@ namespace Events {
 		bool reset_requested;
 		
 		// The kart producing this event
-		int kart_index;
 		entity_id kart_id;
 	ENDEVENT;
 
