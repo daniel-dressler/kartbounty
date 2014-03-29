@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stack>
 #include <SDL.h>
 #include <algorithm>
 
@@ -11,15 +12,22 @@ class Input {
 private:
 	Events::Mailbox m_Mailbox;
 
-	struct player_kart {
+	struct joystick {
 		SDL_Joystick *joystick;
 		SDL_Haptic *haptic;
 		SDL_GameController *controller;
-		SDL_JoystickID joystick_id;
+		SDL_JoystickID inst_id;
+	};
+	std::map<SDL_JoystickID, entity_id>m_taken_joysticks;
+	std::map<SDL_JoystickID, struct joystick *>m_joysticks;
+	std::vector<struct joystick *>m_free_joysticks;
+
+	struct player_kart {
+		struct joystick *j;
+
 	};
 	std::map<entity_id, player_kart *>m_players;
-	std::map<int, entity_id>m_taken_joysticks;
-	std::vector<int>m_free_joysticks;
+
 
 	Events::InputEvent *lastKbInput;
 
@@ -54,11 +62,9 @@ public:
 #define JOYSTICK_DEADZONE 3000
 
 	Input();
-
 	~Input();
 
 	void setup();
-
 	void HandleEvents();
 
 	// Keyboard events
@@ -69,4 +75,8 @@ public:
 	void PollController(SDL_GameController *, std::vector<Events::Event *> *, Events::InputEvent *);
 	void PollJoystick(SDL_Joystick *, std::vector<Events::Event *> *, Events::InputEvent *);
 
+	// Joystick management
+	void JoystickAdded(int);
+	void JoystickRemoved(SDL_JoystickID);
+	struct joystick *ForgetPlayer(entity_id);
 };
