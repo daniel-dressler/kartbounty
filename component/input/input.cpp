@@ -23,6 +23,7 @@ Input::~Input() {
 	for (auto kart : m_players) { 
 		ForgetPlayer(kart.first);
 	}
+	m_players.empty();
 	for (auto joystick : m_joysticks) { 
 		JoystickRemoved(joystick.first);
 	}
@@ -89,7 +90,7 @@ void Input::HandleEvents() {
 	Events::InputEvent *kbInput = NEWEVENT(Input);
 	// Copy past kb input
 	auto event_id = kbInput->id;
-	memcpy(kbInput, &lastKbInput, sizeof(*kbInput));
+	memcpy(kbInput, lastKbInput, sizeof(*kbInput));
 	kbInput->id = event_id;
 	while( SDL_PollEvent(&sdl_event) ) {
 		switch (sdl_event.type) {
@@ -145,6 +146,7 @@ void Input::HandleEvents() {
 		auto kart_id = kart_local_pair.first;
 		if (seen_karts.count(kart_id) == 0) {
 			ForgetPlayer(kart_id);
+			m_players.erase(kart_id);
 		}
 	}
 
@@ -191,16 +193,18 @@ void Input::HandleEvents() {
 		Events::InputEvent *input = NULL;
 		if (!kbInputTaken) {
 			input = kbInput;
+			kbInputTaken = true;
 		} else {
 			input = NEWEVENT(Input);
 		}
+		input->kart_id = kart_id;
 
 		// Reset Development Tools
 		input->print_position = false;
 		input->reset_requested = false;
 
 
-		if (kart_local->j->controller) {
+		if (false && kart_local->j->controller) {
 			PollController(kart_local->j->controller, &outEvents, input);
 		} else if (kart_local->j->joystick) {
 			PollJoystick(kart_local->j->joystick, &outEvents, input);
@@ -288,7 +292,7 @@ void Input::OnKeyUp(SDL_Event *event, Events::InputEvent *outInput) {
 		outInput->leftThumbStickRL = 0;
 		break;
 	case SDLK_w:
-		outInput->rightTrigger = 0.01;
+		outInput->rightTrigger = 0.0;
 		break;
 	case SDLK_s:
 		outInput->leftTrigger = 0;
@@ -325,6 +329,7 @@ void Input::PollController(SDL_GameController *controller,
 	out->bPressed |= POLL(B);
 	out->yPressed |= POLL(Y);
 
+
 	if (POLL(START)) {
 		eventQueue->push_back(NEWEVENT(TogglePauseGame));
 	}
@@ -345,7 +350,6 @@ void Input::PollController(SDL_GameController *controller,
 	out->leftTrigger      += POLL(TRIGGERLEFT);
 	out->rightTrigger     += POLL(TRIGGERRIGHT);
 	out->leftThumbStickRL += POLL(LEFTX);
-
 	#undef POLL
 }
 
@@ -381,6 +385,16 @@ void Input::PollJoystick(SDL_Joystick *joystick,
 	out->rightTrigger     += POLL(RIGHT_TRIGGER_AXIS);
 	out->leftThumbStickRL += POLL(LEFT_STICK_LEFT_RIGHT_AXIS);
 
+	if (out->aPressed)
+		printf("a pressed %d\n", out->aPressed);
+	if (out->xPressed)
+		printf("x pressed %d\n", out->xPressed);
+	if (out->bPressed)
+		printf("b pressed %d\n", out->bPressed);
+	if (out->rightTrigger)
+		printf("trigger %f\n", out->rightTrigger);
+
+
 	#undef POLL
 }
 
@@ -406,6 +420,7 @@ void Input::JoystickRemoved(SDL_JoystickID inst_id) {
 	
 		auto kart_id = m_taken_joysticks[inst_id];
 		js = ForgetPlayer(kart_id);
+		m_players.erase(kart_id);
 		m_taken_joysticks.erase(inst_id);
 	} else {
 		for (size_t i = 0; i < m_free_joysticks.size(); i++) {
@@ -437,7 +452,6 @@ Input::joystick *Input::ForgetPlayer(entity_id kart_id) {
 
 	auto kart = m_players[kart_id];
 	auto joystick = kart->j;
-	m_players.erase(kart_id);
 
 	m_free_joysticks.push_back(joystick);
 	return joystick;
