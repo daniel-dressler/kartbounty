@@ -120,9 +120,12 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 		btVector3 vUp = btVector3(0, 1, 0);
 		btScalar angle = MAX(up.dot(vUp), 0.1);
 
-		// Slow flips
+		// Slow flips on way up
 		btScalar ang_damp = MIN(1.2 - (angle * angle * angle), 1);
 		btScalar lin_damp = rigidBody->getLinearDamping();
+		btVector3 ang_vol = rigidBody->getAngularVelocity();
+		if (ang_vol.getY() < 0)
+			ang_damp = 0.1;
 		rigidBody->setDamping(lin_damp, ang_damp);
 
 		// Last resort force unflip
