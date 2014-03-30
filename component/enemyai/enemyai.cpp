@@ -696,7 +696,7 @@ void EnemyAi::init_obs_sqr()
 #define LENGTH_OF_RAY_FORWARD 3.5
 #define SENSOR_ANGLE 10
 
-#define IN_FRONT_ANGLE 140
+#define IN_FRONT_ANGLE 70
 #define FAR_AWAY 6
 
 float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
@@ -707,7 +707,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 
 	std::vector<Square> danger_sqr;
 
-	for(Square square : obs_sqr)
+	for (Square square : obs_sqr)
 	{
 		float angle = getAngle(Vector2(square.getCenter().x, square.getCenter().z), pos, &forward);
 		if ( abs(RADTODEG(angle)) < IN_FRONT_ANGLE )
