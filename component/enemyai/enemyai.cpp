@@ -102,7 +102,7 @@ void EnemyAi::get_target_pickups(struct ai_kart *kart)
 
 void EnemyAi::get_target_aggressive(struct ai_kart *kart)
 {
-	int isPlayer = std::rand() % 3;
+	//int isPlayer = std::rand() % 3;
 	kart->target_kart_id = m_player_kart;
 
 	// ALWAYS ATTACK PLAYER. Fun stuff.
@@ -705,71 +705,57 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 	btVector3 forward = kart_entity->forDirection;
 	Vector3 pos = kart_entity->Pos;
 
-	std::vector<Square> danger_sqr;
-
+	Vector2 threat;
+	float most_threat_dist = 10000000.f;
 	for (Square square : obs_sqr)
 	{
-		float angle = getAngle(Vector2(square.getCenter().x, square.getCenter().z), pos, &forward);
-		if ( abs(RADTODEG(angle)) < IN_FRONT_ANGLE )
-		{
-			btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
-			btVector3 right_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
-			
-			Vector3 direction = Vector3(forward.getX(), 0, forward.getZ());
-			direction = direction.Normalize();
+		// Cull by distance
+		auto center = square.getCenter();
+		float dist_from_center = get_distance(pos, center);
+		if (dist_from_center > LENGTH_OF_RAY || dist_from_center < most_threat_dist)
+			continue;
 
-			Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
-			Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
+		// Cull by Angle
+		Vector2 center_xz = Vector2(center.x, center.z);
+		float angle = getAngle(center_xz, pos, &forward);
+		if ( abs(RADTODEG(angle)) >= IN_FRONT_ANGLE )
+			continue;
+	
+		btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
+		Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
+		int intersection_left = square.LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
+		if (intersection_left > 0) {
+			threat = center_xz;
+			most_threat_dist = dist_from_center;
+			continue;
+		}
 
-			int intersections_forward = square.LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
-			int intersections_left = square.LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
-			int intersections_right = square.LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
 
-			if (intersections_forward + intersections_left + intersections_right > 0)
-			{
-				danger_sqr.push_back(square);
-
-				/*
-				if (intersections_forward > 0)
-					DEBUGOUT("Intersects forward with %d %f times!\n" , i, intersections_forward);
-
-				if (intersections_left > 0)
-					DEBUGOUT("Intersects left with %d %f times!\n" , i, intersections_left);
-
-				if (intersections_right > 0)
-					DEBUGOUT("Intersects right with %d %f times!\n" , i, intersections_right);
-				*/
-			}
+		btVector3 right_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
+		Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
+		int intersection_right = square.LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
+		if (intersection_right > 0) {
+			threat = center_xz;
+			most_threat_dist = dist_from_center;
+			continue;
 		}
 		
-	}
-
-	int most_threat = -1;
-	float most_threat_dist = 10000000.f;
-
-	for (uint32_t i = 0; i<danger_sqr.size(); i++)
-	{
-		Square square = danger_sqr.at(i);
-		Vector3 center = square.getCenter();
-
-		float dist_from_center = get_distance(pos, center);
-
-		if (dist_from_center < most_threat_dist)
-		{
-			most_threat = i;
+		Vector3 direction = Vector3(forward.getX(), 0, forward.getZ());
+		direction = direction.Normalize();
+		int intersection_forward = square.LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
+		if (intersection_forward > 0) {
+			threat = center_xz;
 			most_threat_dist = dist_from_center;
+			continue;
 		}
 	}
 
-	float turn_value = 0;
-	if (most_threat != -1) // This means there's a threat that needs to be steered!
-	{
-		Square most_threat_sqr = danger_sqr.at(most_threat);
-		Vector3 center_threat = most_threat_sqr.getCenter();
-		Vector2 sqr_center = Vector2(center_threat.x, center_threat.z);
 
+	float turn_value = 0;
+	if (threat.x != 0 && threat.y != 0)
+	{
 		// get angle between car and the most threatening obsticle.
-		float steer_correction_angle = getAngle(sqr_center, pos, &forward);
+		float steer_correction_angle = getAngle(threat, pos, &forward);
 
 		if (steer_correction_angle > 0)
 		{
