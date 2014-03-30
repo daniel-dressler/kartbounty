@@ -350,48 +350,47 @@ int GameAi::planFrame()
 
 	m_mb->emptyMail();
 	
-	// Direct controllers to karts
-	for (auto id : this->player_kart_ids) {
-		Events::PlayerKartEvent *kart_event;
-		if (currentState & (RoundStart | RoundInProgress)) {
-			kart_event = NEWEVENT(PlayerKart);
-		} else {
-			kart_event = (Events::PlayerKartEvent *)NEWEVENT(AiKart);
-		}
-		kart_event->kart_id = id;
-		events_out.push_back(kart_event);
-	}
-
-	for (auto id : this->ai_kart_ids) {
-		auto kart_event = NEWEVENT(AiKart);
-		kart_event->kart_id = id;
-		events_out.push_back(kart_event);
-	}
 
 	if(currentState == StartMenu)
 	{
 		auto menuEvent = NEWEVENT(StartMenu);
 		events_out.push_back(menuEvent);
 	}
-	else if (currentState == RoundStart)
+	else if (currentState & (RoundStart | RoundInProgress))
 	{
-		// Update countdown timer
-		roundStartCountdownTimer -= frame_timer.CalcSeconds();
-
-		if(roundStartCountdownTimer < 0)
+		if (currentState & RoundStart)
 		{
-			auto unpauseEvent = NEWEVENT( TogglePauseGame );
-			events_out.push_back(unpauseEvent);
-			currentState = RoundInProgress;
+			// Update countdown timer
+			roundStartCountdownTimer -= frame_timer.CalcSeconds();
+	
+			if(roundStartCountdownTimer < 0)
+			{
+				auto unpauseEvent = NEWEVENT( TogglePauseGame );
+				events_out.push_back(unpauseEvent);
+				currentState = RoundInProgress;
+			}
 		}
 
 		// Update the scoreboard to be sent to rendering
 		updateScoreBoard();
-	}
-	else if (currentState == RoundInProgress)
-	{
-		// Update the scoreboard to be sent to rendering
-		updateScoreBoard();
+
+		// Direct controllers to karts
+		for (auto id : this->player_kart_ids) {
+			Events::PlayerKartEvent *kart_event;
+			if (currentState & (RoundStart | RoundInProgress)) {
+				kart_event = NEWEVENT(PlayerKart);
+			} else {
+				kart_event = (Events::PlayerKartEvent *)NEWEVENT(AiKart);
+			}
+			kart_event->kart_id = id;
+			events_out.push_back(kart_event);
+		}
+
+		for (auto id : this->ai_kart_ids) {
+			auto kart_event = NEWEVENT(AiKart);
+			kart_event->kart_id = id;
+			events_out.push_back(kart_event);
+		}
 	}
 	else if (currentState == RoundEnd)
 	{

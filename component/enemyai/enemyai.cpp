@@ -308,6 +308,8 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	// Generate input for car.
 	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
 	directions->reset_requested = false;
+	directions->kart_id = kart_local->kart_id;
+
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
 	{

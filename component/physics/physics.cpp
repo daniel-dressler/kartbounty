@@ -663,8 +663,9 @@ void Simulation::step(double seconds)
 		case Events::EventType::Input:
 		{			
 			Events::InputEvent *input = (Events::InputEvent *)event;
-
 			entity_id kart_id = input->kart_id;
+
+			//DEBUGOUT("id: %d, r: %f, a: %d\n", kart_id, input->rightTrigger, input->aPressed);
 			if (m_karts.find(kart_id) != m_karts.end())
 			{
 				btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;

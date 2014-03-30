@@ -96,9 +96,7 @@ void Input::HandleEvents() {
 			}
 			break;
 		case SDL_QUIT:
-			{
-				outEvents.push_back( NEWEVENT( Quit ) );
-			}
+			outEvents.push_back( NEWEVENT( Quit ) );
 			break;
 		case SDL_KEYDOWN:
 			OnKeyDown(&sdl_event, &outEvents, kbInput);
@@ -129,16 +127,12 @@ void Input::HandleEvents() {
 	// controllers
 	if (menu) {
 		if (seen_kart_ids.size() == 0) {
-			for (int i = 0; i < SDL_NumJoysticks(); i++) {
-				auto joy = SDL_JoystickOpen(i);
-				if (SDL_IsGameController(i)) {
-					auto con = SDL_GameControllerOpen(i);
-					PollController(con, &outEvents, kbInput);
-					SDL_GameControllerClose(con);
+			for (auto joy : m_free_joysticks) {
+				if (joy->controller != NULL) {
+					PollController(joy->controller, &outEvents, kbInput);
 				} else {
-					PollJoystick(joy, &outEvents, kbInput);
+					PollJoystick(joy->joystick, &outEvents, kbInput);
 				}
-				SDL_JoystickClose(joy);
 			}
 		}
 		menu->aPressed = kbInput->aPressed;
@@ -233,6 +227,7 @@ void Input::HandleEvents() {
 
 		// Send input
 		outEvents.push_back(input);
+		//DEBUGOUT("id: %d, r: %f, a: %d\n", kart_id, input->rightTrigger, input->aPressed);
 	}
 
 	m_Mailbox.emptyMail();
