@@ -124,8 +124,23 @@ void Input::HandleEvents() {
 	// Save keyboard input
 	memcpy(lastKbInput, kbInput, sizeof(*kbInput));
 
-	// Menu always get kb input
+	// Give Menu controls
+	// If no players active poll all
+	// controllers
 	if (menu) {
+		if (seen_kart_ids.size() == 0) {
+			for (int i = 0; i < SDL_NumJoysticks(); i++) {
+				auto joy = SDL_JoystickOpen(i);
+				if (SDL_IsGameController(i)) {
+					auto con = SDL_GameControllerOpen(i);
+					PollController(con, &outEvents, kbInput);
+					SDL_GameControllerClose(con);
+				} else {
+					PollJoystick(joy, &outEvents, kbInput);
+				}
+				SDL_JoystickClose(joy);
+			}
+		}
 		menu->aPressed = kbInput->aPressed;
 		menu->bPressed = kbInput->bPressed;
 		menu->xPressed = kbInput->xPressed;
