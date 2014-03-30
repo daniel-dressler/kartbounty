@@ -718,7 +718,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 		// Cull by Angle
 		Vector2 center_xz = Vector2(center.x, center.z);
 		float angle = getAngle(center_xz, pos, &forward);
-		if ( abs(RADTODEG(angle)) >= IN_FRONT_ANGLE )
+		if ( ABS(RADTODEG(angle)) >= IN_FRONT_ANGLE )
 			continue;
 	
 		btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
@@ -778,7 +778,9 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 // get the distance between two points
 float EnemyAi::get_distance(Vector3 a, Vector3 b)
 {
-	return sqrtf( pow( ((float)a.x - (float)b.x) , 2 ) + pow(((float)a.z - (float)b.z),2) );
+	float x = a.x - b.x;
+	float y = a.y - b.z;
+	return sqrtf(x * x + y * y);
 }
 
 
