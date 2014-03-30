@@ -105,6 +105,8 @@ void GameAi::setup()
 {
 	std::vector<Events::Event *> events;
 	// Create karts
+	// TODO: Make this configurable at runtime
+	int NUMPLAYERS = 2;
 	for (int i = 0; i < NUM_KARTS; i++) 
 	{
 		std::string kart_name = "Kart #" + i;
@@ -116,10 +118,11 @@ void GameAi::setup()
 
 		this->kart_ids.push_back(kart_id);
 
-		// Set the first created kart as player 1's kart
-		if(i == 0)
-		{
-			player1KartId = kart_id;
+		// First N karts are players
+		if (NUMPLAYERS-- > 0) {
+			this->player_kart_ids.push_back(kart_id);
+		} else {
+			this->ai_kart_ids.push_back(kart_id);
 		}
 
 		// Tell people of the new kart
@@ -286,7 +289,7 @@ int GameAi::planFrame()
 					{
 						if(kart->powerup_slot != Entities::NullPowerup)
 						{
-							Entities::powerup_t p_type = kart->powerup_slot;
+							//Entities::powerup_t p_type = kart->powerup_slot;
 
 							auto pow_event = NEWEVENT(PowerupActivated);
 							pow_event->kart_id = inputEvent->kart_id;
@@ -365,23 +368,21 @@ int GameAi::planFrame()
 	m_mb->emptyMail();
 	
 	// Direct controllers to karts
-	for (auto id : this->kart_ids) 
-	{
-		Events::Event *event;
-		if (id == player1KartId && (currentState != StartMenu || currentState != RoundEnd) )
-		{
-			auto kart_event = NEWEVENT(PlayerKart);
-			kart_event->kart_id = id;
-			event = kart_event;
-		} 
-		else 
-		{
-			auto kart_event = NEWEVENT(AiKart);
-			kart_event->kart_id = id;
-			event = kart_event;
+	for (auto id : this->player_kart_ids) {
+		Events::PlayerKartEvent *kart_event;
+		if (currentState & (RoundStart | RoundInProgress)) {
+			kart_event = NEWEVENT(PlayerKart);
+		} else {
+			kart_event = (Events::PlayerKartEvent *)NEWEVENT(AiKart);
 		}
+		kart_event->kart_id = id;
+		events_out.push_back(kart_event);
+	}
 
-		events_out.push_back(event);
+	for (auto id : this->ai_kart_ids) {
+		auto kart_event = NEWEVENT(AiKart);
+		kart_event->kart_id = id;
+		events_out.push_back(kart_event);
 	}
 
 	if(currentState == StartMenu)
@@ -519,10 +520,13 @@ void GameAi::updateScoreBoard()
 			// Some one has reached the goal, end the round
 			events_out.push_back(NEWEVENT(TogglePauseGame));	// Pause the karts
 			auto roundEndEvent = NEWEVENT(RoundEnd);
-			if(kart_ids[0] == player1KartId)
-				roundEndEvent->playerWon = true;
-			else
-				roundEndEvent->playerWon = false;
+
+			// Did a player win?
+			for (auto player : player_kart_ids) {
+				if (kart_ids[0] == player) {
+					roundEndEvent->playerWon = true;
+				}
+			}
 
 			events_out.push_back(roundEndEvent);	
 			currentState = RoundEnd;
@@ -537,10 +541,9 @@ void GameAi::updateScoreBoard()
 // Outputs the score borad to the console
 void GameAi::outputScoreBoard()
 {
-	for(int i = 0; i < kart_ids.size(); i++)
-	{
-		auto kart = GETENTITY(kart_ids[i], CarEntity);
-		DEBUGOUT("Id:%f|Score:%lu || ", kart_ids[i], kart->gold);
+	for (auto kart_id : kart_ids) {
+		auto kart = GETENTITY(kart_id, CarEntity);
+		DEBUGOUT("Id:%d|Score:%lu || ", kart_id, kart->gold);
 	}
 	DEBUGOUT("\n");
 }
@@ -558,6 +561,8 @@ void GameAi::resetGame()
 	}
 
 	this->kart_ids.clear();
+	this->ai_kart_ids.clear();
+	this->player_kart_ids.clear();
 
 	m_mb->sendMail(events_out);
 

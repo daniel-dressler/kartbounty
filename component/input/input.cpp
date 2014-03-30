@@ -5,8 +5,6 @@
 
 #include "input.h"
 
-#define PLAYER_KART_INDEX 0
-
 Input::Input() {
 	m_Mailbox.request(Events::EventType::PlayerKart);
 	m_Mailbox.request(Events::EventType::KartDestroyed);
@@ -27,29 +25,11 @@ Input::~Input() {
 	for (auto joystick : m_joysticks) { 
 		JoystickRemoved(joystick.first);
 	}
+	m_joysticks.empty();
 }
 
 void Input::setup() {
 	lastKbInput = NEWEVENT(Input);
-
-	DEBUGOUT("%i joysticks present.\n", SDL_NumJoysticks() );
-
-	// Claim any jobsticks connected
-	// Push reverse order
-	// The PC wireless xbox adapter reports 4 controllers
-	// even if only the first is valid
-	for (int i = SDL_NumJoysticks() -1; i >= 0; i--)
-	{
-		JoystickAdded(i);
-	}
-
-	for (auto joystick : m_joysticks) {
-		auto controller = joystick.second->controller;
-		if (controller) {
-			DEBUGOUT("Found controller: %s\n",
-					SDL_GameControllerName(controller));
-		}
-	}
 }
 
 void Input::HandleEvents() {
@@ -130,7 +110,11 @@ void Input::HandleEvents() {
 			JoystickAdded(sdl_event.jdevice.which);
 			break;
 		case SDL_JOYDEVICEREMOVED:
-			JoystickRemoved((SDL_JoystickID)sdl_event.jdevice.which);
+			{
+				auto inst_id = (SDL_JoystickID)sdl_event.jdevice.which;
+				JoystickRemoved(inst_id);
+				m_joysticks.erase(inst_id);
+			}
 			break;
 		default:
 			//DEBUGOUT("SDL Event type:%i\n", sdl_event->type);
@@ -164,7 +148,8 @@ void Input::HandleEvents() {
 		player_kart *kart_local = NULL;
 
 		// Have we seen kart before?
-		if (m_players.count(kart_id) == 0) {
+		bool first_sighting = m_players.count(kart_id) == 0;
+		if (first_sighting) {
 			kart_local = new player_kart();
 
 			kart_local->j= NULL;
@@ -182,7 +167,7 @@ void Input::HandleEvents() {
 				m_free_joysticks.pop_back();
 				auto j_id = kart_local->j->inst_id;
 				m_taken_joysticks[j_id] = kart_id;
-			} else {
+			} else if (first_sighting) {
 				DEBUGOUT("Warning: Could not get joystick for player of kart %d\n", kart_id);
 			}
 		}
@@ -359,19 +344,6 @@ void Input::PollController(SDL_GameController *controller,
 	out->leftTrigger      += POLL(TRIGGERLEFT);
 	out->rightTrigger     += POLL(TRIGGERRIGHT);
 	out->leftThumbStickRL += POLL(LEFTX);
-
-	if (out->aPressed)
-		printf("a pressed %d\n", out->aPressed);
-	if (out->xPressed)
-		printf("x pressed %d\n", out->xPressed);
-	if (out->bPressed)
-		printf("b pressed %d\n", out->bPressed);
-	if (out->rightTrigger)
-		printf("trigger %f\n", out->rightTrigger);
-	if (out->leftTrigger)
-		printf("left trigger %f\n", out->leftTrigger);
-	if (out->leftThumbStickRL)
-		printf("dir %f\n", out->leftThumbStickRL);
 	#undef POLL
 }
 
@@ -406,32 +378,24 @@ void Input::PollJoystick(SDL_Joystick *joystick,
 	out->leftTrigger      += POLL(LEFT_TRIGGER_AXIS);
 	out->rightTrigger     += POLL(RIGHT_TRIGGER_AXIS);
 	out->leftThumbStickRL += POLL(LEFT_STICK_LEFT_RIGHT_AXIS);
-
-	if (out->aPressed)
-		printf("a pressed %d\n", out->aPressed);
-	if (out->xPressed)
-		printf("x pressed %d\n", out->xPressed);
-	if (out->bPressed)
-		printf("b pressed %d\n", out->bPressed);
-	if (out->rightTrigger)
-		printf("trigger %f\n", out->rightTrigger);
-	if (out->leftTrigger)
-		printf("left trigger %f\n", out->leftTrigger);
-	if (out->leftThumbStickRL)
-		printf("dir %f\n", out->leftThumbStickRL);
-
-
 	#undef POLL
 }
 
 void Input::JoystickAdded(int device_id) {
+	auto joy = SDL_JoystickOpen(device_id);
+	if (joy == NULL) {
+		return;
+	}
+
 	struct joystick *js = new joystick();
 
-	js->joystick = SDL_JoystickOpen(device_id);
+	js->joystick = joy;
 	js->inst_id = SDL_JoystickInstanceID(js->joystick);
 	js->haptic = SDL_HapticOpenFromJoystick(js->joystick);
 	if (SDL_IsGameController(device_id)) {
 		js->controller = SDL_GameControllerOpen(device_id);
+		DEBUGOUT("Found controller %d: %s\n", device_id,
+				SDL_GameControllerName(js->controller));
 	} else {
 		js->controller = NULL;
 	}
@@ -466,7 +430,6 @@ void Input::JoystickRemoved(SDL_JoystickID inst_id) {
 	if (js->joystick)
 		SDL_JoystickClose(js->joystick);
 
-	m_joysticks.erase(inst_id);
 	delete js;
 }
 
