@@ -170,6 +170,12 @@ namespace Events {
 		float rightThumbStickRL;
 		float rightThumbStickUD;
 
+		// Numbers
+		bool onePressed;
+		bool twoPressed;
+		bool threePressed;
+		bool fourPressed;
+
 		// Development Cheats
 		bool print_position;
 		bool reset_requested;
@@ -187,6 +193,12 @@ namespace Events {
 		bool yPressed;
 		bool bPressed;
 		bool aPressed;
+
+		// Numbers
+		bool onePressed;
+		bool twoPressed;
+		bool threePressed;
+		bool fourPressed;
 	ENDEVENT;
 
 	EVENTSTRUCT(AudioPlayPause)

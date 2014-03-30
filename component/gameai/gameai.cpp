@@ -103,37 +103,7 @@ GameAi::~GameAi()
 
 void GameAi::setup()
 {
-	std::vector<Events::Event *> events;
-	// Create karts
-	// TODO: Make this configurable at runtime
-	int NUMPLAYERS = 2;
-	for (int i = 0; i < NUM_KARTS; i++) 
-	{
-		std::string kart_name = "Kart #" + i;
-		auto kart = new Entities::CarEntity(kart_name);
-		entity_id kart_id = g_inventory->AddEntity(kart);
-
-		kart->health = STARTING_HEALTH;
-		kart->powerup_slot = Entities::SpeedPowerup;
-
-		this->kart_ids.push_back(kart_id);
-
-		// First N karts are players
-		if (NUMPLAYERS-- > 0) {
-			this->player_kart_ids.push_back(kart_id);
-		} else {
-			this->ai_kart_ids.push_back(kart_id);
-		}
-
-		// Tell people of the new kart
-		auto new_kart_ev = NEWEVENT(KartCreated);
-		new_kart_ev->kart_id = kart_id;
-		events.push_back(new_kart_ev);
-	}
-
-	init_powerups_not_gold();
-
-	m_mb->sendMail(events);
+	// Gameai might not even need a setup
 }
 
 void GameAi::add_to_future_respawn(Events::PowerupPickupEvent * event)
@@ -315,17 +285,30 @@ int GameAi::planFrame()
 					return 0;	// Quit the game
 				}
 
-				if(inputEvent->aPressed)
+				int numPlayers = 0;
+				if (inputEvent->aPressed || inputEvent->onePressed) {
+					numPlayers = 1;
+				} else if (inputEvent->twoPressed) {
+					numPlayers = 2;
+				} else if (inputEvent->threePressed) {
+					numPlayers = 3;
+				} else if (inputEvent->fourPressed) {
+					numPlayers = 4;
+				}
+
+
+				if (numPlayers > 0)
 				{
 					auto startRoundEvent = NEWEVENT( RoundStart );
 					events_out.push_back(startRoundEvent);
 
-					// Reset all karts
-					resetGame();
+					// Restart a new game
+					endRound();
+					newRound(numPlayers, NUM_KARTS - numPlayers);
 
 					// Pause the game to allow audio to play countdown
 					// If we are starting a second round the game is already paused so we skip this
-					if(currentState == StartMenu)
+					if (currentState == StartMenu)
 						events_out.push_back( NEWEVENT( TogglePauseGame ));	
 
 					currentState = RoundStart;
@@ -548,7 +531,7 @@ void GameAi::outputScoreBoard()
 	DEBUGOUT("\n");
 }
 
-void GameAi::resetGame()
+void GameAi::endRound()
 {
 	std::vector<Events::Event *> events_out;
 
@@ -565,9 +548,39 @@ void GameAi::resetGame()
 	this->player_kart_ids.clear();
 
 	m_mb->sendMail(events_out);
+}
 
-	// Create a bunch of new ones
-	setup();
+void GameAi::newRound(int numPlayers, int numAi)
+{
+	std::vector<Events::Event *> events;
+	// Create karts
+	for (int i = 0; i < numPlayers + numAi; i++) 
+	{
+		std::string kart_name = "Kart #" + i;
+		auto kart = new Entities::CarEntity(kart_name);
+		entity_id kart_id = g_inventory->AddEntity(kart);
+
+		kart->health = STARTING_HEALTH;
+		kart->powerup_slot = Entities::SpeedPowerup;
+
+		this->kart_ids.push_back(kart_id);
+
+		// First N karts are players
+		if (i < numPlayers) {
+			this->player_kart_ids.push_back(kart_id);
+		} else {
+			this->ai_kart_ids.push_back(kart_id);
+		}
+
+		// Tell people of the new kart
+		auto new_kart_ev = NEWEVENT(KartCreated);
+		new_kart_ev->kart_id = kart_id;
+		events.push_back(new_kart_ev);
+	}
+
+	init_powerups_not_gold();
+
+	m_mb->sendMail(events);
 }
 
 

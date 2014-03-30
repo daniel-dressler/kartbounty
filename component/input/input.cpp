@@ -145,6 +145,10 @@ void Input::HandleEvents() {
 		menu->bPressed = kbInput->bPressed;
 		menu->xPressed = kbInput->xPressed;
 		menu->yPressed = kbInput->yPressed;
+		menu->onePressed = kbInput->onePressed;
+		menu->twoPressed = kbInput->twoPressed;
+		menu->threePressed = kbInput->threePressed;
+		menu->fourPressed = kbInput->fourPressed;
 	}
 
 	// Any players leave?
@@ -238,52 +242,50 @@ void Input::HandleEvents() {
 	m_Mailbox.sendMail(outEvents);
 }
 
+#define KEY(x) \
+	break; \
+	case SDLK_ ## x : 
+
 void Input::OnKeyDown(SDL_Event *event, std::vector<Events::Event *> *eventQueue, Events::InputEvent *outInput){
 	SDL_Keycode keycode = event->key.keysym.sym;
 
 	// Handle key press for sending InputEvent to physics
 	switch (keycode)
 	{
-	case SDLK_ESCAPE :	//This should pause the game but for now it just exits the program
-		{
-			eventQueue->push_back( NEWEVENT( Quit ) );
-			break;
-		}
-	case SDLK_a:
+	KEY(ESCAPE)	//This should pause the game but for now it just exits the program
+		eventQueue->push_back( NEWEVENT( Quit ) );
+	KEY(a)
 		outInput->leftThumbStickRL = -1;
-		break;
-	case SDLK_d:
+	KEY(d)
 		outInput->leftThumbStickRL = 1;
-		break;
-	case SDLK_RIGHT:
+	KEY(RIGHT)
 		outInput->leftThumbStickRL = 1;
-		break;
-	case SDLK_LEFT:
+	KEY(LEFT)
 		outInput->leftThumbStickRL = -1;
-		break;
-	case SDLK_w:
+	KEY(w)
 		outInput->rightTrigger = 1;
-		break;
-	case SDLK_s:
+	KEY(s)
 		outInput->leftTrigger = 1;
-		break;
-	case SDLK_SPACE:
+	KEY(SPACE)
 		outInput->bPressed = true;
-		break;
-	case SDLK_LSHIFT:
+	KEY(LSHIFT)
 		outInput->aPressed = true;
-		break;
-	case SDLK_RETURN:
+	KEY(RSHIFT)
 		outInput->xPressed = true;
-		break;
+	KEY(1)
+		outInput->onePressed = true;
+	KEY(2)
+		outInput->twoPressed = true;
+	KEY(3)
+		outInput->threePressed = true;
+	KEY(4)
+		outInput->fourPressed = true;
 
 		// Development Tools
-	case SDLK_z:
+	KEY(z)
 		outInput->print_position = true;
-		break;
-	case SDLK_r:
+	KEY(r)
 		outInput->reset_requested = true;
-		break;
 	default:
 		break;
 	}
@@ -294,37 +296,37 @@ void Input::OnKeyUp(SDL_Event *event, Events::InputEvent *outInput) {
 
 	switch (keycode)
 	{
-	case SDLK_a:
+	KEY(a)
 		outInput->leftThumbStickRL = 0;
-		break;
-	case SDLK_d:
+	KEY(d)
 		outInput->leftThumbStickRL = 0;
-		break;
-	case SDLK_w:
-		outInput->rightTrigger = 0.0;
-		break;
-	case SDLK_s:
+	KEY(RIGHT)
+		outInput->leftThumbStickRL = 0;
+	KEY(LEFT)
+		outInput->leftThumbStickRL = 0;
+	KEY(w)
+		outInput->rightTrigger = 0;
+	KEY(s)
 		outInput->leftTrigger = 0;
-		break;
-	case SDLK_LEFT:
-		outInput->leftThumbStickRL = 0;
-		break;
-	case SDLK_RIGHT:
-		outInput->leftThumbStickRL = 0;
-		break;
-	case SDLK_SPACE:
+	KEY(SPACE)
 		outInput->bPressed = false;
-		break;
-	case SDLK_LSHIFT:
+	KEY(LSHIFT)
 		outInput->aPressed = false;
-		break;
-	case SDLK_RETURN:
+	KEY(RSHIFT)
 		outInput->xPressed = false;
-		break;
+	KEY(1)
+		outInput->onePressed = false;
+	KEY(2)
+		outInput->twoPressed = false;
+	KEY(3)
+		outInput->threePressed = false;
+	KEY(4)
+		outInput->fourPressed = false;
 	default:
 		break;
 	}
 }
+#undef KEY
 
 
 void Input::PollController(SDL_GameController *controller,

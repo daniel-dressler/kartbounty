@@ -58,5 +58,6 @@ private:
 	void handle_powerups_not_gold(double time_elapsed);
 	void init_powerups_not_gold();
 
-	void resetGame();
+	void endRound();
+	void newRound(int, int);
 };
