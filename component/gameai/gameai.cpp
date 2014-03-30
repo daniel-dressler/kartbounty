@@ -347,7 +347,6 @@ int GameAi::planFrame()
 			break;
 		}
 	}
-
 	m_mb->emptyMail();
 	
 
@@ -478,7 +477,7 @@ Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type,
 // Returns true if kart with id 'i' has a score greater than kart with id 'j'
 bool sortByScore(entity_id i, entity_id j)
 {
-	return ( GETENTITY(i, CarEntity)->gold > GETENTITY(j, CarEntity)->gold );	
+	return GETENTITY(i, CarEntity)->gold > GETENTITY(j, CarEntity)->gold;	
 }
 
 
@@ -486,12 +485,32 @@ bool sortByScore(entity_id i, entity_id j)
 // gets over the set score goal
 void GameAi::updateScoreBoard()
 {
-	// Sorts the kart id list with the kart with the largest amount of gold first 
-	std::sort (kart_ids.begin(), kart_ids.end(), sortByScore);
-
 	std::vector<Events::Event *> events_out;
+
+	// Get top 10 scoring karts
+	uint32_t MAX_SCORERS = 10;
+	std::vector<entity_id> top_scorers;
+	for (auto id : kart_ids) {
+		size_t size = top_scorers.size();
+		bool full = size >= MAX_SCORERS;
+		entity_id poorest = 0;
+		if (full && size > 0) {
+			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
+			poorest = top_scorers.back();
+		}
+		if (poorest == 0 || sortByScore(id, poorest)) {
+			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
+			if (full) {
+				top_scorers.pop_back();
+			}
+			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
+			top_scorers.push_back(id);
+			std::sort(top_scorers.begin(), top_scorers.end(), sortByScore);
+		}
+	}
+
 	auto scoreBoardEvent = NEWEVENT(ScoreBoardUpdate);
-	scoreBoardEvent->kartsByScore = kart_ids;
+	scoreBoardEvent->kartsByScore = top_scorers;
 	events_out.push_back(scoreBoardEvent);
 	
 	// Check for end of game condition

@@ -1,7 +1,7 @@
 BULLET = ./lib/bullet
 
 BULLETFLAGS = -I $(BULLET)/src/
-CXXFLAGS += -g -Wall -Wextra -Wno-write-strings -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
+CXXFLAGS += -Wno-ignored-qualifiers -g -Wall -Wextra -Wno-write-strings -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
 
 BULLETLIB = $(BULLET)/static_lib/src
 BULLETLIBS = $(BULLETLIB)/BulletDynamics/libBulletDynamics.a $(BULLETLIB)/BulletCollision/libBulletCollision.a $(BULLETLIB)/LinearMath/libLinearMath.a
