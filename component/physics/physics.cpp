@@ -554,7 +554,7 @@ void Simulation::handle_bullets(double time)
 						// If this is the shooting kart, don't hit it.
 						if (kart_id != bullet_obj->kart_id)
 						{
-							DEBUGOUT("From physics: HIT KART %d\n", kart_id)
+							//DEBUGOUT("From physics: HIT KART %d\n", kart_id)
 							bullets_to_desroy.push_back(bullet_obj->bullet_id);
 
 							auto hit_event = NEWEVENT(KartHitByBullet);

@@ -15,8 +15,8 @@ Input::Input() {
 	// Load database of joystick to controller mappings
 	SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
 
-	// Disable Joystick updates over events
-	SDL_JoystickEventState(SDL_IGNORE);
+	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+	SDL_JoystickEventState(SDL_ENABLE);
 }
 
 Input::~Input() {
@@ -32,8 +32,7 @@ Input::~Input() {
 void Input::setup() {
 	lastKbInput = NEWEVENT(Input);
 
-	DEBUGOUT("%i joysticks found.\n", SDL_NumJoysticks() );
-	DEBUGOUT("Number of haptic devices: %d\n", SDL_NumHaptics());
+	DEBUGOUT("%i joysticks present.\n", SDL_NumJoysticks() );
 
 	// Claim any jobsticks connected
 	// Push reverse order
@@ -42,6 +41,14 @@ void Input::setup() {
 	for (int i = SDL_NumJoysticks() -1; i >= 0; i--)
 	{
 		JoystickAdded(i);
+	}
+
+	for (auto joystick : m_joysticks) {
+		auto controller = joystick.second->controller;
+		if (controller) {
+			DEBUGOUT("Found controller: %s\n",
+					SDL_GameControllerName(controller));
+		}
 	}
 }
 
@@ -204,10 +211,12 @@ void Input::HandleEvents() {
 		input->reset_requested = false;
 
 
-		if (false && kart_local->j->controller) {
-			PollController(kart_local->j->controller, &outEvents, input);
-		} else if (kart_local->j->joystick) {
-			PollJoystick(kart_local->j->joystick, &outEvents, input);
+		if (kart_local->j) {
+			if (kart_local->j->controller) {
+				PollController(kart_local->j->controller, &outEvents, input);
+			} else if (kart_local->j->joystick) {
+				PollJoystick(kart_local->j->joystick, &outEvents, input);
+			}
 		}
 
 
@@ -350,6 +359,19 @@ void Input::PollController(SDL_GameController *controller,
 	out->leftTrigger      += POLL(TRIGGERLEFT);
 	out->rightTrigger     += POLL(TRIGGERRIGHT);
 	out->leftThumbStickRL += POLL(LEFTX);
+
+	if (out->aPressed)
+		printf("a pressed %d\n", out->aPressed);
+	if (out->xPressed)
+		printf("x pressed %d\n", out->xPressed);
+	if (out->bPressed)
+		printf("b pressed %d\n", out->bPressed);
+	if (out->rightTrigger)
+		printf("trigger %f\n", out->rightTrigger);
+	if (out->leftTrigger)
+		printf("left trigger %f\n", out->leftTrigger);
+	if (out->leftThumbStickRL)
+		printf("dir %f\n", out->leftThumbStickRL);
 	#undef POLL
 }
 
@@ -393,6 +415,10 @@ void Input::PollJoystick(SDL_Joystick *joystick,
 		printf("b pressed %d\n", out->bPressed);
 	if (out->rightTrigger)
 		printf("trigger %f\n", out->rightTrigger);
+	if (out->leftTrigger)
+		printf("left trigger %f\n", out->leftTrigger);
+	if (out->leftThumbStickRL)
+		printf("dir %f\n", out->leftThumbStickRL);
 
 
 	#undef POLL

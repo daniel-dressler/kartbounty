@@ -338,7 +338,7 @@ int GameAi::planFrame()
 				auto kart = GETENTITY(kart_id, CarEntity);
 				kart->health -= DAMAGE_FROM_BULLET;
 
-				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %d", kart_id, kart->health);
+				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %f\n", kart_id, kart->health);
 
 				// Reset kart if health gone
 				// There should be a slight pause before this gets triggered to show the kart exploding and to
