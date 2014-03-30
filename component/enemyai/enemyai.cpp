@@ -5,7 +5,7 @@
 #include "util/Square.h"
 #include <algorithm>
 
-#define LIMIT_FOR_STUCK 0.0001f
+#define LIMIT_FOR_STUCK 0.01f
 #define REVERSE_TRESHOLD 1.5f
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f

@@ -176,8 +176,8 @@ void Input::HandleEvents() {
 		if (kart_local->j == NULL) {
 			// Get next free joysick
 			if (m_free_joysticks.size() > 0) {
-				kart_local->j = m_free_joysticks.back();
-				m_free_joysticks.pop_back();
+				kart_local->j = *m_free_joysticks.begin();
+				m_free_joysticks.erase(m_free_joysticks.begin());
 				auto j_id = kart_local->j->inst_id;
 				m_taken_joysticks[j_id] = kart_id;
 			} else if (first_sighting) {
