@@ -5,7 +5,7 @@
 #include "util/Square.h"
 #include <algorithm>
 
-#define LIMIT_FOR_STUCK 0.01f
+#define LIMIT_FOR_STUCK 0.0001f
 #define REVERSE_TRESHOLD 1.5f
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
@@ -284,7 +284,6 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	Vector3 target_3 = kart_local->target_to_move;
 	Vector2 target = Vector2(target_3.x, target_3.z);
 	Vector3 pos = kart_entity->Pos;
-	Vector3 oldPos = kart_local->lastPos;
 
 	// Calculate the updated distance and the difference in angle.
 	btScalar diff_in_angles = getAngle(target, pos, &kart_entity->forDirection) / PI;
@@ -295,7 +294,8 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 		think_of_target(kart_local);
 
 	// check if car stuck, increase stuck timer if stuck.
-	bool stuck = (abs(oldPos.x - pos.x) < LIMIT_FOR_STUCK && abs(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
+	Vector3 oldPos = kart_local->lastPos;
+	bool stuck = (ABS(oldPos.x - pos.x) < LIMIT_FOR_STUCK) && (ABS(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
 	if (stuck) 
 	{
 		kart_local->time_stuck += elapsed_time;
@@ -304,11 +304,13 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	{
 		kart_local->time_stuck = 0;
 	}
+	kart_local->lastPos = pos;
 	
 	// Generate input for car.
 	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
 	directions->reset_requested = false;
 	directions->kart_id = kart_local->kart_id;
+
 
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
@@ -316,9 +318,6 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 		kart_local->time_stuck = 0;
 		directions->reset_requested = true;
 	}
-
-	// update old pos
-	kart_local->lastPos = pos;
 
 	// HACK for now, make ai use their powerups right away
 	directions->xPressed = true;

@@ -62,6 +62,8 @@ class Audio {
 };
 #endif
 
+#define ABS(x) (x < 0 ? -x : x)
+
 // Common opengl includes are the same on windows and linux, only mac differs
 #include <GL/glew.h>
 #ifdef _WIN32
