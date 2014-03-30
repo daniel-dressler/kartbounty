@@ -5,7 +5,7 @@
 #include "util/Square.h"
 #include <algorithm>
 
-#define LIMIT_FOR_STUCK 0.01f
+#define LIMIT_FOR_STUCK 0.03f
 #define REVERSE_TRESHOLD 1.5f
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
@@ -565,8 +565,10 @@ void EnemyAi::init_obs_sqr()
 	center = Vector3(-19.f, 0, 0.f); top_left = Vector3(-19.f, 0, 2.f);bot_right = Vector3(-19.f, 0, -2.f);
 	Square s31 = Square(center, top_left, bot_right);
 
-	// q1 no flip , X > 0, Z > 0
-	obs_sqr.push_back(s0);
+
+	// Outer walls, s19 - s27
+	#define WALL_QUARTER_SIZE 29
+	obs_sqr.push_back(s0); // Quarter 1 X > 0, Z > 0
 	obs_sqr.push_back(s1);
 	obs_sqr.push_back(s2);
 	obs_sqr.push_back(s3);
@@ -594,15 +596,8 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25);
 	obs_sqr.push_back(s26);
 	obs_sqr.push_back(s27);
-
-	// 0's
 	obs_sqr.push_back(s28);
-	obs_sqr.push_back(s29);
-	obs_sqr.push_back(s30);
-	obs_sqr.push_back(s31);
-
-	// q2 flip on the Z axis. X < 0, Z > 0
-	obs_sqr.push_back(s0.flip_z_axis());
+	obs_sqr.push_back(s0.flip_z_axis()); // Quarter 2, X < 0, Z > 0
 	obs_sqr.push_back(s1.flip_z_axis());
 	obs_sqr.push_back(s2.flip_z_axis());
 	obs_sqr.push_back(s3.flip_z_axis());
@@ -630,9 +625,8 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_z_axis());
 	obs_sqr.push_back(s26.flip_z_axis());
 	obs_sqr.push_back(s27.flip_z_axis());
-
-	// q3 flip on the Z axis and the X axis. X < 0, Z < 0
-	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis());
+	obs_sqr.push_back(s31);
+	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis()); // Quarter 3 X < 0, Z < 0
 	obs_sqr.push_back(s1.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s2.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s3.flip_z_axis().flip_x_axis());
@@ -660,9 +654,8 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s26.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s27.flip_z_axis().flip_x_axis());
-
-	// q4 flip on the  X axis. X > 0, Z < 0
-	obs_sqr.push_back(s0.flip_x_axis());
+	obs_sqr.push_back(s30);
+	obs_sqr.push_back(s0.flip_x_axis()); // Quarter 4 X > 0, Z < 0
 	obs_sqr.push_back(s1.flip_x_axis());
 	obs_sqr.push_back(s2.flip_x_axis());
 	obs_sqr.push_back(s3.flip_x_axis());
@@ -690,14 +683,14 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_x_axis());
 	obs_sqr.push_back(s26.flip_x_axis());
 	obs_sqr.push_back(s27.flip_x_axis());
+	obs_sqr.push_back(s29);
 }
-
 #define LENGTH_OF_RAY 3.75
 #define LENGTH_OF_RAY_FORWARD 3.5
 #define SENSOR_ANGLE 10
 
-#define IN_FRONT_ANGLE 70
-#define FAR_AWAY 6
+#define IN_FRONT_ANGLE 100
+#define FAR_AWAY 15
 
 float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 {
@@ -707,12 +700,45 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 
 	Vector2 threat;
 	float most_threat_dist = 10000000.f;
-	for (Square square : obs_sqr)
+	float MAP_MAX_DIST = 20.f;
+	float OVER_SCAN = 5.f;
+	auto x_dist = pos.x / MAP_MAX_DIST;
+	auto y_dist = pos.z / MAP_MAX_DIST;
+	std::vector<std::vector<Square>::iterator> quarters;
+	if (x_dist > -OVER_SCAN && y_dist > -OVER_SCAN) {
+		quarters.push_back(obs_sqr.begin());
+	}
+	if (x_dist < OVER_SCAN && y_dist > -OVER_SCAN) {
+		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE);
+	}
+	if (x_dist < OVER_SCAN && y_dist < OVER_SCAN) {
+		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE * 2);
+	}
+	if (x_dist > -OVER_SCAN && y_dist < OVER_SCAN) {
+		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE * 3);
+	}
+
+	int i = 0;
+	std::vector<Square>::iterator square = quarters.back();
+	quarters.pop_back();
+	while (quarters.size() > 0)
 	{
+		if (++i > WALL_QUARTER_SIZE) {
+			if (quarters.size() == 0) {
+				break;
+			}
+			square = quarters.back();
+			quarters.pop_back();
+			i = 0;
+		} else if (i > 1) {
+			square++;
+		}
+
+
 		// Cull by distance
-		auto center = square.getCenter();
+		auto center = square->getCenter();
 		float dist_from_center = get_distance(pos, center);
-		if (dist_from_center > LENGTH_OF_RAY || dist_from_center < most_threat_dist)
+		if (dist_from_center > LENGTH_OF_RAY * FAR_AWAY || dist_from_center > most_threat_dist)
 			continue;
 
 		// Cull by Angle
@@ -723,7 +749,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 	
 		btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
 		Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
-		int intersection_left = square.LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
+		int intersection_left = square->LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
 		if (intersection_left > 0) {
 			threat = center_xz;
 			most_threat_dist = dist_from_center;
@@ -733,7 +759,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 
 		btVector3 right_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
 		Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
-		int intersection_right = square.LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
+		int intersection_right = square->LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
 		if (intersection_right > 0) {
 			threat = center_xz;
 			most_threat_dist = dist_from_center;
@@ -742,7 +768,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 		
 		Vector3 direction = Vector3(forward.getX(), 0, forward.getZ());
 		direction = direction.Normalize();
-		int intersection_forward = square.LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
+		int intersection_forward = square->LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
 		if (intersection_forward > 0) {
 			threat = center_xz;
 			most_threat_dist = dist_from_center;

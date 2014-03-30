@@ -671,7 +671,10 @@ int Renderer::render( float fElapseSec )
 		Vector4 color1;
 		Vector4 color2;
 		auto bullet = bullet_pair.second;
-		Vector3 pos = bullet->poistion;
+		Vector3 pos;
+		pos.x = bullet->position.getX();
+		pos.y = bullet->position.getY();
+		pos.z = bullet->position.getZ();
 
 		Vector3 vDir = Vector3( bullet->direction.x(), bullet->direction.y(), bullet->direction.z() );
 		Vector3 vAxis = Vector3::Cross( vDir, Vector3( 0, 0, 1 ) );

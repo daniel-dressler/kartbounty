@@ -10,7 +10,7 @@
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 4
+#define NUM_KARTS 10
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 1
 // Small Gold Powerup
@@ -324,7 +324,7 @@ int GameAi::planFrame()
 				auto kart = GETENTITY(kart_id, CarEntity);
 				kart->health -= DAMAGE_FROM_BULLET;
 
-				DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %f\n", kart_id, kart->health);
+				//DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %f\n", kart_id, kart->health);
 
 				// Reset kart if health gone
 				// There should be a slight pause before this gets triggered to show the kart exploding and to
@@ -495,15 +495,12 @@ void GameAi::updateScoreBoard()
 		bool full = size >= MAX_SCORERS;
 		entity_id poorest = 0;
 		if (full && size > 0) {
-			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
 			poorest = top_scorers.back();
 		}
 		if (poorest == 0 || sortByScore(id, poorest)) {
-			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
 			if (full) {
 				top_scorers.pop_back();
 			}
-			DEBUGOUT("full %d, id %d, size %lu\n", full, id, top_scorers.size());
 			top_scorers.push_back(id);
 			std::sort(top_scorers.begin(), top_scorers.end(), sortByScore);
 		}

@@ -43,7 +43,7 @@ namespace Physics {
 
 		struct bullet
 		{
-			Vector3 poistion;
+			btVector3 position;
 			btVector3 direction;
 			float time_to_live; // Once this is 0, the bullet will be removed from the list by physics.
 			int bullet_id;
@@ -52,7 +52,7 @@ namespace Physics {
 			bullet() 
 			{
 				//bullet_id = bullet_next_id;
-				poistion = Vector3(0,0,0);
+				position = btVector3(0,0,0);
 				direction.setZero();
 				time_to_live = 0;
 				bullet_id = bullet_next_id;
@@ -145,6 +145,8 @@ namespace Physics {
 		void resetKart(entity_id id);
 		void removePowerup(powerup_id_t id);
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
+
+		void fireBullet(entity_id);
 		
 		float get_distance(Vector3 a, Vector3 b);
 		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);

@@ -79,6 +79,9 @@ void Input::HandleEvents() {
 	auto event_id = kbInput->id;
 	memcpy(kbInput, lastKbInput, sizeof(*kbInput));
 	kbInput->id = event_id;
+	// Reset Development Tools
+	kbInput->print_position = false;
+	kbInput->reset_requested = false;
 	while( SDL_PollEvent(&sdl_event) ) {
 		switch (sdl_event.type) {
 		case SDL_WINDOWEVENT:
@@ -203,11 +206,6 @@ void Input::HandleEvents() {
 			input = NEWEVENT(Input);
 		}
 		input->kart_id = kart_id;
-
-		// Reset Development Tools
-		input->print_position = false;
-		input->reset_requested = false;
-
 
 		if (kart_local->j) {
 			if (kart_local->j->controller) {

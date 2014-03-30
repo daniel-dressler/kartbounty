@@ -147,12 +147,19 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(BulletList)
-		void* list_of_bullets;
+		void *list_of_bullets;
 	ENDEVENT;
 
 	EVENTSTRUCT(KartHitByBullet)
 		entity_id kart_id;
 		entity_id source_kart_id;
+		Vector3 normal;
+		Vector3 pos;
+	ENDEVENT;
+
+	EVENTSTRUCT(BulletHitWall)
+		Vector3 normal;
+		Vector3 pos;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
