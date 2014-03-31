@@ -452,6 +452,10 @@ Input::joystick *Input::ForgetPlayer(entity_id kart_id) {
 	auto kart = m_players[kart_id];
 	auto joystick = kart->j;
 
-	m_free_joysticks.push_back(joystick);
+	m_players.erase(kart_id);
+	delete kart;
+
+	m_free_joysticks.insert(m_free_joysticks.begin(), joystick);
+
 	return joystick;
 }

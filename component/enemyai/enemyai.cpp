@@ -24,7 +24,7 @@
 
 // else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
 // This is the seconds check. If below, select a (semi)random kart to attack and go for it. Chooses player 66% of the time to look "alive".
-#define AGRESSIVE_BEHAVIOUR_TRESHOLD 1
+#define AGRESSIVE_BEHAVIOUR_TRESHOLD 2
 
 // The rest of the cases
 // This makes the karts chase the gold pickups
