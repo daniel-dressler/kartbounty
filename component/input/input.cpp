@@ -433,6 +433,9 @@ void Input::JoystickRemoved(SDL_JoystickID inst_id) {
 		}
 	}
 
+	if (js == NULL)
+		return;
+
 	if (js->controller)
 		SDL_GameControllerClose(js->controller);
 	if (js->haptic)
