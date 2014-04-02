@@ -701,7 +701,7 @@ void Simulation::step(double seconds)
 			kart_ent->shoot_timer -= seconds; // Every turn reduce the cooldown remained before can shoot again
 
 			// Generate bullets for player shots
-			if (input->aPressed && kart_ent->shoot_timer <= 0) {
+			if (input->aPressed && !gamePaused && kart_ent->shoot_timer <= 0) {
 				kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
 				fireBullet(kart_id);
 			}
