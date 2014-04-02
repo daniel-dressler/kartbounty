@@ -1,7 +1,7 @@
 BULLET = ./lib/bullet
 
 BULLETFLAGS = -I $(BULLET)/src/
-CXXFLAGS += -g -Wall -Wextra -Wno-write-strings -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
+CXXFLAGS += -Wno-ignored-qualifiers -g -Wall -Wextra -Wno-write-strings -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
 
 BULLETLIB = $(BULLET)/static_lib/src
 BULLETLIBS = $(BULLETLIB)/BulletDynamics/libBulletDynamics.a $(BULLETLIB)/BulletCollision/libBulletCollision.a $(BULLETLIB)/LinearMath/libLinearMath.a
@@ -13,7 +13,6 @@ BDIR := build
 
 SRC = main.cpp Standard.cpp \
 	component/gameai/gameai.cpp \
-	component/gameai/GameLogic.cpp \
 	component/enemyai/enemyai.cpp \
 	component/events/events.cpp \
 	component/input/input.cpp \
@@ -26,7 +25,6 @@ SRC = main.cpp Standard.cpp \
 	component/rendering/SELib/SEVector.cpp \
 	component/rendering/SELib/SEQuaternion.cpp \
 	component/rendering/SELib/SEMesh.cpp \
-	component/state/state.cpp \
 	component/physics/physics.cpp \
 	component/entities/entities.cpp
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))

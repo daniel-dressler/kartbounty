@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stack>
 #include <SDL.h>
 #include <algorithm>
 
@@ -9,11 +10,26 @@
 class Input {
 
 private:
-	std::vector<SDL_Joystick *> m_mJoysticks;
-	std::vector<SDL_Haptic *> m_mHaptics;
-	Events::Mailbox *m_pMailbox;
-	Events::InputEvent *m_pCurrentInput;
-	Events::InputEvent *m_pPreviousInput;
+	Events::Mailbox m_Mailbox;
+
+	struct joystick {
+		SDL_Joystick *joystick;
+		SDL_Haptic *haptic;
+		SDL_GameController *controller;
+		SDL_JoystickID inst_id;
+	};
+	std::map<SDL_JoystickID, entity_id>m_taken_joysticks;
+	std::map<SDL_JoystickID, struct joystick *>m_joysticks;
+	std::vector<struct joystick *>m_free_joysticks;
+
+	struct player_kart {
+		struct joystick *j;
+
+	};
+	std::map<entity_id, player_kart *>m_players;
+
+
+	Events::InputEvent *lastKbInput;
 
 public:
 
@@ -42,27 +58,25 @@ public:
 	int static const LEFT_TRIGGER_AXIS = 4;
 	int static const RIGHT_TRIGGER_AXIS = 5;
 
-	//int static const MIN_JOY_MOVEMENT_THRESHOLD = 3200;
 #define MIN_JOY_MOVEMENT_THRESHOLD 500
 #define JOYSTICK_DEADZONE 3000
 
 	Input();
-
 	~Input();
 
-	void OpenJoysticks();
-
-	void HandleEvents();
 	void setup();
-	void OnEvent(SDL_Event* Event);
+	void HandleEvents();
 
 	// Keyboard events
-	void OnKeyDown(SDL_Keycode keycode, Uint16 mod, Uint32 type);
-	void OnKeyUp(SDL_Keycode keycode, Uint16 mod, Uint32 type);
+	void OnKeyDown(SDL_Event* Event, std::vector<Events::Event *> *, Events::InputEvent *);
+	void OnKeyUp(SDL_Event* Event, Events::InputEvent *);
 
-	//Joystick Events
-	void OnJoystickAxisMotion(SDL_JoyAxisEvent event);
-	void OnJoystickButtonDown(SDL_JoyButtonEvent event);
-	void OnJoystickButtonUp(SDL_JoyButtonEvent event);
+	// Joysticks & Controllers
+	void PollController(SDL_GameController *, std::vector<Events::Event *> *, Events::InputEvent *);
+	void PollJoystick(SDL_Joystick *, std::vector<Events::Event *> *, Events::InputEvent *);
 
+	// Joystick management
+	void JoystickAdded(int);
+	void JoystickRemoved(SDL_JoystickID);
+	struct joystick *ForgetPlayer(entity_id);
 };

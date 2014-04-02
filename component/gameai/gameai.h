@@ -29,10 +29,10 @@ private:
 
 	enum GameStates
 	{
-		StartMenu,
-		RoundStart,
-		RoundInProgress,
-		RoundEnd
+		StartMenu = 1,
+		RoundStart = 2,
+		RoundInProgress = 4,
+		RoundEnd = 8
 	} currentState;
 
 	Real roundStartCountdownTimer;
@@ -40,8 +40,8 @@ private:
 	std::map<entity_id, GameAi::local_powerup_to_spawn *> m_to_spawn_vec;
 
 	std::vector<entity_id> kart_ids;
-
-	entity_id player1KartId;
+	std::vector<entity_id> ai_kart_ids;
+	std::vector<entity_id> player_kart_ids;
 
 	std::vector<Vector3> m_open_points;
 	uint32_t active_powerups;
@@ -55,8 +55,9 @@ private:
 	void outputScoreBoard();
 
 	void add_to_future_respawn(Events::PowerupPickupEvent *);
-	void GameAi::handle_powerups_not_gold(double time_elapsed);
-	void GameAi::init_powerups_not_gold();
+	void handle_powerups_not_gold(double time_elapsed);
+	void init_powerups_not_gold();
 
-	void resetGame();
+	void endRound();
+	void newRound(int, int);
 };

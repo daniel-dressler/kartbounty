@@ -120,6 +120,8 @@ int Renderer::setup()
 {
 
 	SDL_Init( SDL_INIT_EVERYTHING );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
@@ -140,6 +142,8 @@ int Renderer::setup()
 
 	SDL_GL_MakeCurrent( win, glcontext );
 
+	// Note: default glew only inits 2.0 and lower apis
+	glewExperimental = GL_TRUE;
 	if( glewInit() != GLEW_OK )
 		exit(4);
 
@@ -671,7 +675,10 @@ int Renderer::render( float fElapseSec )
 		Vector4 color1;
 		Vector4 color2;
 		auto bullet = bullet_pair.second;
-		Vector3 pos = bullet->poistion;
+		Vector3 pos;
+		pos.x = bullet->position.getX();
+		pos.y = bullet->position.getY();
+		pos.z = bullet->position.getZ();
 
 		Vector3 vDir = Vector3( bullet->direction.x(), bullet->direction.y(), bullet->direction.z() );
 		Vector3 vAxis = Vector3::Cross( vDir, Vector3( 0, 0, 1 ) );

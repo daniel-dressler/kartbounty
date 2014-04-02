@@ -147,12 +147,19 @@ namespace Events {
 	ENDEVENT;
 
 	EVENTSTRUCT(BulletList)
-		void* list_of_bullets;
+		void *list_of_bullets;
 	ENDEVENT;
 
 	EVENTSTRUCT(KartHitByBullet)
 		entity_id kart_id;
 		entity_id source_kart_id;
+		Vector3 normal;
+		Vector3 pos;
+	ENDEVENT;
+
+	EVENTSTRUCT(BulletHitWall)
+		Vector3 normal;
+		Vector3 pos;
 	ENDEVENT;
 
 	EVENTSTRUCT(Input)
@@ -170,12 +177,17 @@ namespace Events {
 		float rightThumbStickRL;
 		float rightThumbStickUD;
 
+		// Numbers
+		bool onePressed;
+		bool twoPressed;
+		bool threePressed;
+		bool fourPressed;
+
 		// Development Cheats
 		bool print_position;
 		bool reset_requested;
 		
 		// The kart producing this event
-		int kart_index;
 		entity_id kart_id;
 	ENDEVENT;
 
@@ -188,6 +200,12 @@ namespace Events {
 		bool yPressed;
 		bool bPressed;
 		bool aPressed;
+
+		// Numbers
+		bool onePressed;
+		bool twoPressed;
+		bool threePressed;
+		bool fourPressed;
 	ENDEVENT;
 
 	EVENTSTRUCT(AudioPlayPause)
