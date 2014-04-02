@@ -350,7 +350,7 @@ int Renderer::render( float fElapseSec )
 				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
 				
-				cameras.clear();
+//				cameras.clear();
 				cameras.push_back(kart->camera);
 
 				player_kart_found = true;
@@ -358,7 +358,7 @@ int Renderer::render( float fElapseSec )
 			break;
 		case Events::EventType::AiKart:
 			{
-				if (!player_kart_found)
+//				if (!player_kart_found)
 				{
 					entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
 					auto kart = GETENTITY(kart_id, CarEntity);
