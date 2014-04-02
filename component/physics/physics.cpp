@@ -998,7 +998,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	Real fLastSpeed = m_karts[kart_id]->lastspeed;
 	Real fSpeed = ABS( m_karts[kart_id]->vehicle->getCurrentSpeedKmHour() );
 	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
-	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
+	Real fAdjFOV = Clamp(fAdjSpeed, (Real)0.f, (Real)MAX_SPEED) / (Real)MAX_SPEED;
 	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
 
 	kart->camera.fFOV = Lerp( kart->camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
