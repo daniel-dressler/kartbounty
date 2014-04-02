@@ -54,6 +54,7 @@ long _filelength(int fd);
 class Audio {
 	public:
 	void update(double std) {
+		std = std;
 		return;
 	}
 	void setup() {
