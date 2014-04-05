@@ -18,14 +18,18 @@ Input::Input() {
 }
 
 Input::~Input() {
-	for (auto kart : m_players) { 
-		ForgetPlayer(kart.first);
+	auto kart_iter = m_players.begin();
+	while (kart_iter != m_players.end()) {
+		auto kart_id = kart_iter->first;
+		kart_iter++;
+		ForgetPlayer(kart_id);
 	}
-	m_players.empty();
-	for (auto joystick : m_joysticks) { 
-		JoystickRemoved(joystick.first);
+	auto js_iter = m_joysticks.begin();
+	while (js_iter != m_joysticks.end()) {
+		auto js_id = js_iter->first;
+		js_iter++;
+		JoystickRemoved(js_id);
 	}
-	m_joysticks.empty();
 }
 
 void Input::setup() {
@@ -149,11 +153,12 @@ void Input::HandleEvents() {
 	}
 
 	// Any players leave?
-	for (auto kart_local_pair : m_players) {
-		auto kart_id = kart_local_pair.first;
+	auto kart_iter = m_players.begin();
+	while (kart_iter != m_players.end()) {
+		auto kart_id = kart_iter->first;
+		kart_iter++;
 		if (seen_karts.count(kart_id) == 0) {
 			ForgetPlayer(kart_id);
-			m_players.erase(kart_id);
 		}
 	}
 
