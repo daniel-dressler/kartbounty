@@ -6,11 +6,11 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 8
+#define FINAL_SCORE_GOAL 1
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 10
+#define NUM_KARTS 2
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 1
 // Small Gold Powerup
@@ -18,7 +18,7 @@
 // Amount of gold for killing another kart
 #define KART_KILL_GOLD_VALUE 2
 // How much health does a kart has to start with
-#define STARTING_HEALTH 5
+#define STARTING_HEALTH 2
 #define HEALTH_POWERUP_AMOUNT 5
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
@@ -511,9 +511,9 @@ void GameAi::updateScoreBoard()
 	events_out.push_back(scoreBoardEvent);
 	
 	// Check for end of game condition
-	if(!kart_ids.empty())
+	if(!top_scorers.empty())
 	{
-		if(GETENTITY(kart_ids[0], CarEntity)->gold > FINAL_SCORE_GOAL)
+		if(GETENTITY(top_scorers[0], CarEntity)->gold > FINAL_SCORE_GOAL)
 		{
 			// Some one has reached the goal, end the round
 			events_out.push_back(NEWEVENT(TogglePauseGame));	// Pause the karts
@@ -521,7 +521,7 @@ void GameAi::updateScoreBoard()
 
 			// Did a player win?
 			for (auto player : player_kart_ids) {
-				if (kart_ids[0] == player) {
+				if (top_scorers[0] == player) {
 					roundEndEvent->playerWon = true;
 				}
 			}

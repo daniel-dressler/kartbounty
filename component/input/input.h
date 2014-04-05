@@ -12,22 +12,21 @@ class Input {
 private:
 	Events::Mailbox m_Mailbox;
 
-	struct joystick {
+	struct local_joystick {
 		SDL_Joystick *joystick;
 		SDL_Haptic *haptic;
 		SDL_GameController *controller;
 		SDL_JoystickID inst_id;
 	};
 	std::map<SDL_JoystickID, entity_id>m_taken_joysticks;
-	std::map<SDL_JoystickID, struct joystick *>m_joysticks;
-	std::vector<struct joystick *>m_free_joysticks;
+	std::map<SDL_JoystickID, struct local_joystick *>m_joysticks;
+	std::vector<struct local_joystick *>m_free_joysticks;
 
 	struct player_kart {
-		struct joystick *j;
+		struct local_joystick *j;
 
 	};
 	std::map<entity_id, player_kart *>m_players;
-
 
 	Events::InputEvent *lastKbInput;
 
@@ -78,5 +77,5 @@ public:
 	// Joystick management
 	void JoystickAdded(int);
 	void JoystickRemoved(SDL_JoystickID);
-	struct joystick *ForgetPlayer(entity_id);
+	struct local_joystick *ForgetPlayer(entity_id);
 };

@@ -11,7 +11,7 @@ Input::Input() {
 	m_Mailbox.request(Events::EventType::StartMenu);
 
 	// Load database of joystick to controller mappings
-	SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
+	//SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	SDL_JoystickEventState(SDL_ENABLE);
@@ -397,7 +397,7 @@ void Input::JoystickAdded(int device_id) {
 		return;
 	}
 
-	struct joystick *js = new joystick();
+	struct local_joystick *js = new local_joystick();
 
 	js->joystick = joy;
 	js->inst_id = SDL_JoystickInstanceID(js->joystick);
@@ -415,7 +415,7 @@ void Input::JoystickAdded(int device_id) {
 }
 
 void Input::JoystickRemoved(SDL_JoystickID inst_id) {
-	struct joystick *js = NULL;
+	struct local_joystick *js = NULL;
 	if (m_taken_joysticks.count(inst_id) != 0) {
 	
 		auto kart_id = m_taken_joysticks[inst_id];
@@ -446,7 +446,7 @@ void Input::JoystickRemoved(SDL_JoystickID inst_id) {
 	delete js;
 }
 
-Input::joystick *Input::ForgetPlayer(entity_id kart_id) {
+Input::local_joystick *Input::ForgetPlayer(entity_id kart_id) {
 
 	if (m_players.count(kart_id) == 0) {
 		return NULL;
