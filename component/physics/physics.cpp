@@ -28,14 +28,14 @@ using namespace Physics;
 #define MIN_ANGLE_SHOOTING 0.9
 #define MAX_DIST_SHOOTING 7
 
-btVector3 toBtVector(Vector3 in)
+btVector3 toBtVector(Vector3 *in)
 {
-	return btVector3(in.x, in.y, in.z);
+	return btVector3(in->x, in->y, in->z);
 }
 
-Vector3 fromBtVector(btVector3 in)
+Vector3 fromBtVector(btVector3 *in)
 {
-	return Vector3(in.getX(), in.getY(), in.getZ());
+	return Vector3(in->getX(), in->getY(), in->getZ());
 }
 
 // Callback cannot be inside class
@@ -666,7 +666,7 @@ void Simulation::step(double seconds)
 						auto event = NEWEVENT(KartHandbrake);
 						event->kart_id = kart_id;
 						event->speed = speed;
-						event->pos = fromBtVector(orig);
+						event->pos = fromBtVector(&orig);
 						events_out.push_back(event);
 					}
 				}
@@ -701,7 +701,7 @@ void Simulation::step(double seconds)
 			kart_ent->shoot_timer -= seconds; // Every turn reduce the cooldown remained before can shoot again
 
 			// Generate bullets for player shots
-			if (input->aPressed && kart_ent->shoot_timer <= 0) {
+			if (input->aPressed && !gamePaused && kart_ent->shoot_timer <= 0) {
 				kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
 				fireBullet(kart_id);
 			}
@@ -739,7 +739,7 @@ void Simulation::step(double seconds)
 			btTransform tr;
 			tr.setIdentity();
 			auto pos = powerup->powerup_pos = powerup_event->pos;
-			btVector3 powerup_pos = toBtVector(pos);
+			btVector3 powerup_pos = toBtVector(&pos);
 			tr.setOrigin(powerup_pos);
 			body->setWorldTransform(tr);
 
@@ -890,7 +890,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	qOriOldInv.Invert();
 
 	btVector3 pos = trans.getOrigin();
-	kart->Pos = fromBtVector(pos);
+	kart->Pos = fromBtVector(&pos);
 
 	btQuaternion rot = trans.getRotation();
 	kart->Orient.x = (Real)rot.getX();
@@ -944,7 +944,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	}
 
 	// Save forward vector
-	btVector3 Up = toBtVector(kart->Up);
+	btVector3 Up = toBtVector(&kart->Up);
 
 	kart->forDirection = (m_karts[kart_id]->vehicle->getForwardVector()).rotate(Up,DEGTORAD(-90));
 
@@ -960,9 +960,9 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	{
 		btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
 		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
-		kart->groundHit = fromBtVector(hitEnd);
+		kart->groundHit = fromBtVector(&hitEnd);
 		
-		kart->groundNormal = fromBtVector(RayCallback.m_hitNormalWorld);
+		kart->groundNormal = fromBtVector(&RayCallback.m_hitNormalWorld);
 	}
 
 	// Camera
@@ -998,7 +998,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	Real fLastSpeed = m_karts[kart_id]->lastspeed;
 	Real fSpeed = ABS( m_karts[kart_id]->vehicle->getCurrentSpeedKmHour() );
 	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
-	Real fAdjFOV = fAdjSpeed / (Real)MAX_SPEED;
+	Real fAdjFOV = Clamp(fAdjSpeed, (Real)0.f, (Real)MAX_SPEED) / (Real)MAX_SPEED;
 	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
 
 	kart->camera.fFOV = Lerp( kart->camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
@@ -1060,7 +1060,7 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 	auto kart1_pos = kart1->vehicle->getChassisWorldTransform().getOrigin();
 
 	auto kart = GETENTITY(firing_kart_id, CarEntity);
-	btVector3 Up = toBtVector(kart->Up);
+	btVector3 Up = toBtVector(&kart->Up);
 
 	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(Up,DEGTORAD(-90));
 	kart1_forward.normalize();

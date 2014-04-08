@@ -11,21 +11,25 @@ Input::Input() {
 	m_Mailbox.request(Events::EventType::StartMenu);
 
 	// Load database of joystick to controller mappings
-	SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
+	//SDL_GameControllerAddMappingsFromFile("./assets/gamecontrollerdb.txt");
 
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	SDL_JoystickEventState(SDL_ENABLE);
 }
 
 Input::~Input() {
-	for (auto kart : m_players) { 
-		ForgetPlayer(kart.first);
+	auto kart_iter = m_players.begin();
+	while (kart_iter != m_players.end()) {
+		auto kart_id = kart_iter->first;
+		kart_iter++;
+		ForgetPlayer(kart_id);
 	}
-	m_players.empty();
-	for (auto joystick : m_joysticks) { 
-		JoystickRemoved(joystick.first);
+	auto js_iter = m_joysticks.begin();
+	while (js_iter != m_joysticks.end()) {
+		auto js_id = js_iter->first;
+		js_iter++;
+		JoystickRemoved(js_id);
 	}
-	m_joysticks.empty();
 }
 
 void Input::setup() {
@@ -149,11 +153,12 @@ void Input::HandleEvents() {
 	}
 
 	// Any players leave?
-	for (auto kart_local_pair : m_players) {
-		auto kart_id = kart_local_pair.first;
+	auto kart_iter = m_players.begin();
+	while (kart_iter != m_players.end()) {
+		auto kart_id = kart_iter->first;
+		kart_iter++;
 		if (seen_karts.count(kart_id) == 0) {
 			ForgetPlayer(kart_id);
-			m_players.erase(kart_id);
 		}
 	}
 
@@ -397,7 +402,7 @@ void Input::JoystickAdded(int device_id) {
 		return;
 	}
 
-	struct joystick *js = new joystick();
+	struct local_joystick *js = new local_joystick();
 
 	js->joystick = joy;
 	js->inst_id = SDL_JoystickInstanceID(js->joystick);
@@ -415,7 +420,7 @@ void Input::JoystickAdded(int device_id) {
 }
 
 void Input::JoystickRemoved(SDL_JoystickID inst_id) {
-	struct joystick *js = NULL;
+	struct local_joystick *js = NULL;
 	if (m_taken_joysticks.count(inst_id) != 0) {
 	
 		auto kart_id = m_taken_joysticks[inst_id];
@@ -446,7 +451,7 @@ void Input::JoystickRemoved(SDL_JoystickID inst_id) {
 	delete js;
 }
 
-Input::joystick *Input::ForgetPlayer(entity_id kart_id) {
+Input::local_joystick *Input::ForgetPlayer(entity_id kart_id) {
 
 	if (m_players.count(kart_id) == 0) {
 		return NULL;
