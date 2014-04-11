@@ -14,21 +14,27 @@
 #define SHOT_COOLDOWN 0.2f
 #define DIST_TO_TARGET_RETHINK_NEW_TARGET 0.1f
 
-#define AI_FORWARD_SPEED 0.7f
+// How close the AI has to be to a player to use pulse
+#define PULSE_DISTANCE 1.2f
+
+// If false, AI doesn't move
+#define AI_MOVEMENT true
+
+#define AI_FORWARD_SPEED 0.8f
 
 // Behaviour templates
 
 //if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
 // This is the first check. If below, just drive to a random spot. Keep low, I think?
-#define JUST_DRIVE_BEHAVIOUR_TRESHOLD 1
+#define JUST_DRIVE_BEHAVIOUR_TRESHOLD 0
 
 // else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
 // This is the seconds check. If below, select a (semi)random kart to attack and go for it. Chooses player 66% of the time to look "alive".
-#define AGRESSIVE_BEHAVIOUR_TRESHOLD 1
+#define AGRESSIVE_BEHAVIOUR_TRESHOLD 10
 
 // The rest of the cases
 // This makes the karts chase the gold pickups
-#define SEEK_GOLD_TRESHOLD 10
+#define SEEK_GOLD_TRESHOLD 0
 
 // int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
 // FULL_BEHAVIOUR_TRESHHOLD is the total sum of all the treshholds.
@@ -230,7 +236,9 @@ void EnemyAi::update(Real elapsed_time)
 					kart = m_karts[kart_id];
 				}
 				kart->shoot_timer -= elapsed_time; // decrease cooldown on shot.
-				inputEvents.push_back(move_kart(kart, elapsed_time));
+
+				if (AI_MOVEMENT)
+					inputEvents.push_back(move_kart(kart, elapsed_time));
 
 			}
 			break;
@@ -255,9 +263,6 @@ void EnemyAi::update(Real elapsed_time)
 	m_mb.emptyMail();
 	m_mb.sendMail(inputEvents);
 }
-
-bool UseAI = 1;
-bool Prev = 0;
 
 Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_time)
 {
@@ -318,8 +323,15 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	// update old pos
 	kart_local->lastPos = pos;
 
+	directions->xPressed = false;
 	// HACK for now, make ai use their powerups right away
-	directions->xPressed = true;
+	if (distance_to_target < PULSE_DISTANCE && kart_entity->powerup_slot == Entities::PulsePowerup)
+	{
+		directions->xPressed = true;
+		DEBUGOUT("Kart %d used pulse!\n", kart_local->kart_id)
+	}
+	else if ( kart_entity->powerup_slot != Entities::PulsePowerup )
+		directions->xPressed = true;
 
 	return directions;
 }

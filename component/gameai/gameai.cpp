@@ -203,6 +203,8 @@ int GameAi::planFrame()
 
 						active_tresures--;
 						kart->gold += BIG_GOLD_VALUE;
+
+						DEBUGOUT("Kart %d picked up gold!", kart_id)
 						break;
 
 					case Entities::GoldCoinPowerup:
@@ -213,6 +215,7 @@ int GameAi::planFrame()
 						// Player loses any unused powerups
 						kart->powerup_slot = powerup;
 						add_to_future_respawn(pickup);
+						DEBUGOUT("Kart %d picked up a powerup of type %d!\n", kart_id, powerup)
 						break;
 				}
 			}
@@ -601,7 +604,7 @@ void GameAi::newRound(int numPlayers, int numAi)
 
 void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out)
 {
-	int type_num =  rand() %2 + 2;
+	int type_num =  3; //rand() %4 ;
 		switch (type_num)
 		{
 			case 0:
