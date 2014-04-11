@@ -476,7 +476,8 @@ int Renderer::render( float fElapseSec )
 			case 2:
 				{
 					RCAMERA cam;
-					cam.x = cam.y = 0;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
 					cam.w = nWinWidth;
 					cam.h = nWinHeight>>1;
 					cam.fov = DEGTORAD( cameras[0].fFOV );
@@ -484,7 +485,7 @@ int Renderer::render( float fElapseSec )
 					cam.eyefocus = cameras[0].vFocus;
 					aryCameras.push_back( cam );
 
-					cam.y = nWinHeight>>1;
+					cam.y = 0;
 					cam.fov = DEGTORAD( cameras[1].fFOV );
 					cam.eyepos = cameras[1].vPos;
 					cam.eyefocus = cameras[1].vFocus;
@@ -494,7 +495,8 @@ int Renderer::render( float fElapseSec )
 			case 3:
 				{
 					RCAMERA cam;
-					cam.x = cam.y = 0;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
 					cam.w = nWinWidth;
 					cam.h = nWinHeight>>1;
 					cam.fov = DEGTORAD( cameras[0].fFOV );
@@ -502,8 +504,8 @@ int Renderer::render( float fElapseSec )
 					cam.eyefocus = cameras[0].vFocus;
 					aryCameras.push_back( cam );
 
+					cam.y = 0;
 					cam.w = nWinWidth>>1;
-					cam.y = nWinHeight>>1;
 					cam.fov = DEGTORAD( cameras[1].fFOV );
 					cam.eyepos = cameras[1].vPos;
 					cam.eyefocus = cameras[1].vFocus;
@@ -519,7 +521,8 @@ int Renderer::render( float fElapseSec )
 			default: // 4
 				{
 					RCAMERA cam;
-					cam.x = cam.y = 0;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
 					cam.w = nWinWidth>>1;
 					cam.h = nWinHeight>>1;
 					cam.fov = DEGTORAD( cameras[0].fFOV );
@@ -533,8 +536,8 @@ int Renderer::render( float fElapseSec )
 					cam.eyefocus = cameras[1].vFocus;
 					aryCameras.push_back( cam );
 
+					cam.y = 0;
 					cam.x = 0;
-					cam.y = nWinHeight>>1;
 					cam.fov = DEGTORAD( cameras[2].fFOV );
 					cam.eyepos = cameras[2].vPos;
 					cam.eyefocus = cameras[2].vFocus;
@@ -709,14 +712,11 @@ int Renderer::render( float fElapseSec )
 		glDisable( GL_BLEND );
 	}
 
-	// GUI TEST
+	// GUI
 	glClear( GL_DEPTH_BUFFER_BIT );
 
-	Matrix matOrtho;
-	matOrtho.Orthographic( 0, nWinWidth, 0, nWinHeight, -1, 1 );
-
 	cstGUI& guidata = *(cstGUI*)m_bufGUI.data;
-	guidata.matWorldViewProj = matOrtho;
+	guidata.matWorldViewProj.Orthographic( 0, nWinWidth, 0, nWinHeight, -1, 1 );
 	glhUpdateBuffer( m_eftGUI, m_bufGUI );
 
 	glDisable( GL_DEPTH_TEST );
@@ -726,16 +726,27 @@ int Renderer::render( float fElapseSec )
 	switch( m_nScreenState )
 	{
 	case RS_START:
+		guidata.matWorldViewProj.Orthographic( 0, nWinWidth, 0, nWinHeight, -1, 1 );
+		glhUpdateBuffer( m_eftGUI, m_bufGUI );
 		glhEnableTexture( m_texGUIStart );
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
 		break;
 	case RS_END:
+		guidata.matWorldViewProj.Orthographic( 0, nWinWidth, 0, nWinHeight, -1, 1 );
+		glhUpdateBuffer( m_eftGUI, m_bufGUI );
 		glhEnableTexture( m_texGUIScore );
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
-		_DrawScore( 0, 0 );
+		_DrawScore( 0, 0, 0 );
 		break;
 	case RS_DRIVING:
-		_DrawScore( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40 );
+		for( Int32 i = 0; i < aryCameras.size(); i++ )
+		{	
+			glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
+			guidata.matWorldViewProj.Orthographic( 0, nWinWidth, 0, nWinWidth * ( (Real)aryCameras[i].h / aryCameras[i].w ), -1, 1 );
+			glhUpdateBuffer( m_eftGUI, m_bufGUI );
+
+			_DrawScore( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40, 1 );
+		}
 		break;
 	}
 
@@ -811,7 +822,7 @@ void Renderer::_DrawArenaQuad( Vector3 vColor )
 	glDisable( GL_BLEND );
 }
 
-void Renderer::_DrawScore( Int32 x, Int32 y ) // 125, 40
+void Renderer::_DrawScore( Int32 x, Int32 y, Int32 simple ) // 125, 40
 {
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );

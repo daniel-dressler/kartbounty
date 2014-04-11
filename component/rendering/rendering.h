@@ -79,7 +79,7 @@ private:
 
 	void _DrawArena();
 	void _DrawArenaQuad( Vector3 vColor );
-	void _DrawScore( Int32 x, Int32 y );
+	void _DrawScore( Int32 x, Int32 y, Int32 simple );
 
 	// Local knowledge of karts
 	struct kart {
