@@ -6,11 +6,11 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 1
+#define FINAL_SCORE_GOAL 20
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
-#define NUM_KARTS 2
+#define NUM_KARTS 8
 // Big Gold Powerup
 #define BIG_GOLD_VALUE 1
 // Small Gold Powerup

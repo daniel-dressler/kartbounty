@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <queue>
+#include <time.h>
 
 #include "physics.h"
 
@@ -27,6 +28,12 @@ using namespace Physics;
 // NOTE: Angle is measured in the dot product, not degrees
 #define MIN_ANGLE_SHOOTING 0.9
 #define MAX_DIST_SHOOTING 7
+
+// Array for kart spawn locations.
+#define NUM_KART_SPAWN_LOCATIONS 8
+const btVector3 kartSpawnLocations[] = { btVector3(12.4, 1.1, 12.4), btVector3(-12.4, 1.1, 12.4), btVector3(12.4, 1.1, -12.4), 
+	btVector3(-12.4, 1.1,-12.4), btVector3(16,2.1,16), btVector3(-16,2.1,16), btVector3(-16,2.1,-16), btVector3(16,2.1,-16) };
+int kartSpawnCounter;
 
 btVector3 toBtVector(Vector3 *in)
 {
@@ -73,6 +80,10 @@ Simulation::Simulation()
 	m_triangleInfoMap = NULL;
 
 	gamePaused = false;
+
+	// Set Initial seed for spawn locations
+	srand(time(NULL));
+	kartSpawnCounter = rand() % NUM_KART_SPAWN_LOCATIONS;
 }
 
 Simulation::~Simulation()
@@ -326,7 +337,16 @@ int Simulation::createKart(entity_id kart_id)
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,1.05,0));		// This sets where the car initially spawns
+	//tr.setOrigin(btVector3(0,1.05,0));		
+	
+	// This sets where the car initially spawns with a rotation to look towards the center of the map
+	tr.setOrigin(kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS]);
+	btScalar distX = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS].x() * -1;
+	btScalar distY = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS].z() * -1;
+	btScalar radians = atan2(distX, distY);
+	btQuaternion rotation = btQuaternion(btVector3(0,1,0), radians);
+	tr.setRotation(rotation);
+	kartSpawnCounter++;
 
 	btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
 	m_kart_bodies[kart_id] = carChassis;
@@ -350,8 +370,6 @@ int Simulation::createKart(entity_id kart_id)
 	m_world->addVehicle(kart);
 	m_karts[kart_id]->vehicle = kart;
 	m_karts[kart_id]->raycaster = vehicleRayCaster;
-
-
 
 	float connectionHeight = 0.10f;
 	btVector3 wheelDirectionCS0(0,-1,0);
