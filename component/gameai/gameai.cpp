@@ -470,6 +470,9 @@ Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type
 	p_event->pos = pos;
 	p_event->powerup_id = this->next_powerup_id++;
 
+	if(p_type == Entities::GoldCasePowerup)
+		m_gold_case_id = p_event->powerup_id;
+
 	active_powerups++;
 	return p_event;
 }
@@ -562,6 +565,15 @@ void GameAi::endRound()
 	this->kart_ids.clear();
 	this->ai_kart_ids.clear();
 	this->player_kart_ids.clear();
+
+	goldSpawnCounter = 0;
+	active_tresures = 0;
+
+	auto removeGoldPow = NEWEVENT( PowerupDestroyed );
+	removeGoldPow->powerup_type = Entities::GoldCasePowerup;
+	removeGoldPow->powerup_id = m_gold_case_id;
+
+	events_out.push_back(removeGoldPow);
 
 	m_mb->sendMail(events_out);
 }

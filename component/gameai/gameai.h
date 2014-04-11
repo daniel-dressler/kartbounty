@@ -49,6 +49,7 @@ private:
 	uint32_t active_powerups;
 	uint32_t active_tresures;
 	powerup_id_t next_powerup_id;
+	powerup_id_t m_gold_case_id;
 
 	Vector3 pick_point();
 	void open_point(Vector3);
