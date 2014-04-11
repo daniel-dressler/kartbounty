@@ -849,7 +849,7 @@ void Renderer::_DrawScore( Int32 x, Int32 y, Int32 simple ) // 125, 40
 		glhDestroyMesh( temp_mesh );
 
 		GuiBox pnum_box = GuiBox( 80 + x, y - ofs, 20, 30, Vector4( 1,1,1,1 ) );
-		pnum_box.Num( i );
+		pnum_box.Num( kart_entity->playerNumber );
 		glhCreateGUI( temp_mesh, pnum_box, 6 );
 		glhEnableTexture( m_texGUINumbers );
 		glhDrawMesh( m_eftGUI, temp_mesh );
