@@ -27,6 +27,8 @@ private:
 	Timer frame_timer;
 	Timer fps_timer;
 
+	float inputPauseTimer;
+
 	enum GameStates
 	{
 		StartMenu = 1,

@@ -6,7 +6,7 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 20
+#define FINAL_SCORE_GOAL 2
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
@@ -22,6 +22,8 @@
 #define HEALTH_POWERUP_AMOUNT 5
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
+// time to stop listening to input events at end of round
+#define TIME_TO_IGNORE_INPUT 1
 
 const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
 	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
@@ -285,41 +287,45 @@ int GameAi::planFrame()
 
 			case Events::EventType::StartMenuInput:
 			{
-				auto inputEvent = ((Events::StartMenuInputEvent *)event);
-
-				if(inputEvent->bPressed)
+				inputPauseTimer -= getElapsedTime();
+				if(inputPauseTimer <= 0)
 				{
-					return 0;	// Quit the game
-				}
+					auto inputEvent = ((Events::StartMenuInputEvent *)event);
 
-				int numPlayers = 0;
-				if (inputEvent->aPressed || inputEvent->onePressed) {
-					numPlayers = 1;
-				} else if (inputEvent->twoPressed) {
-					numPlayers = 2;
-				} else if (inputEvent->threePressed) {
-					numPlayers = 3;
-				} else if (inputEvent->fourPressed) {
-					numPlayers = 4;
-				}
+					if(inputEvent->bPressed)
+					{
+						return 0;	// Quit the game
+					}
+
+					int numPlayers = 0;
+					if (inputEvent->aPressed || inputEvent->onePressed) {
+						numPlayers = 1;
+					} else if (inputEvent->twoPressed) {
+						numPlayers = 2;
+					} else if (inputEvent->threePressed) {
+						numPlayers = 3;
+					} else if (inputEvent->fourPressed) {
+						numPlayers = 4;
+					}
 
 
-				if (numPlayers > 0)
-				{
-					auto startRoundEvent = NEWEVENT( RoundStart );
-					events_out.push_back(startRoundEvent);
+					if (numPlayers > 0)
+					{
+						auto startRoundEvent = NEWEVENT( RoundStart );
+						events_out.push_back(startRoundEvent);
 
-					// Restart a new game
-					endRound();
-					newRound(numPlayers, NUM_KARTS - numPlayers);
+						// Restart a new game
+						endRound();
+						newRound(numPlayers, NUM_KARTS - numPlayers);
 
-					// Pause the game to allow audio to play countdown
-					// If we are starting a second round the game is already paused so we skip this
-					if (currentState == StartMenu)
-						events_out.push_back( NEWEVENT( TogglePauseGame ));	
+						// Pause the game to allow audio to play countdown
+						// If we are starting a second round the game is already paused so we skip this
+						if (currentState == StartMenu)
+							events_out.push_back( NEWEVENT( TogglePauseGame ));	
 
-					currentState = RoundStart;
-					roundStartCountdownTimer = 2.2;  // This is how long to wait until we unpause in seconds
+						currentState = RoundStart;
+						roundStartCountdownTimer = 2.2;  // This is how long to wait until we unpause in seconds
+					}
 				}
 			}
 			break;
@@ -537,6 +543,7 @@ void GameAi::updateScoreBoard()
 
 			events_out.push_back(roundEndEvent);	
 			currentState = RoundEnd;
+			inputPauseTimer = TIME_TO_IGNORE_INPUT;
 		}
 	}
 
