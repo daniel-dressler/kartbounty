@@ -34,7 +34,7 @@ using namespace Physics;
 //const btVector3 kartSpawnLocations[] = { btVector3(12.4, 1.1, 12.4), btVector3(-12.4, 1.1, 12.4), btVector3(12.4, 1.1, -12.4), 
 //	btVector3(-12.4, 1.1,-12.4), btVector3(16,2.1,16), btVector3(-16,2.1,16), btVector3(-16,2.1,-16), btVector3(16,2.1,-16) };
 const btVector3 kartSpawnLocations[] = { btVector3(17, 2.10, 8), btVector3(-17, 2.1, 8), btVector3(17, 2.1, -8), 
-	btVector3(-17, 2.1, -8), btVector3(8, 2.1, 17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8, 2.1, 17) };
+	btVector3(-17, 2.1, -8), btVector3(8, 2.1, -17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8, 2.1, 17) };
 int kartSpawnCounter;
 
 btVector3 toBtVector(Vector3 *in)

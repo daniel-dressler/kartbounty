@@ -80,6 +80,7 @@ namespace Events {
 	EVENTSTRUCT(Explosion)
 		entity_id exploder;
 		float force;
+		Vector3 pos;
 	ENDEVENT;
 
 	EVENTSTRUCT(StateUpdate)

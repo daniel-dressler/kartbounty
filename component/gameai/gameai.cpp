@@ -273,7 +273,7 @@ int GameAi::planFrame()
 
 			case Events::EventType::StartMenuInput:
 			{
-				inputPauseTimer -= getElapsedTime();
+				inputPauseTimer -= frame_timer.CalcSeconds();
 				if(inputPauseTimer <= 0)
 				{
 					auto inputEvent = ((Events::StartMenuInputEvent *)event);
@@ -332,6 +332,12 @@ int GameAi::planFrame()
 					// Add points to the kart that shot the bullet
 					auto shootingKart = GETENTITY(((Events::KartHitByBulletEvent *)event)->source_kart_id, CarEntity);
 					shootingKart->gold += KART_KILL_GOLD_VALUE;
+
+					auto explodeEvent = NEWEVENT( Explosion );
+					explodeEvent->exploder = kart_id;
+					explodeEvent->pos = kart->Pos;
+
+					events_out.push_back(explodeEvent);
 
 					kart->health = STARTING_HEALTH;
 					auto reset_kart_event = NEWEVENT(Reset);

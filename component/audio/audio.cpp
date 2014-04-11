@@ -39,6 +39,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::TogglePauseGame );
 	m_pMailbox->request( Events::EventType::RoundStart );
 	m_pMailbox->request( Events::EventType::RoundEnd );
+	m_pMailbox->request( Events::EventType::Explosion );
 	m_pMailbox->request( Events::EventType::Reset );
 	primary_player = 0;
 }
@@ -654,27 +655,22 @@ void Audio::update(Real seconds){
 				channel->setPaused(false);
 			}
 			break;
-		case Events::EventType::Reset:
+		case Events::EventType::Explosion:
 			{
-				Events::ResetEvent *resetEvent = (Events::ResetEvent *)event;
+				Events::ExplosionEvent *expEvent = (Events::ExplosionEvent *)event;
 
-				auto kart_local = m_karts[resetEvent->kart_id];
+				FMOD_VECTOR pos;
+				pos.x = expEvent->pos.x;
+				pos.y = expEvent->pos.y;
+				pos.z = expEvent->pos.z;
 
-				if (kart_local != NULL)
-				{
-					auto kart_entity = GETENTITY(resetEvent->kart_id, CarEntity);
+				FMOD::Channel *channel;
 
-					FMOD_VECTOR pos;
-					pos.x = kart_entity->Pos.x;
-					pos.y = kart_entity->Pos.y;
-					pos.z = kart_entity->Pos.z;
-
-					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.KartExplode],
-						true, &(kart_local->soundsChannel)));
-					kart_local->soundsChannel->set3DAttributes(&pos, 0);
-					kart_local->soundsChannel->setChannelGroup(m_channelGroupEffects);
-					kart_local->soundsChannel->setPaused(false);
-				}
+				ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.KartExplode],
+					true, &channel));
+				channel->set3DAttributes(&pos, 0);
+				channel->setChannelGroup(m_channelGroupEffects);
+				channel->setPaused(false);
 			}
 			break;
 		}
