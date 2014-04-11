@@ -23,6 +23,11 @@
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
 
+const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
+	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
+int goldSpawnCounter;
+int goldSpawnPointCount;
+
 GameAi::GameAi()
 {
 	active_powerups = 0;
@@ -38,6 +43,8 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::RoundStart );
 	m_mb->request( Events::EventType::Input );
 	m_mb->request( Events::EventType::StartMenuInput );
+
+	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
 
 	m_open_points.push_back(Vector3(0.0, 0.0, 5.5));
 
@@ -450,17 +457,19 @@ Real GameAi::getElapsedTime()
 
 Vector3 GameAi::pick_point()
 {
-	int pt = rand() % m_open_points.size();
-	Vector3 open = m_open_points[pt];
-	m_open_points.erase(m_open_points.begin() + pt);
+	Vector3	open = goldSpawnLocations[goldSpawnCounter % goldSpawnPointCount];
+	goldSpawnCounter++;
+	//int pt = rand() % m_open_points.size();
+	//Vector3 open = m_open_points[pt];
+	//m_open_points.erase(m_open_points.begin() + pt);
 	return open;
 }
 
 void GameAi::open_point(Vector3 pt)
 {
-	if (--active_powerups <= 0)
-		DEBUGOUT("Warning: Extra powerup location appeared\n");
-	m_open_points.push_back(pt);
+	//if (--active_powerups <= 0)
+	//	DEBUGOUT("Warning: Extra powerup location appeared\n");
+	//m_open_points.push_back(pt);
 }
 
 Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
