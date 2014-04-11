@@ -49,6 +49,7 @@ namespace Entities {
 
 		// Kart
 		Vector3 Pos;
+		btVector3 respawnLocation;
 		Quaternion Orient;
 		Float64 health; // 1.0 == full 0.0 == death
 		Int64 gold;

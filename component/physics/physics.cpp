@@ -34,7 +34,7 @@ using namespace Physics;
 //const btVector3 kartSpawnLocations[] = { btVector3(12.4, 1.1, 12.4), btVector3(-12.4, 1.1, 12.4), btVector3(12.4, 1.1, -12.4), 
 //	btVector3(-12.4, 1.1,-12.4), btVector3(16,2.1,16), btVector3(-16,2.1,16), btVector3(-16,2.1,-16), btVector3(16,2.1,-16) };
 const btVector3 kartSpawnLocations[] = { btVector3(17, 2.10, 8), btVector3(-17, 2.1, 8), btVector3(17, 2.1, -8), 
-	btVector3(-17, 1.1,-8), btVector3(8, 2.1, 17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8,2.1,17) };
+	btVector3(-17, 2.1, -8), btVector3(8, 2.1, 17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8, 2.1, 17) };
 int kartSpawnCounter;
 
 btVector3 toBtVector(Vector3 *in)
@@ -430,6 +430,9 @@ int Simulation::createKart(entity_id kart_id)
 	kart_entity->Pos.y = (Real)pos.getY();
 	kart_entity->Pos.z = (Real)pos.getZ();
 
+	// Keep track of this so kart resets back to its initial spawn location
+	kart_entity->respawnLocation = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS];
+
 	btQuaternion rot = car1.getRotation();
 	kart_entity->Orient.x = (Real)rot.getX();
 	kart_entity->Orient.y = (Real)rot.getY();
@@ -498,14 +501,23 @@ int Simulation::loadWorld()
 
 void Simulation::resetKart(entity_id id)
 {
+	auto kart_entity = GETENTITY(id, CarEntity);
+
 	btRaycastVehicle *kart_body = m_karts[id]->vehicle;
 	btTransform trans;
-	trans.setOrigin( btVector3( 0, 3, 0 ) );
-	trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+	//trans.setOrigin( btVector3( 0, 3, 0 ) );
+	trans.setOrigin( kart_entity->respawnLocation + btVector3(0,2,0) );
+	btScalar distX = kart_entity->respawnLocation.x() * -1;
+	btScalar distY = kart_entity->respawnLocation.y() * -1;
+	btScalar radians = atan2(distX, distY);
+	btQuaternion rotation = btQuaternion(btVector3(0,1,0), radians);
+	trans.setRotation(rotation);
+
+	//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 	kart_body->getRigidBody()->setWorldTransform( trans );
 	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 
-	auto kart_entity = GETENTITY(id, CarEntity);
+	
 	kart_entity->camera.fFOV = 70;
 	kart_entity->camera.vFocus.Zero();
 	kart_entity->camera.vPos.Zero();
