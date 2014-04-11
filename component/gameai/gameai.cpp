@@ -6,7 +6,7 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 2
+#define FINAL_SCORE_GOAL 10
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
@@ -596,7 +596,7 @@ void GameAi::newRound(int numPlayers, int numAi)
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
 
-		kart->playerNumber = i;
+		kart->playerNumber = i + 1;
 		kart->health = STARTING_HEALTH;
 		kart->powerup_slot = Entities::SpeedPowerup;
 
