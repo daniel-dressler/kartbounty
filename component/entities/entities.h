@@ -47,6 +47,7 @@ namespace Entities {
 		public:
 		CarEntity(std::string name);
 		powerup_t powerup_slot;
+		int playerNumber;		// Indicated which player this kart is for this round, different than id
 
 		// Kart
 		Vector3 Pos;

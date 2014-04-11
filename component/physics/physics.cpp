@@ -83,6 +83,7 @@ Simulation::Simulation()
 	mb.request(Events::EventType::PowerupActivated);
 	mb.request(Events::EventType::Shoot);
 	mb.request(Events::EventType::TogglePauseGame);
+	mb.request(Events::EventType::RoundEnd);
 
 	m_arena = NULL;
 	m_triangleInfoMap = NULL;
@@ -621,7 +622,6 @@ void Simulation::handle_bullets(double time)
 	mb.sendMail(events_out);
 }
 
-
 void Simulation::step(double seconds)
 {
 //#define STEER_MAX_ANGLE (35)
@@ -927,6 +927,8 @@ void Simulation::step(double seconds)
 	events_out.push_back(bullet_list_event);
 
 	mb.sendMail(events_out);
+
+	//DEBUGOUT("Powerups: %d Kart Bodies: %d\n CollisionShapes: %d", m_powerups.size(), m_kart_bodies.size(), m_collisionShapes.size());
 }
 
 // Updates the car placement in the world state
@@ -1105,7 +1107,6 @@ void Simulation::fireBullet(entity_id kart_id)
 	new_bullet->time_to_live = BULLET_TTL;
 	list_of_bullets[new_bullet->bullet_id] = new_bullet;
 }
-
 
 void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist)
 {
