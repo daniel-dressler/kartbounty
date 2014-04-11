@@ -276,7 +276,7 @@ int GameAi::planFrame()
 
 			case Events::EventType::StartMenuInput:
 			{
-				inputPauseTimer -= getElapsedTime();
+				inputPauseTimer -= frame_timer.CalcSeconds();
 				if(inputPauseTimer <= 0)
 				{
 					auto inputEvent = ((Events::StartMenuInputEvent *)event);
@@ -335,6 +335,12 @@ int GameAi::planFrame()
 					// Add points to the kart that shot the bullet
 					auto shootingKart = GETENTITY(((Events::KartHitByBulletEvent *)event)->source_kart_id, CarEntity);
 					shootingKart->gold += KART_KILL_GOLD_VALUE;
+
+					auto explodeEvent = NEWEVENT( Explosion );
+					explodeEvent->exploder = kart_id;
+					explodeEvent->pos = kart->Pos;
+
+					events_out.push_back(explodeEvent);
 
 					kart->health = STARTING_HEALTH;
 					auto reset_kart_event = NEWEVENT(Reset);
@@ -473,6 +479,9 @@ Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type
 	p_event->pos = pos;
 	p_event->powerup_id = this->next_powerup_id++;
 
+	if(p_type == Entities::GoldCasePowerup)
+		m_gold_case_id = p_event->powerup_id;
+
 	active_powerups++;
 	return p_event;
 }
@@ -565,6 +574,15 @@ void GameAi::endRound()
 	this->kart_ids.clear();
 	this->ai_kart_ids.clear();
 	this->player_kart_ids.clear();
+
+	goldSpawnCounter = 0;
+	active_tresures = 0;
+
+	auto removeGoldPow = NEWEVENT( PowerupDestroyed );
+	removeGoldPow->powerup_type = Entities::GoldCasePowerup;
+	removeGoldPow->powerup_id = m_gold_case_id;
+
+	events_out.push_back(removeGoldPow);
 
 	m_mb->sendMail(events_out);
 }
