@@ -272,35 +272,24 @@ int Renderer::setup()
 	return 1;
 }
 
-#define expand_int(x) ((uint64_t)x << 31 ^ (uint64_t)x)
-Vector4 getNextColor()
+Vector4 GetKartColor( Int32 player )
 {
-	static uint64_t color = 1;
-	uint64_t red = 0;
-	uint64_t blue = 0;
-	uint64_t green= 0;
+	Vector4 vColor;
 
-	// A table might be nicer
-	switch (color++) {
-	case 4:
-		blue += 9000;
-	case 3: 
-		green += 10000;
-	case 2:
-		blue += 100;
-	case 1:
-		red += 1;
-		break;
-	default:
-		red += rand();
-		blue += rand();
-		green += rand();
-		break;
-	}
+	switch( player )
+	{
+	case 1:	vColor = Vector4( 1, 0, 0, 1 ); break;
+	case 2:	vColor = Vector4( 0, 1, 0, 1 ); break;
+	case 3:	vColor = Vector4( 0, 0, 1, 1 ); break;
+	case 4:	vColor = Vector4( 1, 1, 0, 1 ); break;
+	case 5:	vColor = Vector4( 0, 1, 1, 1 ); break;
+	case 6:	vColor = Vector4( 1, 0, 1, 1 ); break;
+	case 7:	vColor = Vector4( 0, 0, 0, 1 ); break;
+	case 8:	vColor = Vector4( 1, 1, 1, 1 ); break;
+	default: vColor = Vector4( 0.01f * ( rand() % 101 ), 0.01f * ( rand() % 101 ), 0.01f * ( rand() % 101 ), 1 ); break;
+	};
 
-	float largest = MAX(red, MAX(blue, green));
-
-	return Vector4(red / largest, blue / largest, green / largest, 1);
+	return vColor;
 }
 
 bool player_kart_found = false;
@@ -341,9 +330,10 @@ int Renderer::render( float fElapseSec )
 		case Events::EventType::KartCreated:
 			{
 				auto kart_event = ((Events::KartCreatedEvent *)event);
+				auto kart = GETENTITY(kart_event->kart_id, CarEntity);
 				struct kart kart_local;
 				entity_id id = kart_local.idKart = kart_event->kart_id;
-				kart_local.vColor = getNextColor();
+				kart_local.vColor = GetKartColor( kart->playerNumber );
 				m_mKarts[id] = kart_local;
 			}
 			break;
