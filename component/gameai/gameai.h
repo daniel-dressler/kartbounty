@@ -29,6 +29,13 @@ private:
 
 	float inputPauseTimer;
 
+	struct exploadingKart {
+		entity_id kart_id;
+		float timer;
+	};
+
+	std::vector<exploadingKart *> m_exploding_karts;
+	
 	enum GameStates
 	{
 		StartMenu = 1,
@@ -64,4 +71,5 @@ private:
 	void endRound();
 	void newRound(int, int);
 	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
+	void updateExplodingKarts();
 };

@@ -605,8 +605,10 @@ void GameAi::newRound(int numPlayers, int numAi)
 		// First N karts are players
 		if (i < numPlayers) {
 			this->player_kart_ids.push_back(kart_id);
+			kart->isHumanPlayer = true;
 		} else {
 			this->ai_kart_ids.push_back(kart_id);
+			kart->isHumanPlayer = false;
 		}
 
 		// Tell people of the new kart
@@ -650,4 +652,29 @@ void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> 
 		}
 		
 		return;
+}
+
+void GameAi::updateExplodingKarts(){
+	std::vector<Events::Event *> events;
+	float elapsedTime = frame_timer.CalcSeconds();
+
+	for(int i = m_exploding_karts.size() - 1; i >= 0; i--)
+	{
+		auto kart = m_exploding_karts[i];
+		kart->timer -= elapsedTime;
+
+		if(kart->timer <= 0)
+		{
+			auto resetEvent = NEWEVENT( Reset );
+			resetEvent->kart_id = kart->kart_id;
+			events.push_back(resetEvent);
+
+			auto kart_entity = GETENTITY(kart->kart_id, CarEntity);
+			kart_entity->health = STARTING_HEALTH;
+			kart_entity->isExploding = false;
+
+			// Remove kart from local exploding kart list
+			m_exploding_karts.erase(m_exploding_karts.begin() + i);
+		}
+	}
 }
