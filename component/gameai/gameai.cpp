@@ -118,10 +118,12 @@ void GameAi::setup()
 void GameAi::add_to_future_respawn(Events::PowerupPickupEvent * event)
 {
 	auto to_spawn = new local_powerup_to_spawn();
+
 	to_spawn->powerup_id = event->powerup_id;
 	to_spawn->powerup_type = event->powerup_type;
 	to_spawn->timer_to_respawn = TIME_TO_SPAWN_POWERUPS;
 	to_spawn->pos = event->pos;
+
 	m_to_spawn_vec[to_spawn->powerup_id] = to_spawn;
 }
 
@@ -136,11 +138,7 @@ void GameAi::init_powerups_not_gold()
 
 	for (Vector3 pos: powerup_location)
 	{
-		int type_num = rand() %2;
-		if (type_num == 0)
-			events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
-		else
-			events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+		spawn_a_powerup_not_gold(pos, events_out);
 	}
 
 	m_mb->sendMail(events_out);
@@ -150,19 +148,17 @@ void GameAi::handle_powerups_not_gold(double time_elapsed)
 {
 	std::vector<Events::Event *> events_out;
 	std::vector<entity_id> to_delete;
+
 	for (auto to_spawn_pair : m_to_spawn_vec)
 	{
 		auto to_spawn = to_spawn_pair.second;
 		auto pos = to_spawn->pos;
 		to_spawn->timer_to_respawn -= time_elapsed;
+
 		if (to_spawn->timer_to_respawn <= 0)
 		{
 			to_delete.push_back( to_spawn->powerup_id );
-			int type_num = rand() %2;
-			if (type_num == 0)
-				events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
-			else
-				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+			spawn_a_powerup_not_gold(pos, events_out);
 		}
 	}
 	
@@ -219,16 +215,6 @@ int GameAi::planFrame()
 						add_to_future_respawn(pickup);
 						break;
 				}
-			}
-			break;
-
-			// This never actually happens, lol
-			case Events::EventType::PowerupDestroyed:
-			{
-				auto pickup = ((Events::PowerupDestroyedEvent *)event);
-				if (pickup->powerup_type == Entities::GoldCasePowerup)
-					open_point(pickup->pos);
-			
 			}
 			break;
 
@@ -307,7 +293,6 @@ int GameAi::planFrame()
 					} else if (inputEvent->fourPressed) {
 						numPlayers = 4;
 					}
-
 
 					if (numPlayers > 0)
 					{
@@ -437,7 +422,7 @@ int GameAi::planFrame()
 	}
 
 	// Report FPS
-	const bool PRINT_FPS = 1;
+	const bool PRINT_FPS = 0;
 	static int32_t frames = 0;
 	if (PRINT_FPS) 
 	{
@@ -478,7 +463,7 @@ void GameAi::open_point(Vector3 pt)
 	//m_open_points.push_back(pt);
 }
 
-Events::PowerupPlacementEvent *GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
+Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
 {
 	auto p_event = NEWEVENT(PowerupPlacement);
 	p_event->powerup_type = p_type;
@@ -614,5 +599,34 @@ void GameAi::newRound(int numPlayers, int numAi)
 	m_mb->sendMail(events);
 }
 
+void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out)
+{
+	int type_num =  rand() %2 + 2;
+		switch (type_num)
+		{
+			case 0:
+				events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
+				DEBUGOUT("SPAWNING A HEALTH POWERUP\n!")
+			break;
 
+			case 1:
+				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+				DEBUGOUT("SPAWNING A SPEED POWERUP!\n")
+			break;
 
+			case 2:
+				events_out.push_back(spawn_powerup(Entities::RocketPowerup, pos));
+				DEBUGOUT("SPAWNING A ROCKET POWERUP!\n")
+			break;
+
+			case 3:
+				events_out.push_back(spawn_powerup(Entities::PulsePowerup, pos));
+				DEBUGOUT("SPAWNING A PULSE POWERUP!\n")
+			break;
+
+			default:
+				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+		}
+		
+		return;
+}

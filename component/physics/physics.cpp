@@ -994,7 +994,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
 		kart->groundHit = fromBtVector(&hitEnd);
 		
-		kart->groundNormal = fromBtVector(&RayCallback.m_hitNormalWorld);
+		kart->groundNormal = fromBtVector(&Up);
 	}
 
 	// Camera

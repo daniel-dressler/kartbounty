@@ -5,7 +5,7 @@
 #include "util/Square.h"
 #include <algorithm>
 
-#define LIMIT_FOR_STUCK 0.03f
+#define LIMIT_FOR_STUCK 0.01f
 #define REVERSE_TRESHOLD 1.5f
 #define REVERSE_TIME 0.7f
 #define RESET_TRESHOLD 4.f
@@ -24,7 +24,7 @@
 
 // else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
 // This is the seconds check. If below, select a (semi)random kart to attack and go for it. Chooses player 66% of the time to look "alive".
-#define AGRESSIVE_BEHAVIOUR_TRESHOLD 2
+#define AGRESSIVE_BEHAVIOUR_TRESHOLD 1
 
 // The rest of the cases
 // This makes the karts chase the gold pickups
@@ -102,7 +102,7 @@ void EnemyAi::get_target_pickups(struct ai_kart *kart)
 
 void EnemyAi::get_target_aggressive(struct ai_kart *kart)
 {
-	//int isPlayer = std::rand() % 3;
+	int isPlayer = std::rand() % 3;
 	kart->target_kart_id = m_player_kart;
 
 	// ALWAYS ATTACK PLAYER. Fun stuff.
@@ -284,6 +284,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	Vector3 target_3 = kart_local->target_to_move;
 	Vector2 target = Vector2(target_3.x, target_3.z);
 	Vector3 pos = kart_entity->Pos;
+	Vector3 oldPos = kart_local->lastPos;
 
 	// Calculate the updated distance and the difference in angle.
 	btScalar diff_in_angles = getAngle(target, pos, &kart_entity->forDirection) / PI;
@@ -294,8 +295,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 		think_of_target(kart_local);
 
 	// check if car stuck, increase stuck timer if stuck.
-	Vector3 oldPos = kart_local->lastPos;
-	bool stuck = (ABS(oldPos.x - pos.x) < LIMIT_FOR_STUCK) && (ABS(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
+	bool stuck = (abs(oldPos.x - pos.x) < LIMIT_FOR_STUCK && abs(oldPos.z - pos.z) < LIMIT_FOR_STUCK);
 	if (stuck) 
 	{
 		kart_local->time_stuck += elapsed_time;
@@ -304,20 +304,19 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	{
 		kart_local->time_stuck = 0;
 	}
-	kart_local->lastPos = pos;
 	
 	// Generate input for car.
 	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
 	directions->reset_requested = false;
-	directions->kart_id = kart_local->kart_id;
-
-
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
 	{
 		kart_local->time_stuck = 0;
 		directions->reset_requested = true;
 	}
+
+	// update old pos
+	kart_local->lastPos = pos;
 
 	// HACK for now, make ai use their powerups right away
 	directions->xPressed = true;
@@ -565,10 +564,8 @@ void EnemyAi::init_obs_sqr()
 	center = Vector3(-19.f, 0, 0.f); top_left = Vector3(-19.f, 0, 2.f);bot_right = Vector3(-19.f, 0, -2.f);
 	Square s31 = Square(center, top_left, bot_right);
 
-
-	// Outer walls, s19 - s27
-	#define WALL_QUARTER_SIZE 29
-	obs_sqr.push_back(s0); // Quarter 1 X > 0, Z > 0
+	// q1 no flip , X > 0, Z > 0
+	obs_sqr.push_back(s0);
 	obs_sqr.push_back(s1);
 	obs_sqr.push_back(s2);
 	obs_sqr.push_back(s3);
@@ -596,8 +593,15 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25);
 	obs_sqr.push_back(s26);
 	obs_sqr.push_back(s27);
+
+	// 0's
 	obs_sqr.push_back(s28);
-	obs_sqr.push_back(s0.flip_z_axis()); // Quarter 2, X < 0, Z > 0
+	obs_sqr.push_back(s29);
+	obs_sqr.push_back(s30);
+	obs_sqr.push_back(s31);
+
+	// q2 flip on the Z axis. X < 0, Z > 0
+	obs_sqr.push_back(s0.flip_z_axis());
 	obs_sqr.push_back(s1.flip_z_axis());
 	obs_sqr.push_back(s2.flip_z_axis());
 	obs_sqr.push_back(s3.flip_z_axis());
@@ -625,8 +629,9 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_z_axis());
 	obs_sqr.push_back(s26.flip_z_axis());
 	obs_sqr.push_back(s27.flip_z_axis());
-	obs_sqr.push_back(s31);
-	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis()); // Quarter 3 X < 0, Z < 0
+
+	// q3 flip on the Z axis and the X axis. X < 0, Z < 0
+	obs_sqr.push_back(s0.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s1.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s2.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s3.flip_z_axis().flip_x_axis());
@@ -654,8 +659,9 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s26.flip_z_axis().flip_x_axis());
 	obs_sqr.push_back(s27.flip_z_axis().flip_x_axis());
-	obs_sqr.push_back(s30);
-	obs_sqr.push_back(s0.flip_x_axis()); // Quarter 4 X > 0, Z < 0
+
+	// q4 flip on the  X axis. X > 0, Z < 0
+	obs_sqr.push_back(s0.flip_x_axis());
 	obs_sqr.push_back(s1.flip_x_axis());
 	obs_sqr.push_back(s2.flip_x_axis());
 	obs_sqr.push_back(s3.flip_x_axis());
@@ -683,14 +689,14 @@ void EnemyAi::init_obs_sqr()
 	obs_sqr.push_back(s25.flip_x_axis());
 	obs_sqr.push_back(s26.flip_x_axis());
 	obs_sqr.push_back(s27.flip_x_axis());
-	obs_sqr.push_back(s29);
 }
+
 #define LENGTH_OF_RAY 3.75
 #define LENGTH_OF_RAY_FORWARD 3.5
 #define SENSOR_ANGLE 10
 
-#define IN_FRONT_ANGLE 100
-#define FAR_AWAY 15
+#define IN_FRONT_ANGLE 140
+#define FAR_AWAY 6
 
 float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 {
@@ -698,90 +704,71 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 	btVector3 forward = kart_entity->forDirection;
 	Vector3 pos = kart_entity->Pos;
 
-	Vector2 threat;
-	float most_threat_dist = 10000000.f;
-	float MAP_MAX_DIST = 20.f;
-	float OVER_SCAN = 5.f;
-	auto x_dist = pos.x / MAP_MAX_DIST;
-	auto y_dist = pos.z / MAP_MAX_DIST;
-	std::vector<std::vector<Square>::iterator> quarters;
-	if (x_dist > -OVER_SCAN && y_dist > -OVER_SCAN) {
-		quarters.push_back(obs_sqr.begin());
-	}
-	if (x_dist < OVER_SCAN && y_dist > -OVER_SCAN) {
-		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE);
-	}
-	if (x_dist < OVER_SCAN && y_dist < OVER_SCAN) {
-		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE * 2);
-	}
-	if (x_dist > -OVER_SCAN && y_dist < OVER_SCAN) {
-		quarters.push_back(obs_sqr.begin() + WALL_QUARTER_SIZE * 3);
-	}
+	std::vector<Square> danger_sqr;
 
-	int i = 0;
-	std::vector<Square>::iterator square = quarters.back();
-	quarters.pop_back();
-	while (quarters.size() > 0)
+	for(Square square : obs_sqr)
 	{
-		if (++i > WALL_QUARTER_SIZE) {
-			if (quarters.size() == 0) {
-				break;
+		float angle = getAngle(Vector2(square.getCenter().x, square.getCenter().z), pos, &forward);
+		if ( abs(RADTODEG(angle)) < IN_FRONT_ANGLE )
+		{
+			btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
+			btVector3 right_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
+			
+			Vector3 direction = Vector3(forward.getX(), 0, forward.getZ());
+			direction = direction.Normalize();
+
+			Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
+			Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
+
+			int intersections_forward = square.LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
+			int intersections_left = square.LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
+			int intersections_right = square.LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
+
+			if (intersections_forward + intersections_left + intersections_right > 0)
+			{
+				danger_sqr.push_back(square);
+
+				/*
+				if (intersections_forward > 0)
+					DEBUGOUT("Intersects forward with %d %f times!\n" , i, intersections_forward);
+
+				if (intersections_left > 0)
+					DEBUGOUT("Intersects left with %d %f times!\n" , i, intersections_left);
+
+				if (intersections_right > 0)
+					DEBUGOUT("Intersects right with %d %f times!\n" , i, intersections_right);
+				*/
 			}
-			square = quarters.back();
-			quarters.pop_back();
-			i = 0;
-		} else if (i > 1) {
-			square++;
-		}
-
-
-		// Cull by distance
-		auto center = square->getCenter();
-		float dist_from_center = get_distance(pos, center);
-		if (dist_from_center > LENGTH_OF_RAY * FAR_AWAY || dist_from_center > most_threat_dist)
-			continue;
-
-		// Cull by Angle
-		Vector2 center_xz = Vector2(center.x, center.z);
-		float angle = getAngle(center_xz, pos, &forward);
-		if ( ABS(RADTODEG(angle)) >= IN_FRONT_ANGLE )
-			continue;
-	
-		btVector3 left_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(-SENSOR_ANGLE));
-		Vector3 left_sensor = Vector3(left_ray.getX(), 0, left_ray.getZ()).Normalize();
-		int intersection_left = square->LineIntersectsSquare(pos, left_sensor, LENGTH_OF_RAY);
-		if (intersection_left > 0) {
-			threat = center_xz;
-			most_threat_dist = dist_from_center;
-			continue;
-		}
-
-
-		btVector3 right_ray = forward.rotate(btVector3(0,1,0), DEGTORAD(SENSOR_ANGLE));
-		Vector3 right_sensor = Vector3(right_ray.getX(), 0, right_ray.getZ()).Normalize();
-		int intersection_right = square->LineIntersectsSquare(pos, right_sensor, LENGTH_OF_RAY);
-		if (intersection_right > 0) {
-			threat = center_xz;
-			most_threat_dist = dist_from_center;
-			continue;
 		}
 		
-		Vector3 direction = Vector3(forward.getX(), 0, forward.getZ());
-		direction = direction.Normalize();
-		int intersection_forward = square->LineIntersectsSquare(pos, direction, LENGTH_OF_RAY_FORWARD);
-		if (intersection_forward > 0) {
-			threat = center_xz;
+	}
+
+	int most_threat = -1;
+	float most_threat_dist = 10000000.f;
+
+	for (uint32_t i = 0; i<danger_sqr.size(); i++)
+	{
+		Square square = danger_sqr.at(i);
+		Vector3 center = square.getCenter();
+
+		float dist_from_center = get_distance(pos, center);
+
+		if (dist_from_center < most_threat_dist)
+		{
+			most_threat = i;
 			most_threat_dist = dist_from_center;
-			continue;
 		}
 	}
 
-
 	float turn_value = 0;
-	if (threat.x != 0 && threat.y != 0)
+	if (most_threat != -1) // This means there's a threat that needs to be steered!
 	{
+		Square most_threat_sqr = danger_sqr.at(most_threat);
+		Vector3 center_threat = most_threat_sqr.getCenter();
+		Vector2 sqr_center = Vector2(center_threat.x, center_threat.z);
+
 		// get angle between car and the most threatening obsticle.
-		float steer_correction_angle = getAngle(threat, pos, &forward);
+		float steer_correction_angle = getAngle(sqr_center, pos, &forward);
 
 		if (steer_correction_angle > 0)
 		{
@@ -804,9 +791,7 @@ float EnemyAi::avoid_obs_sqr(struct ai_kart *kart_local)
 // get the distance between two points
 float EnemyAi::get_distance(Vector3 a, Vector3 b)
 {
-	float x = a.x - b.x;
-	float y = a.y - b.z;
-	return sqrtf(x * x + y * y);
+	return sqrtf( pow( ((float)a.x - (float)b.x) , 2 ) + pow(((float)a.z - (float)b.z),2) );
 }
 
 

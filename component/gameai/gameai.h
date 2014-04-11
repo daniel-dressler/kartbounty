@@ -62,4 +62,5 @@ private:
 
 	void endRound();
 	void newRound(int, int);
+	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
 };
