@@ -1,5 +1,6 @@
 #include <map>
 #include <list>
+#include <vector>
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
@@ -151,5 +152,7 @@ namespace Physics {
 		float get_distance(Vector3 a, Vector3 b);
 		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
 		Events::Event* makeRerportEvent(entity_id kart_shooting , entity_id kart_shot);
+
+		void do_pulse_powerup(entity_id kart_id);
 	};
 };

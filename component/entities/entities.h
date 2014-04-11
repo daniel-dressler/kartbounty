@@ -39,7 +39,8 @@ namespace Entities {
 		GoldCoinPowerup,
 		SpeedPowerup,
 		HealthPowerup,
-		RocketPowerup
+		RocketPowerup,
+		PulsePowerup
 	} powerup_t;
 
 	class CarEntity : public Entity {
@@ -49,8 +50,10 @@ namespace Entities {
 
 		// Kart
 		Vector3 Pos;
+		btVector3 respawnLocation;
 		Quaternion Orient;
 		Float64 health; // 1.0 == full 0.0 == death
+		bool isExploding;
 		Int64 gold;
 		Real heightOffGround;
 		Vector3 groundHit;

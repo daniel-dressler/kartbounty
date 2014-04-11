@@ -27,6 +27,8 @@ private:
 	Timer frame_timer;
 	Timer fps_timer;
 
+	float inputPauseTimer;
+
 	enum GameStates
 	{
 		StartMenu = 1,
@@ -47,6 +49,7 @@ private:
 	uint32_t active_powerups;
 	uint32_t active_tresures;
 	powerup_id_t next_powerup_id;
+	powerup_id_t m_gold_case_id;
 
 	Vector3 pick_point();
 	void open_point(Vector3);
@@ -60,4 +63,5 @@ private:
 
 	void endRound();
 	void newRound(int, int);
+	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
 };

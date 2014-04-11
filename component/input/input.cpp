@@ -463,7 +463,8 @@ Input::local_joystick *Input::ForgetPlayer(entity_id kart_id) {
 	m_players.erase(kart_id);
 	delete kart;
 
-	m_free_joysticks.insert(m_free_joysticks.begin(), joystick);
+	if (joystick != NULL)
+		m_free_joysticks.insert(m_free_joysticks.begin(), joystick);
 
 	return joystick;
 }

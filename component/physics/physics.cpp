@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <queue>
+#include <time.h>
 
 #include "physics.h"
 
@@ -27,6 +28,20 @@ using namespace Physics;
 // NOTE: Angle is measured in the dot product, not degrees
 #define MIN_ANGLE_SHOOTING 0.9
 #define MAX_DIST_SHOOTING 7
+
+// Pulse constants
+#define DIST_FOR_PULSE 3
+#define PULSE_FORCE 5000
+#define Y_OFFSET_PULSE 0.2f
+#define PULSE_CAP 8000
+
+// Array for kart spawn locations.
+#define NUM_KART_SPAWN_LOCATIONS 8
+//const btVector3 kartSpawnLocations[] = { btVector3(12.4, 1.1, 12.4), btVector3(-12.4, 1.1, 12.4), btVector3(12.4, 1.1, -12.4), 
+//	btVector3(-12.4, 1.1,-12.4), btVector3(16,2.1,16), btVector3(-16,2.1,16), btVector3(-16,2.1,-16), btVector3(16,2.1,-16) };
+const btVector3 kartSpawnLocations[] = { btVector3(17, 2.10, 8), btVector3(-17, 2.1, 8), btVector3(17, 2.1, -8), 
+	btVector3(-17, 2.1, -8), btVector3(8, 2.1, -17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8, 2.1, 17) };
+int kartSpawnCounter;
 
 btVector3 toBtVector(Vector3 *in)
 {
@@ -73,6 +88,10 @@ Simulation::Simulation()
 	m_triangleInfoMap = NULL;
 
 	gamePaused = false;
+
+	// Set Initial seed for spawn locations
+	srand(time(NULL));
+	kartSpawnCounter = rand() % NUM_KART_SPAWN_LOCATIONS;
 }
 
 Simulation::~Simulation()
@@ -94,14 +113,16 @@ Simulation::~Simulation()
 	delete m_arena;
 
 	// Karts
-	for (auto kart : m_karts) {
+	for (auto kart : m_karts) 
+	{
 		delete kart.second->raycaster;
 		delete kart.second->vehicle;
 		delete kart.second;
 	}
 
 	// Powerups
-	for (auto powerup : m_powerups) {
+	for (auto powerup : m_powerups) 
+	{
 		delete powerup.second;
 	}
 
@@ -119,7 +140,8 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 	btCollisionObjectArray objects = m_world->getCollisionObjectArray();
 	for (int i = 0; i < objects.size(); i++) {
 		btRigidBody *rigidBody = btRigidBody::upcast(objects[i]);
-		if (!rigidBody) {
+		if (!rigidBody) 
+		{
 			continue;
 		}
 
@@ -179,7 +201,8 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 
 void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_obj *B)
 {
-	if (manifold != NULL) {
+	if (manifold != NULL) 
+	{
 		const btCollisionObject* obA = static_cast<const btCollisionObject*>(manifold->getBody0());
 		const btCollisionObject* obB = static_cast<const btCollisionObject*>(manifold->getBody1());
 	
@@ -326,7 +349,16 @@ int Simulation::createKart(entity_id kart_id)
 
 	btTransform tr;
 	tr.setIdentity();
-	tr.setOrigin(btVector3(0,1.05,0));		// This sets where the car initially spawns
+	//tr.setOrigin(btVector3(0,1.05,0));		
+	
+	// This sets where the car initially spawns with a rotation to look towards the center of the map
+	tr.setOrigin(kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS]);
+	btScalar distX = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS].x() * -1;
+	btScalar distY = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS].z() * -1;
+	btScalar radians = atan2(distX, distY);
+	btQuaternion rotation = btQuaternion(btVector3(0,1,0), radians);
+	tr.setRotation(rotation);
+	kartSpawnCounter++;
 
 	btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
 	m_kart_bodies[kart_id] = carChassis;
@@ -350,8 +382,6 @@ int Simulation::createKart(entity_id kart_id)
 	m_world->addVehicle(kart);
 	m_karts[kart_id]->vehicle = kart;
 	m_karts[kart_id]->raycaster = vehicleRayCaster;
-
-
 
 	float connectionHeight = 0.10f;
 	btVector3 wheelDirectionCS0(0,-1,0);
@@ -409,6 +439,9 @@ int Simulation::createKart(entity_id kart_id)
 	kart_entity->Pos.x = (Real)pos.getX();
 	kart_entity->Pos.y = (Real)pos.getY();
 	kart_entity->Pos.z = (Real)pos.getZ();
+
+	// Keep track of this so kart resets back to its initial spawn location
+	kart_entity->respawnLocation = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS];
 
 	btQuaternion rot = car1.getRotation();
 	kart_entity->Orient.x = (Real)rot.getX();
@@ -478,14 +511,23 @@ int Simulation::loadWorld()
 
 void Simulation::resetKart(entity_id id)
 {
+	auto kart_entity = GETENTITY(id, CarEntity);
+
 	btRaycastVehicle *kart_body = m_karts[id]->vehicle;
 	btTransform trans;
-	trans.setOrigin( btVector3( 0, 3, 0 ) );
-	trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
+	//trans.setOrigin( btVector3( 0, 3, 0 ) );
+	trans.setOrigin( kart_entity->respawnLocation + btVector3(0,2,0) );
+	btScalar distX = kart_entity->respawnLocation.x() * -1;
+	btScalar distY = kart_entity->respawnLocation.y() * -1;
+	btScalar radians = atan2(distX, distY);
+	btQuaternion rotation = btQuaternion(btVector3(0,1,0), radians);
+	trans.setRotation(rotation);
+
+	//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 	kart_body->getRigidBody()->setWorldTransform( trans );
 	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
 
-	auto kart_entity = GETENTITY(id, CarEntity);
+	
 	kart_entity->camera.fFOV = 70;
 	kart_entity->camera.vFocus.Zero();
 	kart_entity->camera.vPos.Zero();
@@ -507,6 +549,7 @@ void Simulation::handle_bullets(double time)
 	std::vector<Events::Event *> events_out;
 
 	auto bullet_iter = list_of_bullets.begin();
+
 	while (bullet_iter != list_of_bullets.end())
 	{		
 		auto bullet_obj = bullet_iter->second;
@@ -537,7 +580,8 @@ void Simulation::handle_bullets(double time)
 				entity_id kart_id= user_obj->kart_id;
 				
 				// Find which kart was hit. If it was the shooting kart, ignore
-				if (kart_id != bullet_obj->kart_id) {
+				if (kart_id != bullet_obj->kart_id) 
+				{
 					auto hit_event = NEWEVENT(KartHitByBullet);
 					hit_event->kart_id = kart_id;
 					hit_event->source_kart_id = bullet_obj->kart_id;
@@ -556,13 +600,19 @@ void Simulation::handle_bullets(double time)
 				++bullet_iter;
 				list_of_bullets.erase(id);
 			}
-		} else if (bullet_obj->time_to_live < 0) {
+		} 
+
+		else if (bullet_obj->time_to_live < 0) 
+		{
 			// Kill bullet on TTL < 0
 			auto id = bullet_obj->bullet_id;
 			delete list_of_bullets[id];
 			++bullet_iter;
 			list_of_bullets.erase(id);
-		} else {
+		} 
+
+		else 
+		{
 			++bullet_iter;
 		}
 	}
@@ -781,6 +831,11 @@ void Simulation::step(double seconds)
 					}
 				}
 				break;
+				case Entities::PulsePowerup:
+				{
+					do_pulse_powerup(powUsed->kart_id);
+				}
+				break;
 			default:
 				break;
 			}
@@ -811,7 +866,7 @@ void Simulation::step(double seconds)
 	// slow down.
 	if(!gamePaused)
 	{
-		m_world->stepSimulation( (btScalar)seconds, 3, 0.0166666f );
+		m_world->stepSimulation( (btScalar)seconds, 10, 0.0166666f );
 	}
 
 	// Update Kart Entities
@@ -962,7 +1017,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
 		kart->groundHit = fromBtVector(&hitEnd);
 		
-		kart->groundNormal = fromBtVector(&RayCallback.m_hitNormalWorld);
+		kart->groundNormal = fromBtVector(&Up);
 	}
 
 	// Camera
@@ -1131,4 +1186,63 @@ Events::Event* Simulation::makeRerportEvent(entity_id kart_shooting , entity_id 
 
 
 	return event;
+}
+
+void Simulation::do_pulse_powerup(entity_id using_kart_id)
+{
+	std::vector<entity_id> near_karts;
+
+	auto using_kart = GETENTITY(using_kart_id, CarEntity);
+	auto using_pos = using_kart->Pos;
+
+	for (auto kart_pair : m_karts)
+	{
+		auto affected_kart = kart_pair.second;
+		auto affected_kart_id = affected_kart->kart_id;
+
+		if (affected_kart_id != using_kart_id)
+		{
+			auto current_kart = GETENTITY(affected_kart_id, CarEntity);
+			auto pos = current_kart->Pos;
+
+			btScalar delta_x =(using_pos.x - pos.x);
+			btScalar delta_z =(using_pos.z - pos.z);
+
+			float karts_dist = sqrt(delta_x*delta_x + delta_z*delta_z);
+			bool close_enough = (karts_dist < DIST_FOR_PULSE);
+
+			if (close_enough)
+			{
+				//DEBUGOUT("Kart id %d is close enough!\n", affected_kart_id)
+				//DEBUGOUT("distance to it was %f\n", karts_dist)
+
+				near_karts.push_back(affected_kart_id);
+
+				btRigidBody *kart_affected_body = m_karts[affected_kart_id]->vehicle->getRigidBody();
+
+				btVector3 pulse_dir = toBtVector( &current_kart->Pos) - toBtVector ( &using_kart->Pos) ;
+
+				pulse_dir.setY(pulse_dir.getY() + Y_OFFSET_PULSE);
+
+				// Just use as direction
+				pulse_dir.normalize();
+
+				float pulse_factor = MAX(DIST_FOR_PULSE - karts_dist, 1);
+
+				//DEBUGOUT("Dirty pulse factor was: %f", DIST_FOR_PULSE - karts_dist)
+				//DEBUGOUT("Pulse factor was %f\n", pulse_factor)
+				
+				float boost_force = MIN(PULSE_FORCE * pulse_factor, PULSE_CAP);
+
+				btVector3 boost = pulse_dir * boost_force;
+
+				//DEBUGOUT("boost force was %f\n", boost_force)
+
+				kart_affected_body->applyImpulse(boost, btVector3(0,0,0));
+		
+			}
+		}
+	}
+
+	return;
 }

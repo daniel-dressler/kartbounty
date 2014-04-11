@@ -379,6 +379,7 @@ int Renderer::render( float fElapseSec )
 				powerup_local.type = powerup_event->powerup_type;
 				powerup_local.idPowerup = powerup_event->powerup_id;
 				m_powerups[powerup_local.idPowerup] = powerup_local;
+
 			}
 			break;
 		case Events::EventType::PowerupPickup:
@@ -631,15 +632,28 @@ int Renderer::render( float fElapseSec )
 			{
 				Vector4 color1;
 				Vector4 color2;
-				switch (powerup.type) {
+				switch (powerup.type) 
+				{
 					case Entities::HealthPowerup:
 						color1 = Vector4(1, 0, 0, 1);
 						color2 = Vector4(1, 1, 1, 1);
 					break;
+
 					case Entities::SpeedPowerup:
 						color1 = Vector4(1, 1, 1, 1);
 						color2 = Vector4(0, 0, 0, 0);
 					break;
+
+					case Entities::RocketPowerup:
+						color1 = Vector4(0, 0, 0, 0);
+						color2 = Vector4(0, 0, 0, 0);
+					break;
+
+					case Entities::PulsePowerup:
+						color1 = Vector4(0.01, 1, 0, 1);
+						color2 = Vector4(0.0001, 0.01, 1, 1);
+					break;
+
 					default:
 						color1 = Vector4(1, 1, 0, 1);
 						color2 = Vector4(0, 0, 1, 1);
