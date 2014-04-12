@@ -1214,10 +1214,10 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 		Vector3 vUp = kart->Up = Vector3( 0, 1, 0 ).Transform( matOri );
 
-		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
+		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.8f ).Transform( matOri );
 		vCamOfs.y = 1.0f;
 
-		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
+		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.3f, 0 );
 
 		seconds = Clamp((Real)seconds, (Real)0.0f, (Real)0.10f);		// This is incase frame rate really drops.
 		Real fLerpAmt = seconds * 5.0f;
