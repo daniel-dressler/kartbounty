@@ -226,11 +226,11 @@ Int32 ParticleEmitter::Process( Real fElapse, const Vector3& vEyePos )
 												 fRandAdj * ( rand() % 32767 ), 
 												 fRandAdj * ( rand() % 32767 ) );
 			p.vColorEnd = settings.vColorEnd;
-			p.vPos = settings.vPos;
-			p.vPos.x += settings.fPosOfs + settings.fPosRand * fRandAdj * ( rand() % 32767 );
-
+			p.vPos.x = settings.fPosOfs + settings.fPosRand * fRandAdj * ( rand() % 32767 );
 			Real fXZAngle = ( 6.28f * fRandAdj * ( rand() % 32767 ) );
 			p.vPos.RotateXZ( fXZAngle );
+			p.vPos += settings.vPos;
+
 			p.vVel = settings.vVelDir * ( settings.fVelMin + fRandAdj * settings.fVelRand * ( rand() % 32767 ) );
 
 			Real fAngle = fRandAdj * ( rand() % 32767 );

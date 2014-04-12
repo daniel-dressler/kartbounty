@@ -541,16 +541,6 @@ int Renderer::render( float fElapseSec )
 
 	m_fTime += fElapseSec;
 
-	static Real fFPSLastTime = 0;
-	static Int32 nFPSCount = 0;
-	nFPSCount++;
-	if( m_fTime - fFPSLastTime > 1.0f )
-	{
-		_Explode( Vector3( 0, 1, 0 ) );
-		fFPSLastTime += 1.0f;
-		nFPSCount = 0;
-	}
-
 	if( !m_bInitComplete )
 		return 0;
 
@@ -584,9 +574,16 @@ int Renderer::render( float fElapseSec )
 	std::vector<RCAMERA> aryCameras;
 	_CalcCameras( aryCameras );
 
+	static Real fFPSLastTime = 0;
+	static Int32 nFPSCount = 0;
+	nFPSCount++;
+	if( m_fTime - fFPSLastTime > 1.0f )
 	{
-		m_ps.Update( fElapseSec, aryCameras[0].eyepos );
+		_Explode( Vector3( 1, 1, 2 ) );
+		fFPSLastTime += 1.0f;
+		nFPSCount = 0;
 	}
+	m_ps.Update( fElapseSec, aryCameras[0].eyepos );
 
 	for( Int32 i = 0; i < aryCameras.size(); i++ )
 	{	
@@ -605,43 +602,46 @@ int Renderer::render( float fElapseSec )
 		{
 			auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
 
-			// DRAW SHADOW
-			Vector3 vAxis = Vector3::Cross( kart_entity->groundNormal, Vector3( 0, 1, 0 ) );
-			Real fAngle = ACOS( Vector3::Dot( kart_entity->groundNormal, Vector3( 0, 1, 0 ) ) );
-
-			perMesh.vColor = Vector4( 0,0,0,0.3f );
-			perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) *
-				Matrix::GetTranslate( kart_entity->groundHit + Vector3( 0, 0.01f, 0 ) );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-
-			glhEnableTexture( m_difKartShadow );
-			glhEnableTexture( m_nrmBlank, 1 );
-
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-			glhDrawMesh( m_eftMesh, m_mshKartShadow );
-			glDisable( GL_BLEND );
-
-			// DRAW KART
-			glhEnableTexture( m_difBlank );
-			glhEnableTexture( m_nrmBlank, 1 );
-
-			perMesh.vColor = kart_id_pair.second.vColor;
-			perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-			perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->Orient ) *
-				Matrix::GetTranslate( kart_entity->Pos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshKart );
-
-			for( int i = 0; i < 4; i++ )
+			if( !kart_entity->isExploding )
 			{
-				perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->tireOrient[i] ) *
-					Matrix::GetTranslate( kart_entity->tirePos[i] );
+				// DRAW SHADOW
+				Vector3 vAxis = Vector3::Cross( kart_entity->groundNormal, Vector3( 0, 1, 0 ) );
+				Real fAngle = ACOS( Vector3::Dot( kart_entity->groundNormal, Vector3( 0, 1, 0 ) ) );
+
+				perMesh.vColor = Vector4( 0,0,0,0.3f );
+				perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) *
+					Matrix::GetTranslate( kart_entity->groundHit + Vector3( 0, 0.01f, 0 ) );
 				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-				glhDrawMesh( m_eftMesh, m_mshKartTire );
+
+				glhEnableTexture( m_difKartShadow );
+				glhEnableTexture( m_nrmBlank, 1 );
+
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				glhDrawMesh( m_eftMesh, m_mshKartShadow );
+				glDisable( GL_BLEND );
+
+				// DRAW KART
+				glhEnableTexture( m_difBlank );
+				glhEnableTexture( m_nrmBlank, 1 );
+
+				perMesh.vColor = kart_id_pair.second.vColor;
+				perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+				perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->Orient ) *
+					Matrix::GetTranslate( kart_entity->Pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+				glhDrawMesh( m_eftMesh, m_mshKart );
+
+				for( int i = 0; i < 4; i++ )
+				{
+					perMesh.matWorld = Matrix::GetRotateQuaternion( kart_entity->tireOrient[i] ) *
+						Matrix::GetTranslate( kart_entity->tirePos[i] );
+					perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+					glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+					glhDrawMesh( m_eftMesh, m_mshKartTire );
+				}
 			}
 		}
 
