@@ -18,6 +18,7 @@
 #define MUSIC_VOLUME 0.30f
 #define SOUND_EFFECTS_VOLUME 0.5f
 #define LOW_ENGINE_NOISE_VOLUME 0.2f
+#define VOLUME_CHANGE_STEP 0.1f
 
 #define MIN_HANDBRAKE_SPEED 3.0			// Min speed for handbrake audio to be played
 #define MAX_COLLISION_FORCE 5000		// Max expected collision force for scaling from [0,1] for volume
@@ -31,6 +32,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::PlayerKart );
 	m_pMailbox->request( Events::EventType::AiKart );
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
+	m_pMailbox->request( Events::EventType::MusicVolumeChange);
 	m_pMailbox->request( Events::EventType::ChangeMusic );
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::PowerupActivated );
@@ -361,6 +363,19 @@ void Audio::update(Real seconds){
 	for( Events::Event *event : m_pMailbox->checkMail() )
 	{
 		switch (event->type) {
+		case Events::MusicVolumeChange:
+			{
+				Events::MusicVolumeChangeEvent *mcEvent = (Events::MusicVolumeChangeEvent *)event;
+				if(mcEvent->increase)
+				{
+					musicVol = MIN(1.0f, musicVol + VOLUME_CHANGE_STEP);
+				}
+				else
+					musicVol = MAX(0.0f, musicVol - VOLUME_CHANGE_STEP);
+
+				m_channelGroupMusic->setVolume(musicVol);
+			}
+			break;
 		case Events::ChangeMusic:
 			ChangeMusic();
 			break;
@@ -397,7 +412,8 @@ void Audio::update(Real seconds){
 				{
 					ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.Boo],
 						false, &roundStartChannel));
-				}				
+				}	
+				primary_player = 0;
 			}
 			break;
 		case Events::EventType::KartCreated:

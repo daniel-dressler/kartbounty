@@ -55,60 +55,6 @@ GameAi::GameAi()
 
 	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
 
-	m_open_points.push_back(Vector3(0.0, 0.0, 5.5));
-
-	m_open_points.push_back(Vector3(1.0, 0.0, 5.5));
-	m_open_points.push_back(Vector3(-1.0, 0.0, 5.5));
-	m_open_points.push_back(Vector3(1.0, 0.0, -5.5));
-	m_open_points.push_back(Vector3(-1.0, 0.0, -5.5));
-
-	m_open_points.push_back(Vector3(6.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, -1.f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(6.5f, 0.f, -1.f));
-
-	m_open_points.push_back(Vector3(3.22f, 0.f, 7.59f));
-	m_open_points.push_back(Vector3(-3.22f, 0.f, 7.59f));
-	m_open_points.push_back(Vector3(3.22f, 0.f, -7.59f));
-	m_open_points.push_back(Vector3(-3.22f, 0.f, -7.59f));
-
-	m_open_points.push_back(Vector3(7.59f, 0.f, 3.22f));
-	m_open_points.push_back(Vector3(-7.59f, 0.f, -3.22f));
-	m_open_points.push_back(Vector3(-7.59f, 0.f, 3.22f));
-	m_open_points.push_back(Vector3(7.59f, 0.f, -3.22f));
-
-	m_open_points.push_back(Vector3(15.5f, 2.f, 15.5f));
-	m_open_points.push_back(Vector3(-15.5f, 2.f, 15.5f));
-	m_open_points.push_back(Vector3(15.5f, 2.f, -15.5f));
-	m_open_points.push_back(Vector3(-15.5f, 2.f, -15.5f));
-
-	m_open_points.push_back(Vector3(6.5f, 0.f, 2.5f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, -2.5f));
-	m_open_points.push_back(Vector3(6.5f, 0.f, -2.5f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, 2.5f));	
-
-	m_open_points.push_back(Vector3(2.5f, 0.f, 6.5f));
-	m_open_points.push_back(Vector3(-2.5f, 0.f, -6.5f));
-	m_open_points.push_back(Vector3(2.5f, 0.f, -6.5f));
-	m_open_points.push_back(Vector3(-2.5f, 0.f, 6.5f));
-
-	m_open_points.push_back(Vector3(0.f, 1.f, 0.f));
-
-	m_open_points.push_back(Vector3(1.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(0.f, 1.f, 1.5f));
-	m_open_points.push_back(Vector3(0.f, 1.f, -1.5f));
-
-	m_open_points.push_back(Vector3(1.5f, 1.f, 1.5f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, -1.5f));
-	m_open_points.push_back(Vector3(1.5f, 1.f, -1.5f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, 1.5f));
-
-	m_open_points.push_back(Vector3(11.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(-11.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(0.f, 1.f, 11.5f));
-	m_open_points.push_back(Vector3(0.f, 1.f, -11.5f));
-
 	gamePaused = false;
 	currentState = StartMenu;
 }
@@ -252,8 +198,6 @@ int GameAi::planFrame()
 				switch (powerup) 
 				{
 					case Entities::GoldCasePowerup:
-						// Return point to pool
-						open_point(pickup->pos);
 
 						active_tresures--;
 						kart->gold += BIG_GOLD_VALUE;
@@ -521,17 +465,8 @@ Vector3 GameAi::pick_point()
 {
 	Vector3	open = goldSpawnLocations[goldSpawnCounter % goldSpawnPointCount];
 	goldSpawnCounter++;
-	//int pt = rand() % m_open_points.size();
-	//Vector3 open = m_open_points[pt];
-	//m_open_points.erase(m_open_points.begin() + pt);
-	return open;
-}
 
-void GameAi::open_point(Vector3 pt)
-{
-	//if (--active_powerups <= 0)
-	//	DEBUGOUT("Warning: Extra powerup location appeared\n");
-	//m_open_points.push_back(pt);
+	return open;
 }
 
 Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
