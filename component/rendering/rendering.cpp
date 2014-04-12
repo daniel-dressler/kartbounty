@@ -876,8 +876,9 @@ int Renderer::render( float fElapseSec )
 					glhDestroyMesh( temp_mesh );
 
 					Int32 hpw = kart_entity->health * ( width - 6 );
+					Int32 ofs = ( 1.0f - kart_entity->health ) * ( width - 6 );
 
-					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - xx - ( hpw >> 1 ), (nWinHeight>>1) - yy, hpw - 6, height - 6, Vector4( 1,0,0,0.8f ) ) ), 6 );
+					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - xx - ( ofs >> 1 ), (nWinHeight>>1) - yy, hpw - 6, height - 6, Vector4( 1,0,0,0.8f ) ) ), 6 );
 					glhDrawMesh( m_eftGUI, temp_mesh );
 					glhDestroyMesh( temp_mesh );
 
