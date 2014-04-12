@@ -242,7 +242,8 @@ int GameAi::planFrame()
 						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
 						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
-
+					case Entities::HealthPowerup:
+						kart->health = HEALTH_POWERUP_AMOUNT;
 					default:
 						// Player loses any unused powerups
 						kart->powerup_slot = powerup;
