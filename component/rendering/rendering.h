@@ -18,6 +18,13 @@
 class Renderer
 {
 private:
+	struct RCAMERA
+	{
+		Int32 player;
+		Int32 x,y,w,h,fov;
+		Vector3 eyepos, eyefocus;
+	};
+
 	Int32				m_bInitComplete;
 	SDL_Window*			m_Window;
 	Events::Mailbox*	m_pMailbox;
@@ -59,6 +66,9 @@ private:
 	GLmesh				m_mshGold;
 	GLmesh				m_mshBullet;
 
+	GLmesh				m_mshSkybox;
+	GLtex				m_texSkybox;
+
 	// Power ups
 	GLmesh				m_mshPowerRing1;
 	GLmesh				m_mshPowerRing2;
@@ -77,6 +87,8 @@ private:
 
 	Vector3				m_vArenaOfs;
 
+	void _CheckMail();
+	void _CalcCameras( std::vector<RCAMERA>& aryCameras );
 	void _DrawArena();
 	void _DrawArenaQuad( Vector3 vColor );
 	void _DrawScoreBoard( Int32 x, Int32 y, Int32 player );
