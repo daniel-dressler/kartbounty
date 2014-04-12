@@ -20,7 +20,8 @@ private:
 
 	enum drivingMode {Reverse, Roaming, Aggressive, Gold};
 
-	struct ai_kart {
+	struct ai_kart 
+	{
 		Vector3 target_to_move;
 		Vector3 lastPos;
 

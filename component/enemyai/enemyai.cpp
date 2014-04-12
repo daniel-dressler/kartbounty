@@ -18,28 +18,9 @@
 #define PULSE_DISTANCE 1.2f
 
 // If false, AI doesn't move
-#define AI_MOVEMENT false
+#define AI_MOVEMENT true
 
 #define AI_FORWARD_SPEED 0.8f
-
-// Behaviour templates
-
-//if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
-// This is the first check. If below, just drive to a random spot. Keep low, I think?
-#define JUST_DRIVE_BEHAVIOUR_TRESHOLD 0
-
-// else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
-// This is the seconds check. If below, select a (semi)random kart to attack and go for it. Chooses player 66% of the time to look "alive".
-#define AGRESSIVE_BEHAVIOUR_TRESHOLD 10
-
-// The rest of the cases
-// This makes the karts chase the gold pickups
-#define SEEK_GOLD_TRESHOLD 0
-
-// int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
-// FULL_BEHAVIOUR_TRESHHOLD is the total sum of all the treshholds.
-#define FULL_BEHAVIOUR_TRESHHOLD ( JUST_DRIVE_BEHAVIOUR_TRESHOLD + AGRESSIVE_BEHAVIOUR_TRESHOLD + SEEK_GOLD_TRESHOLD)			
-		
 
 // temp
 std::vector<Vector3> path;
@@ -75,24 +56,17 @@ void EnemyAi::setup()
 void EnemyAi::think_of_target(struct ai_kart *kart)
 {
 	kart->target_timer = 0;
-
+	auto mode = kart->driving_mode;
 	if (has_player_kart)
 	{
-		int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
-		if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
-			get_target_roaming(kart);
-		else if (choice < AGRESSIVE_BEHAVIOUR_TRESHOLD)
+		if (mode == drivingMode::Aggressive)
 			get_target_aggressive(kart);
 		else
 			get_target_pickups(kart); 
 	}
 	else
 	{
-		int choice = std::rand() % FULL_BEHAVIOUR_TRESHHOLD + 1;
-		if (choice < JUST_DRIVE_BEHAVIOUR_TRESHOLD)
-			get_target_roaming(kart);
-		else
-			get_target_pickups(kart); 
+		get_target_pickups(kart); 
 	}
 }
 
@@ -123,23 +97,11 @@ void EnemyAi::get_target_aggressive(struct ai_kart *kart)
 
 	//	kart->target_kart_id = m_kart_ids.at(rand);
 	//}
+
 	kart->target_timer = TIME_TO_FOLLOW_TARGET;
 	kart->driving_mode = drivingMode::Aggressive;
 
 	//DEBUGOUT("Kart %lu decided to go after kart %lu\n", kart->kart_id, kart->target_kart_id)
-}
-
-void EnemyAi::get_target_roaming(struct ai_kart *kart)
-{
-	int rand = (std::rand() % path.size());
-	if (rand == kart->current_target_index)
-		rand = (std::rand() % path.size());
-
-	Vector3 answer = path.at(rand);
-	kart->current_target_index = rand;
-
-	kart->target_to_move = answer;
-	kart->driving_mode = drivingMode::Roaming;
 }
 
 void EnemyAi::kart_shoot(entity_id kart_id)
@@ -214,6 +176,11 @@ void EnemyAi::update(Real elapsed_time)
 				kart->current_target_index = -1;
 				kart->can_shoot = -1;
 				kart->shoot_timer = 0;
+
+				if (m_karts.size() < 5)
+					kart->driving_mode = drivingMode::Aggressive;
+				else
+					kart->driving_mode = drivingMode::Gold;
 
 				m_kart_ids.push_back(kart_id);
 			}
@@ -313,6 +280,13 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	// Generate input for car.
 	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
 	directions->reset_requested = false;
+
+	// Shoot rocket when have it
+	if (kart_entity->powerup_slot == Entities::RocketPowerup)
+	{
+		directions->xPressed = true;
+	}
+
 	// Check if the kart is stuck for too long, if so, reset.
 	if (kart_local->time_stuck >= RESET_TRESHOLD)
 	{
