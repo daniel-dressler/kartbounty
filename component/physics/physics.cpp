@@ -362,7 +362,6 @@ int Simulation::createKart(entity_id kart_id)
 	btScalar radians = atan2(distX, distY);
 	btQuaternion rotation = btQuaternion(btVector3(0,1,0), radians);
 	tr.setRotation(rotation);
-	kartSpawnCounter++;
 
 	btRigidBody *carChassis = addRigidBody(CAR_MASS, tr, compound);
 	m_kart_bodies[kart_id] = carChassis;
@@ -446,6 +445,7 @@ int Simulation::createKart(entity_id kart_id)
 
 	// Keep track of this so kart resets back to its initial spawn location
 	kart_entity->respawnLocation = kartSpawnLocations[kartSpawnCounter % NUM_KART_SPAWN_LOCATIONS];
+	kartSpawnCounter++;
 
 	btQuaternion rot = car1.getRotation();
 	kart_entity->Orient.x = (Real)rot.getX();

@@ -237,8 +237,7 @@ int GameAi::planFrame()
 
 					default:
 						break;
-				}
-				
+				}				
 			}
 			break;
 
@@ -325,6 +324,10 @@ int GameAi::planFrame()
 				// Apply damage to kart
 				entity_id kart_id = ((Events::KartHitByBulletEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
+
+				if(kart->isExploding)
+					break;
+
 				kart->health -= DAMAGE_FROM_BULLET;
 
 				//DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %f\n", kart_id, kart->health);
@@ -349,12 +352,7 @@ int GameAi::planFrame()
 					localDeadKart->kart_id = kart_id;
 					localDeadKart->timer = TIME_TO_EXPLODE;
 
-					m_exploding_karts.push_back(localDeadKart);
-
-/*					kart->health = STARTING_HEALTH;
-					auto reset_kart_event = NEWEVENT(Reset);
-					reset_kart_event->kart_id = kart_id;
-					events_out.push_back(reset_kart_event);		*/			
+					m_exploding_karts.push_back(localDeadKart);	
 				}
 			}
 			break;		
@@ -539,13 +537,13 @@ void GameAi::updateScoreBoard()
 
 	m_mb->sendMail(events_out);
 
-	//outputScoreBoard();
+	outputScoreBoard(sortedList);
 }
 
 // Outputs the score borad to the console
-void GameAi::outputScoreBoard()
+void GameAi::outputScoreBoard(std::vector<entity_id> list)
 {
-	for (auto kart_id : kart_ids) {
+	for (auto kart_id : list) {
 		auto kart = GETENTITY(kart_id, CarEntity);
 		DEBUGOUT("Id:%d|Score:%lu || ", kart_id, kart->gold);
 	}

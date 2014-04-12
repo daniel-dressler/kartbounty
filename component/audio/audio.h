@@ -23,6 +23,7 @@ private:
 
 	FMOD::DSP *m_pitchShift;
 	FMOD::Channel *roundStartChannel;
+	FMOD::Channel *musicPlaybackChannel;
 
 	bool gamePaused;
 
@@ -51,6 +52,7 @@ private:
 	int LoadMusic(char* file);
 
 	bool playMusic;
+	int m_musicTrack;
 
 	float musicVol;
 	float sfxVol;
@@ -88,11 +90,13 @@ public:
 		int RoundStart;
 		int Boo;
 		int Cheer;
+		int PulsePowerUp;
 	} Sounds;
 	
 	int SetupHardware();
 	void PlayMusic(int id);
 	void PlaySoundEffect(int id, Vector3 pos);
+	void ChangeMusic();
 
 	void update(Real seconds);
 	void setup();
