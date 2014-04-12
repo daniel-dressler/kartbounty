@@ -20,8 +20,7 @@ GLeffect glhLoadEffect( const char* strVertexShader,
 {
 	GLeffect effect;
 	MEMSET( &effect, 0, sizeof(GLeffect) );
-	// @Phil: Hope you don't mind, calloc() does what you were doing with the
-	// memsets
+
 	GLchar** arySources = (GLchar**)calloc( sizeof(GLchar*), nHeaderCount + 1 );
 	GLint* arySizes = (GLint*)calloc( sizeof(GLint), nHeaderCount + 1 );
 
@@ -256,6 +255,53 @@ void glhDestroyBuffer( GLbuffer& buffer )
 	free( buffer.data );
 }
 
+int glhUpdateInst( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount )
+{
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.xbuffer );
+	glBufferData( GL_ARRAY_BUFFER, nVertSize * nCount, pData, GL_STREAM_DRAW );
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+	glmesh.xcount = nCount;
+
+	return 1;
+}
+
+int glhCreateInst( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount, Int32 nType )
+{
+    glBindVertexArray( glmesh.vao );
+
+	glGenBuffers( 1, &glmesh.xbuffer );
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.xbuffer );
+	glBufferData( GL_ARRAY_BUFFER, nVertSize * nCount, pData, GL_DYNAMIC_DRAW );
+
+	glmesh.xcount = nCount;
+	glhPredefinedVertexLayout( nType );
+
+	glBindVertexArray( 0 );
+
+	return 1;
+}
+
+int glhCreateMesh( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount, Int32 nType )
+{
+	glGenVertexArrays( 1, &glmesh.vao ); 
+    glBindVertexArray( glmesh.vao );
+
+	glGenBuffers( 1, &glmesh.vbuffer );
+	glBindBuffer( GL_ARRAY_BUFFER, glmesh.vbuffer );
+	glBufferData( GL_ARRAY_BUFFER, nVertSize * nCount, pData, GL_STATIC_DRAW );
+
+	glmesh.vstride = nVertSize;
+	glmesh.icount = nCount;
+	glmesh.type = nType;
+
+	glhPredefinedVertexLayout( nType );
+
+	glBindVertexArray( 0 );
+
+	return 1;
+}
+
 int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata )
 {
 	glGenVertexArrays( 1, &glmesh.vao ); 
@@ -302,13 +348,23 @@ int glhCreateGUI( GLmesh& glmesh, const GLvertex* aryVertices, const GLint nCoun
 
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh )
 {
-	glUseProgram( gleffect.program );
 	glBindVertexArray( glmesh.vao );
+	glUseProgram( gleffect.program );
 	if( glmesh.type == 10 )
 		glDrawArrays( GL_TRIANGLES, 0, glmesh.icount );
 	else
 		glDrawElements( GL_TRIANGLES, glmesh.icount, GL_UNSIGNED_SHORT, (void*)0 );
 	glBindVertexArray( 0 );
+	return 1;
+}
+
+int glhDrawInst( const GLeffect& gleffect, const GLmesh& glmesh )
+{
+	glBindVertexArray( glmesh.vao );
+	glUseProgram( gleffect.program );
+	glDrawArraysInstanced( GL_TRIANGLE_STRIP, 0, glmesh.icount, glmesh.xcount );
+	glBindVertexArray( 0 );
+
 	return 1;
 }
 
@@ -320,6 +376,7 @@ void glhDestroyMesh( GLmesh& glmesh )
 
 	glDeleteBuffers( 1, &glmesh.vbuffer );
 	glDeleteBuffers( 1, &glmesh.ibuffer );
+	glDeleteBuffers( 1, &glmesh.xbuffer );
 	glDeleteVertexArrays( 1, &glmesh.vao );
 
 	MEMSET( &glmesh, -1, sizeof(GLmesh) );
@@ -339,6 +396,28 @@ void glhPredefinedVertexLayout( Int32 nType )
 		glVertexAttribPointer( 2, 4, GL_UNSIGNED_BYTE,	GL_FALSE, sizeof(SEG::VertexSS), (void*)16 );
 		glVertexAttribPointer( 3, 4, GL_SHORT,			GL_FALSE, sizeof(SEG::VertexSS), (void*)20 );
 		break;
+	case 20:
+		glEnableVertexAttribArray( 0 );
+		glVertexAttribPointer( 0, 2, GL_FLOAT,	GL_FALSE, sizeof(Vector2), (void*)0 );
+		glVertexAttribDivisor( 0, 0 );
+		break;
+	case 30:
+		glEnableVertexAttribArray( 1 );
+		glVertexAttribPointer( 1, 4, GL_FLOAT,	GL_FALSE, sizeof(Vector4) * 4, (void*)0 );
+		glVertexAttribDivisor( 1, 1 );
+
+		glEnableVertexAttribArray( 2 );
+		glVertexAttribPointer( 2, 4, GL_FLOAT,	GL_FALSE, sizeof(Vector4) * 4, (void*)16 );
+		glVertexAttribDivisor( 2, 1 );
+
+		glEnableVertexAttribArray( 3 );
+		glVertexAttribPointer( 3, 4, GL_FLOAT,	GL_FALSE, sizeof(Vector4) * 4, (void*)32 );
+		glVertexAttribDivisor( 3, 1 );
+
+		glEnableVertexAttribArray( 4 );
+		glVertexAttribPointer( 4, 4, GL_FLOAT,	GL_FALSE, sizeof(Vector4) * 4, (void*)48 );
+		glVertexAttribDivisor( 4, 1 );
+		break;
 	case 10:
 		glEnableVertexAttribArray( 0 );
 		glEnableVertexAttribArray( 1 );
@@ -351,7 +430,7 @@ void glhPredefinedVertexLayout( Int32 nType )
 	};
 }
 
-int glhLoadTexture( GLtex& gltex, char* strFilename )
+int glhLoadTexture( GLtex& gltex, char* strFilename, int mips )
 {
 	int nSize;
 	char* pData;
@@ -366,7 +445,7 @@ int glhLoadTexture( GLtex& gltex, char* strFilename )
 	if( rtn )
 		return 0;
 
-	rtn = glhCreateTexture( gltex, (int)nWidth, (int)nHeight, (char*)pImageData );
+	rtn = glhCreateTexture( gltex, (int)nWidth, (int)nHeight, (char*)pImageData, mips );
 	free( pImageData );
 	if( !rtn )
 		return 0;
@@ -374,23 +453,33 @@ int glhLoadTexture( GLtex& gltex, char* strFilename )
 	return 1;
 }
 
-int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData )
+int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData, int mips )
 {
 	glGenTextures( 1, &gltex.id );
 	glBindTexture( GL_TEXTURE_2D, gltex.id );
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
 	glEnable( GL_TEXTURE_2D );
-	glGenerateMipmap( GL_TEXTURE_2D );
+	
+	if( mips )
+	{
+		glGenerateMipmap( GL_TEXTURE_2D );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	}
+	else
+	{
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	}
+
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 	glBindTexture( GL_TEXTURE_2D, 0 );
-
+	
 	return 1;
 }
 
-int glhEnableTexture( GLtex& gltex, int nIndex )
+int glhEnableTexture( const GLtex& gltex, int nIndex )
 {
 	if( !nIndex )
 		glActiveTexture( GL_TEXTURE0 );

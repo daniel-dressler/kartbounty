@@ -89,6 +89,9 @@
     <ClInclude Include="component\enemyai\graph\Node.h">
       <Filter>component\enemyai\graph</Filter>
     </ClInclude>
+    <ClInclude Include="component\rendering\SELib\SEParticleSystem.h">
+      <Filter>component\rendering\SELib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -140,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="component\enemyai\enemyai.cpp">
       <Filter>component\enemyai</Filter>
+    </ClCompile>
+    <ClCompile Include="component\rendering\SELib\SEParticleSystem.cpp">
+      <Filter>component\rendering\SELib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,6 +209,12 @@
       <Filter>component\rendering\shaders</Filter>
     </None>
     <None Include="component\rendering\VShaderGUI.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
+    <None Include="component\rendering\ParticlePShader.glsl">
+      <Filter>component\rendering\shaders</Filter>
+    </None>
+    <None Include="component\rendering\ParticleVShader.glsl">
       <Filter>component\rendering\shaders</Filter>
     </None>
   </ItemGroup>

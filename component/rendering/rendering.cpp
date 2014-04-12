@@ -58,13 +58,13 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
 	m_pMailbox->request( Events::EventType::RoundStart );
 	m_pMailbox->request( Events::EventType::RoundEnd );
+	m_pMailbox->request( Events::EventType::Explosion );
 
 	m_vArenaOfs = Vector3( -10,0,10 );
 }
 
 Renderer::~Renderer()
 {
-
 	glhDestroyMesh( m_mshArenaCldr );
 
 	glhDestroyMesh( m_mshArenaWalls );
@@ -118,10 +118,9 @@ int LoadMesh( GLmesh& mesh, char* strFilename )
 
 int Renderer::setup()
 {
-
 	SDL_Init( SDL_INIT_EVERYTHING );
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 4 );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
@@ -160,7 +159,7 @@ int Renderer::setup()
 	glCullFace( GL_FRONT );
 	glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 	glEnable( GL_MULTISAMPLE );
-
+	
 	// Load Standard Effects
 	const GLchar* aryHeaders[] = { "component/rendering/ShaderStructs.glsl" };
 	m_eftMesh = glhLoadEffect( "component/rendering/VShader.glsl", NULL, "component/rendering/PShader.glsl", aryHeaders, 1 );
@@ -266,12 +265,242 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_texGUIPlayer, "assets/gui_player.png" ) )
 		exit(14);
 
-	
+	if( !glhLoadTexture( m_texParticle, "assets/Explode.png", 0 ) )
+		exit(15);
+
 	
 	glhMapTexture( m_eftMesh, "g_texDiffuse", 0 );
 	glhMapTexture( m_eftMesh, "g_texNormal", 1 );
 	glhMapTexture( m_eftGUI, "g_texDiffuse", 0 );
+	
+	if( Failed( m_ps.Init() ) )
+		exit(16);
+	/*
+	Int32 build = 0;
+	Int32 nEmitterCount = 0;
+	SE::EMITTER es[5];
+	MEMSET( es, 0, sizeof(SE::EMITTER) * 5 );
 
+	switch( build )
+	{
+	case 0:
+	case 1:
+		nEmitterCount = 1;
+		glhLoadTexture( m_texParticle, "assets/Particle2.png", 0 );
+		glClearColor( 0.0f, 0.0f, 0.0f, 1 );
+		es[0].fEmitRate = build ? 4000 : 500;
+		es[0].fEmitLife = -1.0f;
+
+		es[0].vTexParams = Vector4( 0, 0, 1, 1 );
+
+		es[0].vColorEnd = es[0].vColorMin = Vector4( 1.0f, 0.0f, 0.0f, 1.0f );
+		es[0].vColorRand = Vector4( 0.0f, 1.0f, 0.0f, 0.0f );
+		es[0].fShadeRand = 0.0f;
+
+		es[0].vPos = Vector3( 0, -50, 0 );
+		es[0].fPosOfs = 0.0f;
+		es[0].fPosRand = 1.0f;
+
+		es[0].vVelDir = Vector3( 0, 1, 0 );
+		es[0].fVelMin = 80.0f;
+		es[0].fVelRand = 20.0f;
+		es[0].fVelAngle = 30.0f;
+
+		es[0].bShareVelPosAngle = 0;
+
+		es[0].vAccel = Vector3( 50,0,0 );
+
+		es[0].fLifeMin = 2.0f;
+		es[0].fLifeRand = 1.0f;
+		es[0].fFadeMin = 2.0f;
+		es[0].fFadeRand = 1.0f;
+		es[0].fSizeMin = 0.25f;
+		es[0].fSizeRand = 0.0f;
+		es[0].fScaleMin = 0.25f;
+		es[0].fScaleRand = 0.0f;
+		es[0].fResistance = 0.0f;
+		es[0].fRotateRand = 0;
+		es[0].fAngleVelMin = 0;
+		es[0].fAngleVelRand = 0;
+		break;
+
+	case 2:
+		nEmitterCount = 1;
+		glhLoadTexture( m_texParticle, "assets/Particle.png", 0 );
+		glClearColor( 0.8f, 0.8f, 0.8f, 1 );
+		es[0].fEmitRate = 500;
+		es[0].fEmitLife = -1.0f;
+
+		es[0].vTexParams = Vector4( 0, 0, 1, 1 );
+
+		es[0].vColorEnd = es[0].vColorMin = Vector4( 0.2f, 0.2f, 0.2f, 0.0f );
+		es[0].vColorRand = Vector4( 0, 0, 0, 0.2f );
+		es[0].fShadeRand = 0.1f;
+
+		es[0].vPos = Vector3( 0, -50, 0 );
+		es[0].fPosOfs = 5.0f;
+		es[0].fPosRand = 5.0f;
+
+		es[0].vVelDir = Vector3( 0, 1, 0 );
+		es[0].fVelMin = 20.0f;
+		es[0].fVelRand = 20.0f;
+		es[0].fVelAngle = 70.0f;
+
+		es[0].bShareVelPosAngle = 0;
+
+		es[0].vAccel = Vector3( 0,10,0 );
+
+		es[0].fLifeMin = 2.0f;
+		es[0].fLifeRand = 1.0f;
+		es[0].fFadeMin = 2.0f;
+		es[0].fFadeRand = 1.0f;
+		es[0].fSizeMin = 10.0f;
+		es[0].fSizeRand = 5.0f;
+		es[0].fScaleMin = 10.0f;
+		es[0].fScaleRand = 5.0f;
+		es[0].fResistance = 0.1f;
+
+		es[0].fRotateRand = 1;
+		es[0].fAngleVelMin = 0;
+		es[0].fAngleVelRand = 1;
+		break;
+
+	case 3:
+		nEmitterCount = 1;
+		glhLoadTexture( m_texParticle, "assets/FireParticle.png", 0 );
+		glClearColor( 0, 0, 0, 1 );
+		es[0].fEmitRate = 1000;
+		es[0].fEmitLife = -1.0f;
+
+		es[0].vTexParams = Vector4( 0, 0, 1, 1 );
+
+		es[0].vColorEnd = es[0].vColorMin = Vector4( 1, 1, 1, 0.5f );
+		es[0].vColorRand = Vector4( 1, 0, 0, 0.3f );
+		es[0].fShadeRand = 0;
+
+		es[0].vPos = Vector3( 0, -50, 0 );
+		es[0].fPosOfs = 5.0f;
+		es[0].fPosRand = 15.0f;
+
+		es[0].vVelDir = Vector3( 0, 1, 0 ).GetNormal();
+		es[0].fVelMin = 80.0f;
+		es[0].fVelRand = 20.0f;
+		es[0].fVelAngle = -5.0f;
+
+		es[0].bShareVelPosAngle = 1;
+
+		es[0].vAccel = Vector3( 0,10,0 );
+
+		es[0].fLifeMin = 0.2f;
+		es[0].fLifeRand = 0.8f;
+		es[0].fFadeMin = 0.0f;
+		es[0].fFadeRand = 0.5f;
+		es[0].fSizeMin = 10.0f;
+		es[0].fSizeRand = 2.0f;
+		es[0].fScaleMin = -5.0f;
+		es[0].fScaleRand = -5.0f;
+		es[0].fResistance = 0.2f;
+
+		es[0].fRotateRand = 0;
+		es[0].fAngleVelMin = 0;
+		es[0].fAngleVelRand = 0.25;
+		break;
+	case 4:
+		nEmitterCount = 3;
+		glhLoadTexture( m_texParticle, "assets/Explode.png", 0 );
+		glClearColor( 0.2f, 0.2f, 0.2f, 1 );
+
+		es[0].fEmitRate = 500;
+		es[0].fEmitLife = 0.2f;
+		es[0].vTexParams = Vector4( 0, 1 - 0.75f, 0.25f, 0.25f );
+		es[0].vColorEnd = Vector4( 0.2f, 0.2f, 0.2f, 0.0f );
+		es[0].vColorMin = Vector4( 1, 0.65f, 0.25f, 0.0f );
+		es[0].vColorRand = Vector4( 0, 0, 0, 0.2f );
+		es[0].fShadeRand = 0.1f;
+		es[0].vPos = Vector3( 0, -10, 0 );
+		es[0].fPosOfs = 5.0f;
+		es[0].fPosRand = 5.0f;
+		es[0].vVelDir = Vector3( 0, 1, 0 );
+		es[0].fVelMin = 100.0f;
+		es[0].fVelRand = 20.0f;
+		es[0].fVelAngle = 90.0f;
+		es[0].bShareVelPosAngle = 0;
+		es[0].vAccel = Vector3( 0,-10,0 );
+		es[0].fLifeMin = 1;
+		es[0].fLifeRand = 1;
+		es[0].fFadeMin = 1;
+		es[0].fFadeRand = 0;
+		es[0].fSizeMin = 10.0f;
+		es[0].fSizeRand = 5.0f;
+		es[0].fScaleMin = 20.0f;
+		es[0].fScaleRand = 5.0f;
+		es[0].fResistance = 1;
+		es[0].fRotateRand = 1;
+		es[0].fAngleVelMin = 0;
+		es[0].fAngleVelRand = 1;
+
+		es[1].fEmitRate = 5000;
+		es[1].fEmitLife = 0.2f;
+		es[1].vTexParams = Vector4( 0, 0, 1, 1 );
+		es[1].vColorEnd = es[1].vColorMin = Vector4( 1.0f, 1.0f, 0.0f, 1.0f );
+		es[1].vColorRand = Vector4( 0.0f, 1.0f, 0.0f, 0.0f );
+		es[1].fShadeRand = 0.0f;
+		es[1].vPos = Vector3( 0, -15, 0 );
+		es[1].fPosOfs = 0.0f;
+		es[1].fPosRand = 1.0f;
+		es[1].vVelDir = Vector3( 0, 1, 0 );
+		es[1].fVelMin = 80.0f;
+		es[1].fVelRand = 20.0f;
+		es[1].fVelAngle = 80.0f;
+		es[1].bShareVelPosAngle = 0;
+		es[1].vAccel = Vector3( 0,-10,0 );
+		es[1].fLifeMin = 0.4f;
+		es[1].fLifeRand = 0.4f;
+		es[1].fFadeMin = 0.0f;
+		es[1].fFadeRand = 0.0f;
+		es[1].fSizeMin = 0.25f;
+		es[1].fSizeRand = 0.0f;
+		es[1].fScaleMin = 0.25f;
+		es[1].fScaleRand = 0.0f;
+		es[1].fResistance = 0.1f;
+		es[1].fRotateRand = 0;
+		es[1].fAngleVelMin = 0;
+		es[1].fAngleVelRand = 0;
+
+		es[2].fEmitRate = 100;
+		es[2].fEmitLife = 0.2f;
+		es[2].vTexParams = Vector4( 0.5f, 1 - ( 0.25f + 0.083f * 2 ), 0.083f, 0.083f );
+		es[2].vColorEnd = Vector4( 0.3f, 0.3f, 0.3f, 1 );
+		es[2].vColorMin = Vector4( 0.3f, 0.3f, 0.3f, 1 );
+		es[2].vColorRand = Vector4( 0, 0, 0, 0 );
+		es[2].fShadeRand = 0.0f;
+		es[2].vPos = Vector3( 0, -10, 0 );
+		es[2].fPosOfs = 5.0f;
+		es[2].fPosRand = 5.0f;
+		es[2].vVelDir = Vector3( 0, 1, 0 );
+		es[2].fVelMin = 100.0f;
+		es[2].fVelRand = 20.0f;
+		es[2].fVelAngle = 90.0f;
+		es[2].bShareVelPosAngle = 0;
+		es[2].vAccel = Vector3( 0,-50,0 );
+		es[2].fLifeMin = 1.0f;
+		es[2].fLifeRand = 0;
+		es[2].fFadeMin = 0.1f;
+		es[2].fFadeRand = 0;
+		es[2].fSizeMin = 2.0f;
+		es[2].fSizeRand = 1.0f;
+		es[2].fScaleMin = 2.0f;
+		es[2].fScaleRand = 1.0f;
+		es[2].fResistance = 1;
+		es[2].fRotateRand = 1;
+		es[2].fAngleVelMin = 0;
+		es[2].fAngleVelRand = 1;
+
+		break;
+	};
+
+	m_ps.AddEffect( 10000, Matrix::GetIdentity(), nEmitterCount, es, m_texParticle );
+	*/
 	m_bInitComplete = 1;
 	
 	return 1;
@@ -299,9 +528,27 @@ Vector4 GetKartColor( Int32 player )
 
 std::vector<Int32> camplayerid;
 std::vector<Entities::CarEntity::Camera> cameras;
+
 int Renderer::render( float fElapseSec )
 {
+	static Int32 bIgnore = 1;
+	if( bIgnore )
+	{
+		bIgnore = 0;
+		return 0;
+	}
+
 	m_fTime += fElapseSec;
+
+	static Real fFPSLastTime = 0;
+	static Int32 nFPSCount = 0;
+	nFPSCount++;
+	if( m_fTime - fFPSLastTime > 1.0f )
+	{
+		_Explode( Vector3( 0, 1, 0 ) );
+		fFPSLastTime += 1.0f;
+		nFPSCount = 0;
+	}
 
 	if( !m_bInitComplete )
 		return 0;
@@ -314,9 +561,9 @@ int Renderer::render( float fElapseSec )
 
 	_CheckMail();
 
-	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
+	glClearColor( 0.2f, 0.2f, 0.2f, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
+	
 	Real fLightDist = 17.0f;
 	Real fLightHeight = 5.0f;
 	Real fLightPower = 25.0f;
@@ -333,25 +580,28 @@ int Renderer::render( float fElapseSec )
 	perFrame.vLight[8] = Vector4( -fLightDist, fLightHeight, -fLightDist, fLightPower );
 	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * fSpinRadius, 2, -COS( m_fTime ) * fSpinRadius, fLightPower );
 
-
 	std::vector<RCAMERA> aryCameras;
 	_CalcCameras( aryCameras );
+
+	{
+		m_ps.Update( fElapseSec, aryCameras[0].eyepos );
+	}
 
 	for( Int32 i = 0; i < aryCameras.size(); i++ )
 	{	
 		glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
 
-		Vector3 vFocus = Vector3(0,-0.8,0);
 		perFrame.vEyePos = aryCameras[i].eyepos;
 		perFrame.vEyeDir = Vector3( aryCameras[i].eyefocus - aryCameras[i].eyepos ).Normalize();
 		perFrame.matProj.Perspective( aryCameras[i].fov, (Real)aryCameras[i].w/aryCameras[i].h, 0.1f, 1000.0f );
 		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), aryCameras[i].eyefocus, Vector3( 0, 1, 0 ) );
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
-
+		
 		_DrawArena();
-
-		for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) {
+		
+		for (std::pair<entity_id, struct kart>kart_id_pair: m_mKarts) 
+		{
 			auto kart_entity = GETENTITY(kart_id_pair.first, CarEntity);
 
 			// DRAW SHADOW
@@ -491,6 +741,10 @@ int Renderer::render( float fElapseSec )
 			glhDrawMesh( m_eftMesh, m_mshBullet );
 		}
 		glDisable( GL_BLEND );
+		
+		Quaternion q;
+		q.RotateMatrix( perFrame.matView );
+		m_ps.Draw( q, perFrame.matViewProj );
 	}
 
 	// GUI
@@ -533,7 +787,7 @@ int Renderer::render( float fElapseSec )
 
 	glDisable( GL_BLEND );
 	glEnable( GL_DEPTH_TEST );
-
+	
 	SDL_GL_SwapWindow( m_Window );
 
 	return 1;
@@ -577,7 +831,6 @@ void Renderer::_DrawArena()
 	perMesh.matWorld = Matrix::GetTranslate( m_vArenaOfs ) * Matrix::GetScale( -1, 1, -1 );
 	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 	_DrawArenaQuad( Vector3( 0, 0, 1 ) );
-	
 }
 
 void Renderer::_DrawArenaQuad( Vector3 vColor )
@@ -767,6 +1020,12 @@ void Renderer::_CheckMail()
 				kartsByScore = scoreboard->kartsByScore;
 			}
 			break;
+		case Events::EventType::Explosion:
+			{
+				auto explody = ((Events::PowerupDestroyedEvent *)event);
+				_Explode( explody->pos );
+			}
+			break;
 		default:
 			break;
 		}
@@ -904,4 +1163,108 @@ void Renderer::_CalcCameras( std::vector<RCAMERA>& aryCameras )
 		}
 		break;
 	};
+}
+
+void Renderer::_Explode( Vector3 vPos )
+{
+	SE::EMITTER es[3];
+
+	es[0].fEmitRate = 500;
+	es[0].fEmitLife = 0.2f;
+	es[0].vTexParams = Vector4( 0, 1 - 0.75f, 0.25f, 0.25f );
+	es[0].vColorEnd = Vector4( 0.2f, 0.2f, 0.2f, 0.0f );
+	es[0].vColorMin = Vector4( 1, 0.65f, 0.25f, 0.0f );
+	es[0].vColorRand = Vector4( 0, 0, 0, 0.2f );
+	es[0].fShadeRand = 0.1f;
+	es[0].vPos = vPos;
+	es[0].fPosOfs = 0.05f;
+	es[0].fPosRand = 0.05f;
+	es[0].vVelDir = Vector3( 0, 1, 0 );
+	es[0].fVelMin = 1.0f;
+	es[0].fVelRand = 0.2f;
+	es[0].fVelAngle = 90.0f;
+	es[0].bShareVelPosAngle = 0;
+	es[0].vAccel = Vector3( 0,-1,0 );
+	es[0].fLifeMin = 1;
+	es[0].fLifeRand = 1;
+	es[0].fFadeMin = 1;
+	es[0].fFadeRand = 0;
+	es[0].fSizeMin = 0.1f;
+	es[0].fSizeRand = 0.05f;
+	es[0].fScaleMin = 0.2f;
+	es[0].fScaleRand = 0.05f;
+	es[0].fResistance = 1;
+	es[0].fRotateRand = 1;
+	es[0].fAngleVelMin = 0;
+	es[0].fAngleVelRand = 1;
+
+	es[1].fEmitRate = 500;
+	es[1].fEmitLife = 0.2f;
+	es[1].vTexParams = Vector4( 0, 1 - 0.75f, 0.25f, 0.25f );
+	es[1].vColorEnd = es[1].vColorMin = Vector4( 1.0f, 1.0f, 0.0f, 1.0f );
+	es[1].vColorRand = Vector4( 0.0f, 1.0f, 0.0f, 0.0f );
+	es[1].fShadeRand = 0.0f;
+	es[1].vPos = vPos;
+	es[1].fPosOfs = 0.0f;
+	es[1].fPosRand = 0.1f;
+	es[1].vVelDir = Vector3( 0, 1, 0 );
+	es[1].fVelMin = 1.0f;
+	es[1].fVelRand = 0.25f;
+	es[1].fVelAngle = 80.0f;
+	es[1].bShareVelPosAngle = 0;
+	es[1].vAccel = Vector3( 0,-1,0 );
+	es[1].fLifeMin = 0.4f;
+	es[1].fLifeRand = 0.4f;
+	es[1].fFadeMin = 0.0f;
+	es[1].fFadeRand = 0.0f;
+	es[1].fSizeMin = 0.01f;
+	es[1].fSizeRand = 0.0f;
+	es[1].fScaleMin = 0.01f;
+	es[1].fScaleRand = 0.0f;
+	es[1].fResistance = 1;
+	es[1].fRotateRand = 0;
+	es[1].fAngleVelMin = 0;
+	es[1].fAngleVelRand = 0;
+
+	es[2].fEmitRate = 100;
+	es[2].fEmitLife = 0.2f;
+	es[2].vTexParams = Vector4( 0.5f, 1 - ( 0.25f + 0.083f * 2 ), 0.083f, 0.083f );
+	es[2].vColorEnd = Vector4( 0.3f, 0.3f, 0.3f, 1 );
+	es[2].vColorMin = Vector4( 0.3f, 0.3f, 0.3f, 1 );
+	es[2].vColorRand = Vector4( 0, 0, 0, 0 );
+	es[2].fShadeRand = 0.0f;
+	es[2].vPos = vPos;
+	es[2].fPosOfs = 0.0f;
+	es[2].fPosRand = 0.0f;
+	es[2].vVelDir = Vector3( 0, 1, 0 );
+	es[2].fVelMin = 2.0f;
+	es[2].fVelRand = 2.0f;
+	es[2].fVelAngle = 90.0f;
+	es[2].bShareVelPosAngle = 0;
+	es[2].vAccel = Vector3( 0,-5,0 );
+	es[2].fLifeMin = 1.0f;
+	es[2].fLifeRand = 0;
+	es[2].fFadeMin = 0.1f;
+	es[2].fFadeRand = 0;
+	es[2].fSizeMin = 0.01f;
+	es[2].fSizeRand = 0.05f;
+	es[2].fScaleMin = 0;
+	es[2].fScaleRand = 0;
+	es[2].fResistance = 1;
+	es[2].fRotateRand = 1;
+	es[2].fAngleVelMin = 0;
+	es[2].fAngleVelRand = 1;
+
+	Real fScale = 2;
+	for( Int32 i = 0; i < 3; i++ )
+	{
+		es[i].fSizeMin *= fScale;
+		es[i].fSizeRand *= fScale;
+		es[i].fScaleMin *= fScale;
+		es[i].fScaleRand *= fScale;
+		es[i].fVelMin *= fScale;
+	}
+
+
+	m_ps.AddEffect( 10000, Matrix::GetIdentity(), 3, es, m_texParticle );
 }
