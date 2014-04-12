@@ -302,7 +302,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	if (distance_to_target < PULSE_DISTANCE && kart_entity->powerup_slot == Entities::PulsePowerup)
 	{
 		directions->xPressed = true;
-		DEBUGOUT("Kart %d used pulse!\n", kart_local->kart_id)
+		//DEBUGOUT("Kart %d used pulse!\n", kart_local->kart_id)
 	}
 	else if ( kart_entity->powerup_slot != Entities::PulsePowerup )
 		directions->xPressed = true;

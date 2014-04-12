@@ -414,6 +414,19 @@ int Renderer::render( float fElapseSec )
 				glhDrawMesh( m_eftMesh, m_mshGold );
 				glDisable( GL_BLEND );
 			}
+			else if( powerup.type == Entities::FloatingGoldPowerup)
+			{
+				perMesh.vRenderParams = Vector4( 1, 0, 1, 0 );
+				perMesh.vColor = Vector4(0,0,1,1);
+				perMesh.matWorld = Matrix::GetTranslate( pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				glhDrawMesh( m_eftMesh, m_mshGold );
+				glDisable( GL_BLEND );
+			}
 			else
 			{
 				Vector4 color1;

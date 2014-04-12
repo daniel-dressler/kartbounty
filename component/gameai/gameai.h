@@ -21,6 +21,16 @@ public:
 		float timer_to_respawn;
 		Vector3 pos;
 	};
+		
+	struct floating_gold
+	{
+		Vector3 location;
+		bool active;
+		float timer;
+		int index_in_vector;
+	};
+
+	void GameAi::floating_gold_int();
 
 private:
 	Events::Mailbox* m_mb;
@@ -72,4 +82,6 @@ private:
 	void newRound(int, int);
 	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
 	void updateExplodingKarts();
+
+	void update_floating_gold( double time );
 };
