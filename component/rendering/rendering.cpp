@@ -199,6 +199,11 @@ int Renderer::setup()
 			exit(8);
 	}
 
+	if( !LoadMesh( m_mshSkybox, "assets/skybox.msh" ) )
+		exit(9);
+	if( !glhLoadTexture( m_texSkybox, "assets/skybox.png" ) )
+		exit(10);
+
 	if( !LoadMesh( m_mshArenaWalls, "assets/arena_walls.msh" ) )
 		exit(9);
 	if( !glhLoadTexture( m_difArenaWalls, "assets/arena_walls_diff.png" ) )
@@ -292,7 +297,8 @@ Vector4 GetKartColor( Int32 player )
 	return vColor;
 }
 
-bool player_kart_found = false;
+std::vector<Int32> camplayerid;
+std::vector<Entities::CarEntity::Camera> cameras;
 int Renderer::render( float fElapseSec )
 {
 	m_fTime += fElapseSec;
@@ -306,93 +312,7 @@ int Renderer::render( float fElapseSec )
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	std::vector<Int32> camplayerid;
-	std::vector<Entities::CarEntity::Camera> cameras;
-	for( Events::Event *event : m_pMailbox->checkMail() )
-	{
-		switch( event->type ) 
-		{
-		case Events::EventType::RoundStart:
-			m_nScreenState = RS_DRIVING;
-			break;
-		case Events::EventType::RoundEnd:
-			m_nScreenState = RS_END;
-			break;
-		// Each bullet has a position and a direction passed for rendering and an additional value "time to live" that physics uses, no idea if rendering needs it.
-		case Events::EventType::BulletList:
-		{
-			auto bullet_list_event = ((Events::BulletListEvent *)event);
-			list_of_bullets = *((std::map<int, struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
-
-			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
-		}
-		break;
-		case Events::EventType::KartCreated:
-			{
-				auto kart_event = ((Events::KartCreatedEvent *)event);
-				auto kart = GETENTITY(kart_event->kart_id, CarEntity);
-				struct kart kart_local;
-				entity_id id = kart_local.idKart = kart_event->kart_id;
-				kart_local.vColor = GetKartColor( kart->playerNumber );
-				m_mKarts[id] = kart_local;
-			}
-			break;
-		case Events::EventType::KartDestroyed:
-			m_mKarts.erase(((Events::KartDestroyedEvent *)event)->kart_id);
-			break;
-		case Events::EventType::PlayerKart:
-			{
-				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
-				auto kart = GETENTITY(kart_id, CarEntity);
-				
-//				cameras.clear();
-				cameras.push_back(kart->camera);
-				camplayerid.push_back(kart->playerNumber);
-
-				player_kart_found = true;
-			}
-			break;
-		case Events::EventType::AiKart:
-			{
-//				if (!player_kart_found)
-				{
-					entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
-					auto kart = GETENTITY(kart_id, CarEntity);
-
-//					cameras.push_back(kart->camera);
-//					camplayerid.push_back(kart->playerNumber);
-				}
-			}
-			break;
-		case Events::EventType::PowerupPlacement:
-			{
-				auto powerup_event = ((Events::PowerupPlacementEvent *)event);
-				struct powerup powerup_local;
-				powerup_local.vPos = powerup_event->pos;
-				powerup_local.type = powerup_event->powerup_type;
-				powerup_local.idPowerup = powerup_event->powerup_id;
-				m_powerups[powerup_local.idPowerup] = powerup_local;
-
-			}
-			break;
-		case Events::EventType::PowerupPickup:
-		case Events::EventType::PowerupDestroyed:
-			{
-				auto powerup = ((Events::PowerupDestroyedEvent *)event);
-				m_powerups.erase(powerup->powerup_id);
-			}
-			break;
-		case Events::EventType::ScoreBoardUpdate:
-			{
-				auto scoreboard = ((Events::ScoreBoardUpdateEvent *)event);
-				kartsByScore = scoreboard->kartsByScore;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	m_pMailbox->emptyMail();
+	_CheckMail();
 
 	glClearColor( 59/255.0, 68/255.0, 75/255.0, 1 );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -414,141 +334,8 @@ int Renderer::render( float fElapseSec )
 	perFrame.vLight[9] = Vector4( -SIN( m_fTime ) * fSpinRadius, 2, -COS( m_fTime ) * fSpinRadius, fLightPower );
 
 
-	// START RENDERING
-
-	struct RCAMERA
-	{
-		Int32 player;
-		Int32 x,y,w,h,fov;
-		Vector3 eyepos, eyefocus;
-	};
 	std::vector<RCAMERA> aryCameras;
-
-	switch( m_nScreenState )
-	{
-	case RS_START:
-	case RS_END:
-		{
-			RCAMERA cam;
-			cam.player = 
-			cam.x = cam.y = 0;
-			cam.w = nWinWidth;
-			cam.h = nWinHeight;
-			cam.fov = DEGTORAD( 80 );
-			cam.eyepos = Vector3(0,15,-5);
-			cam.eyefocus = Vector3(0,-0.8,0);
-			aryCameras.push_back( cam );
-		}
-		break;
-	case RS_DRIVING:
-		{
-			switch( cameras.size() )
-			{
-			case 0:
-				{
-					RCAMERA cam;
-					cam.x = cam.y = 0;
-					cam.w = nWinWidth;
-					cam.h = nWinHeight;
-					cam.fov = DEGTORAD( 80 );
-					cam.eyepos = Vector3(0,15,-5);
-					cam.eyefocus = Vector3(0,-0.8,0);
-					aryCameras.push_back( cam );
-				}
-				break;
-			case 1:
-				{
-					RCAMERA cam;
-					cam.x = cam.y = 0;
-					cam.w = nWinWidth;
-					cam.h = nWinHeight;
-					cam.fov = DEGTORAD( cameras[0].fFOV );
-					cam.eyepos = cameras[0].vPos;
-					cam.eyefocus = cameras[0].vFocus;
-					aryCameras.push_back( cam );
-				}
-				break;
-			case 2:
-				{
-					RCAMERA cam;
-					cam.x = 0;
-					cam.y = nWinHeight>>1;
-					cam.w = nWinWidth;
-					cam.h = nWinHeight>>1;
-					cam.fov = DEGTORAD( cameras[0].fFOV );
-					cam.eyepos = cameras[0].vPos;
-					cam.eyefocus = cameras[0].vFocus;
-					aryCameras.push_back( cam );
-
-					cam.y = 0;
-					cam.fov = DEGTORAD( cameras[1].fFOV );
-					cam.eyepos = cameras[1].vPos;
-					cam.eyefocus = cameras[1].vFocus;
-					aryCameras.push_back( cam );
-				}
-				break;
-			case 3:
-				{
-					RCAMERA cam;
-					cam.x = 0;
-					cam.y = nWinHeight>>1;
-					cam.w = nWinWidth;
-					cam.h = nWinHeight>>1;
-					cam.fov = DEGTORAD( cameras[0].fFOV );
-					cam.eyepos = cameras[0].vPos;
-					cam.eyefocus = cameras[0].vFocus;
-					aryCameras.push_back( cam );
-
-					cam.y = 0;
-					cam.w = nWinWidth>>1;
-					cam.fov = DEGTORAD( cameras[1].fFOV );
-					cam.eyepos = cameras[1].vPos;
-					cam.eyefocus = cameras[1].vFocus;
-					aryCameras.push_back( cam );
-
-					cam.x = nWinWidth>>1;
-					cam.fov = DEGTORAD( cameras[2].fFOV );
-					cam.eyepos = cameras[2].vPos;
-					cam.eyefocus = cameras[2].vFocus;
-					aryCameras.push_back( cam );
-				}
-				break;
-			default: // 4
-				{
-					RCAMERA cam;
-					cam.x = 0;
-					cam.y = nWinHeight>>1;
-					cam.w = nWinWidth>>1;
-					cam.h = nWinHeight>>1;
-					cam.fov = DEGTORAD( cameras[0].fFOV );
-					cam.eyepos = cameras[0].vPos;
-					cam.eyefocus = cameras[0].vFocus;
-					aryCameras.push_back( cam );
-					
-					cam.x = nWinWidth>>1;
-					cam.fov = DEGTORAD( cameras[1].fFOV );
-					cam.eyepos = cameras[1].vPos;
-					cam.eyefocus = cameras[1].vFocus;
-					aryCameras.push_back( cam );
-
-					cam.y = 0;
-					cam.x = 0;
-					cam.fov = DEGTORAD( cameras[2].fFOV );
-					cam.eyepos = cameras[2].vPos;
-					cam.eyefocus = cameras[2].vFocus;
-					aryCameras.push_back( cam );
-
-					cam.x = nWinWidth>>1;
-					cam.fov = DEGTORAD( cameras[3].fFOV );
-					cam.eyepos = cameras[3].vPos;
-					cam.eyefocus = cameras[3].vFocus;
-					aryCameras.push_back( cam );
-				}
-				break;
-			}
-		}
-		break;
-	};
+	_CalcCameras( aryCameras );
 
 	for( Int32 i = 0; i < aryCameras.size(); i++ )
 	{	
@@ -557,7 +344,7 @@ int Renderer::render( float fElapseSec )
 		Vector3 vFocus = Vector3(0,-0.8,0);
 		perFrame.vEyePos = aryCameras[i].eyepos;
 		perFrame.vEyeDir = Vector3( aryCameras[i].eyefocus - aryCameras[i].eyepos ).Normalize();
-		perFrame.matProj.Perspective( aryCameras[i].fov, (Real)aryCameras[i].w/aryCameras[i].h, 0.1f, 100.0f );
+		perFrame.matProj.Perspective( aryCameras[i].fov, (Real)aryCameras[i].w/aryCameras[i].h, 0.1f, 1000.0f );
 		perFrame.matView.LookAt( perFrame.vEyePos.xyz(), aryCameras[i].eyefocus, Vector3( 0, 1, 0 ) );
 		perFrame.matViewProj = perFrame.matView * perFrame.matProj;
 		glhUpdateBuffer( m_eftMesh, m_bufPerFrame );
@@ -658,9 +445,8 @@ int Renderer::render( float fElapseSec )
 					break;
 				}
 
-				perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
 				perMesh.vColor = color1;
-				perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+				perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
 				perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
 				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
@@ -757,6 +543,14 @@ void Renderer::_DrawArena()
 {
 	cstPerMesh& perMesh = *(cstPerMesh*)m_bufPerMesh.data;
 	cstPerFrame& perFrame = *(cstPerFrame*)m_bufPerFrame.data;
+
+	perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
+	perMesh.matWorld.Scale( Vector3( 1000, 1000, 1000 ) );
+	perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+	glhEnableTexture( m_texSkybox );
+	glhEnableTexture( m_nrmBlank, 1 );
+	glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+	glhDrawMesh( m_eftMesh, m_mshSkybox );
 	
 	// QUAD A
 	glCullFace( GL_BACK );
@@ -889,4 +683,225 @@ void Renderer::_DrawScore( Int32 kart, Int32 x, Int32 y )
 	glhEnableTexture( m_texGUINumbers );
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
+}
+
+void Renderer::_CheckMail()
+{
+	cameras.clear();
+	camplayerid.clear();
+	for( Events::Event *event : m_pMailbox->checkMail() )
+	{
+		switch( event->type ) 
+		{
+		case Events::EventType::RoundStart:
+			m_nScreenState = RS_DRIVING;
+			break;
+		case Events::EventType::RoundEnd:
+			m_nScreenState = RS_END;
+			break;
+		// Each bullet has a position and a direction passed for rendering and an additional value "time to live" that physics uses, no idea if rendering needs it.
+		case Events::EventType::BulletList:
+		{
+			auto bullet_list_event = ((Events::BulletListEvent *)event);
+			list_of_bullets = *((std::map<int, struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
+
+			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
+		}
+		break;
+		case Events::EventType::KartCreated:
+			{
+				auto kart_event = ((Events::KartCreatedEvent *)event);
+				auto kart = GETENTITY(kart_event->kart_id, CarEntity);
+				struct kart kart_local;
+				entity_id id = kart_local.idKart = kart_event->kart_id;
+				kart_local.vColor = GetKartColor( kart->playerNumber );
+				m_mKarts[id] = kart_local;
+			}
+			break;
+		case Events::EventType::KartDestroyed:
+			m_mKarts.erase(((Events::KartDestroyedEvent *)event)->kart_id);
+			break;
+		case Events::EventType::PlayerKart:
+			{
+				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
+				auto kart = GETENTITY(kart_id, CarEntity);
+				
+//				cameras.clear();
+				cameras.push_back(kart->camera);
+				camplayerid.push_back(kart->playerNumber);
+			}
+			break;
+		case Events::EventType::AiKart:
+			{
+//				if (!player_kart_found)
+				{
+					entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
+					auto kart = GETENTITY(kart_id, CarEntity);
+
+//					cameras.push_back(kart->camera);
+//					camplayerid.push_back(kart->playerNumber);
+				}
+			}
+			break;
+		case Events::EventType::PowerupPlacement:
+			{
+				auto powerup_event = ((Events::PowerupPlacementEvent *)event);
+				struct powerup powerup_local;
+				powerup_local.vPos = powerup_event->pos;
+				powerup_local.type = powerup_event->powerup_type;
+				powerup_local.idPowerup = powerup_event->powerup_id;
+				m_powerups[powerup_local.idPowerup] = powerup_local;
+
+			}
+			break;
+		case Events::EventType::PowerupPickup:
+		case Events::EventType::PowerupDestroyed:
+			{
+				auto powerup = ((Events::PowerupDestroyedEvent *)event);
+				m_powerups.erase(powerup->powerup_id);
+			}
+			break;
+		case Events::EventType::ScoreBoardUpdate:
+			{
+				auto scoreboard = ((Events::ScoreBoardUpdateEvent *)event);
+				kartsByScore = scoreboard->kartsByScore;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	m_pMailbox->emptyMail();
+}
+
+void Renderer::_CalcCameras( std::vector<RCAMERA>& aryCameras )
+{
+	Int32 nWinWidth, nWinHeight;
+	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
+
+	switch( m_nScreenState )
+	{
+	case RS_START:
+	case RS_END:
+		{
+			RCAMERA cam;
+			cam.player = 
+			cam.x = cam.y = 0;
+			cam.w = nWinWidth;
+			cam.h = nWinHeight;
+			cam.fov = DEGTORAD( 80 );
+			cam.eyepos = Vector3(0,15,-5);
+			cam.eyefocus = Vector3(0,-0.8,0);
+			aryCameras.push_back( cam );
+		}
+		break;
+	case RS_DRIVING:
+		{
+			switch( cameras.size() )
+			{
+			case 0:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight;
+					cam.fov = DEGTORAD( 80 );
+					cam.eyepos = Vector3(0,15,-5);
+					cam.eyefocus = Vector3(0,-0.8,0);
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 1:
+				{
+					RCAMERA cam;
+					cam.x = cam.y = 0;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 2:
+				{
+					RCAMERA cam;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.y = 0;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			case 3:
+				{
+					RCAMERA cam;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
+					cam.w = nWinWidth;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.y = 0;
+					cam.w = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[2].fFOV );
+					cam.eyepos = cameras[2].vPos;
+					cam.eyefocus = cameras[2].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			default: // 4
+				{
+					RCAMERA cam;
+					cam.x = 0;
+					cam.y = nWinHeight>>1;
+					cam.w = nWinWidth>>1;
+					cam.h = nWinHeight>>1;
+					cam.fov = DEGTORAD( cameras[0].fFOV );
+					cam.eyepos = cameras[0].vPos;
+					cam.eyefocus = cameras[0].vFocus;
+					aryCameras.push_back( cam );
+					
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[1].fFOV );
+					cam.eyepos = cameras[1].vPos;
+					cam.eyefocus = cameras[1].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.y = 0;
+					cam.x = 0;
+					cam.fov = DEGTORAD( cameras[2].fFOV );
+					cam.eyepos = cameras[2].vPos;
+					cam.eyefocus = cameras[2].vFocus;
+					aryCameras.push_back( cam );
+
+					cam.x = nWinWidth>>1;
+					cam.fov = DEGTORAD( cameras[3].fFOV );
+					cam.eyepos = cameras[3].vPos;
+					cam.eyefocus = cameras[3].vFocus;
+					aryCameras.push_back( cam );
+				}
+				break;
+			}
+		}
+		break;
+	};
 }
