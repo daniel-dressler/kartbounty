@@ -1177,17 +1177,19 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	// Update the karts height above ground and what point is bellow it for rendering shadows
 	// Casts ray 20 units directly down from karts position, which is the size of our arena so 
 	// we should not go higher than that.
-	btVector3 downRay = pos - btVector3(0,20,0);
-	btCollisionWorld::ClosestRayResultCallback RayCallback(pos, downRay);
+	btVector3 kart_bottom = btVector3(pos.getX(), pos.getY()-CAR_HEIGHT/2, pos.getZ());
+	btVector3 kart_under_bottom = btVector3(pos.getX(), pos.getY()-1, pos.getZ());
+	btCollisionWorld::ClosestRayResultCallback RayCallback(kart_bottom, kart_under_bottom);
 
-	m_world->rayTest(pos, downRay, RayCallback);
+	m_world->rayTest(kart_bottom, kart_under_bottom, RayCallback);
 
 	if(RayCallback.hasHit())
 	{
 		btVector3 hitEnd = RayCallback.m_hitPointWorld;	// Point in world coord where ray hit
 		kart->heightOffGround = pos.getY() - hitEnd.getY();	// Height kart is off ground
-		kart->groundHit = fromBtVector(&hitEnd);
 		
+		//Filthy hack
+		kart->groundHit = Vector3(hitEnd.getX(), hitEnd.getY(), hitEnd.getZ());
 		kart->groundNormal = fromBtVector(&Up);
 	}
 
@@ -1214,10 +1216,10 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 		Vector3 vUp = kart->Up = Vector3( 0, 1, 0 ).Transform( matOri );
 
-		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
+		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.8f ).Transform( matOri );
 		vCamOfs.y = 1.0f;
 
-		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
+		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.3f, 0 );
 
 		seconds = Clamp((Real)seconds, (Real)0.0f, (Real)0.10f);		// This is incase frame rate really drops.
 		Real fLerpAmt = seconds * 5.0f;
