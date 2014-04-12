@@ -251,6 +251,13 @@ int Renderer::setup()
 	if( !LoadMesh( m_mshPowerRing2, "assets/PowerRing2.msh" ) )
 		exit(24);
 
+	if( !glhLoadTexture( m_texPowerRocket, "assets/pu_rocket.png" ) )
+		exit(19);
+	if( !glhLoadTexture( m_texPowerPulse, "assets/pu_pulse.png" ) )
+		exit(19);
+	if( !glhLoadTexture( m_texPowerSpeed, "assets/pu_speed.png" ) )
+		exit(19);
+
 	if( !glhLoadTexture( m_difBlank, "assets/blank.png" ) )
 		exit(19);
 	if( !glhLoadTexture( m_nrmBlank, "assets/blank_norm.png" ) )
@@ -832,6 +839,34 @@ int Renderer::render( float fElapseSec )
 			glhUpdateBuffer( m_eftGUI, m_bufGUI );
 
 			_DrawScoreBoard( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40, camplayerid[i] );
+
+			for( Int32 j = 0; j < kartsByScore.size(); j++ )
+			{
+				auto kart_entity = GETENTITY(kartsByScore[j], CarEntity);
+				if( camplayerid[i] == kart_entity->playerNumber )
+				{
+					GLmesh temp_mesh;
+					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - 100, (nWinHeight>>1) - 100, 60, 40, Vector4( 1,1,1,0.8f ) ) ), 6 );
+					switch( kart_entity->powerup_slot )
+					{
+					case Entities::PulsePowerup:
+						glhEnableTexture( m_texPowerPulse );
+						glhDrawMesh( m_eftGUI, temp_mesh );
+						break;
+					case Entities::SpeedPowerup:
+						glhEnableTexture( m_texPowerSpeed );
+						glhDrawMesh( m_eftGUI, temp_mesh );
+						break;
+					case Entities::RocketPowerup:
+						glhEnableTexture( m_texPowerRocket );
+						glhDrawMesh( m_eftGUI, temp_mesh );
+						break;
+					}
+					glhDestroyMesh( temp_mesh );
+					break;
+				}
+			}
+
 		}
 		break;
 	}
