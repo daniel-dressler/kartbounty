@@ -17,6 +17,7 @@
 #include "../entities/entities.h"
 
 static int bullet_next_id;
+static int rocket_next_id;
 
 namespace Physics {
 	class Simulation {
@@ -41,6 +42,32 @@ namespace Physics {
 		// of reasons.
 		void substepEnforcer(btDynamicsWorld *, btScalar);
 		
+		struct rocket
+		{
+			// These are the 4 sides (up down left and right) of a rocket
+			std::vector<btVector3> positions;
+			btVector3 position;
+			btVector3 direction;
+			float time_to_live; // Once this is 0, the bullet will be removed from the list by physics.
+			int rocket_id;
+			entity_id kart_id;
+
+			rocket() 
+			{
+				position = btVector3(0,0,0);
+
+				//bullet_id = bullet_next_id;
+				positions.push_back(btVector3(0,0,0));
+				positions.push_back(btVector3(0,0,0));
+				positions.push_back(btVector3(0,0,0));
+				positions.push_back(btVector3(0,0,0));
+
+				direction.setZero();
+				time_to_live = 0;
+				rocket_id = rocket_next_id;
+				rocket_next_id++;
+			}
+		};
 
 		struct bullet
 		{
@@ -68,6 +95,10 @@ namespace Physics {
 		bool gamePaused;
 
 		std::map<int, struct bullet *> list_of_bullets;
+		std::map<int, struct rocket *> list_of_rockets;
+
+		std::list<int> rockets_to_remove;
+
 		void handle_bullets(double);
 
 		btDiscreteDynamicsWorld *m_world;
@@ -118,6 +149,7 @@ namespace Physics {
 			BULLET_TO_ARENA,
 			BULLET_TO_KART
 		};
+
 		struct col_report 
 		{
 			entity_id kart_id;
@@ -132,8 +164,8 @@ namespace Physics {
 			// bullet
 			int bullet_id;
 		};
-		std::map<entity_id, struct col_report> m_col_reports;
 
+		std::map<entity_id, struct col_report> m_col_reports;
 
 		class btBroadphaseInterface* m_broadphase;
 		class btCollisionDispatcher* m_dispatcher;
@@ -148,11 +180,15 @@ namespace Physics {
 		void actOnCollision(btPersistentManifold *, phy_obj *A = NULL, phy_obj *B = NULL);
 
 		void fireBullet(entity_id);
-		
+		void fireRocket(entity_id);
+
 		float get_distance(Vector3 a, Vector3 b);
 		void solveBulletFiring(entity_id firing_kart_id, btScalar min_angle, btScalar max_dist);
 		Events::Event* makeRerportEvent(entity_id kart_shooting , entity_id kart_shot);
 
 		void do_pulse_powerup(entity_id kart_id);
+
+		void handle_rockets(double time);
+		void sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_id , btVector3 * hit_pos);
 	};
 };

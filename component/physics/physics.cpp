@@ -16,10 +16,17 @@ using namespace Physics;
 // Changing this can result in bullets flying through karts and walls that they should hit
 //PLEASE DON'T CHANGE ULESS KNOW WHAT YOU'RE DOING.
 #define STEP_PER_FRAME 0.6
+#define ROCKET_STEP_PER_FRAME 0.6
 
 // Theses are pretty streight forward. Just modify them to play around with the bullet mechanism!
 // How long the bullet "lives" before being destroyed, even if misses.
 #define BULLET_TTL 1.f 
+
+// ROCKET STUFF
+#define ROCKET_TTL 5.f
+#define HALF_ROCKET_HIGHT 0.2
+#define HALF_ROCKET_WIDTH 0.2
+
 // How much the forward vector gets randomized when shooting
 #define SHOOTING_RANDOMNESS 5
 // How long in seconds does the player have a cooldown between shots. AI cooldwon is in enemyAI.
@@ -37,10 +44,13 @@ using namespace Physics;
 
 // Array for kart spawn locations.
 #define NUM_KART_SPAWN_LOCATIONS 8
+
 //const btVector3 kartSpawnLocations[] = { btVector3(12.4, 1.1, 12.4), btVector3(-12.4, 1.1, 12.4), btVector3(12.4, 1.1, -12.4), 
 //	btVector3(-12.4, 1.1,-12.4), btVector3(16,2.1,16), btVector3(-16,2.1,16), btVector3(-16,2.1,-16), btVector3(16,2.1,-16) };
+
 const btVector3 kartSpawnLocations[] = { btVector3(17, 2.10, 8), btVector3(-17, 2.1, 8), btVector3(17, 2.1, -8), 
 	btVector3(-17, 2.1, -8), btVector3(8, 2.1, -17), btVector3(-8, 2.1, 17), btVector3(-8, 2.1, -17), btVector3(8, 2.1, 17) };
+
 int kartSpawnCounter;
 
 btVector3 toBtVector(Vector3 *in)
@@ -104,7 +114,8 @@ Simulation::~Simulation()
 	}
 	
 	// Delete Collision Shapes
-	for (int j = 0; j < m_collisionShapes.size(); j++) {
+	for (int j = 0; j < m_collisionShapes.size(); j++) 
+	{
 		btCollisionShape* shape = m_collisionShapes[j];
 		delete shape;
 	}
@@ -338,8 +349,8 @@ int Simulation::createKart(entity_id kart_id)
 	btRaycastVehicle::btVehicleTuning tuning;
 	btCollisionShape* chassisShape = new btBoxShape(btVector3(CAR_WIDTH, CAR_HEIGHT, CAR_LENGTH));
 	btCompoundShape* compound = new btCompoundShape();
-	m_collisionShapes.push_back(chassisShape);
-	m_collisionShapes.push_back(compound);
+	//m_collisionShapes.push_back(chassisShape);
+	//m_collisionShapes.push_back(compound);
 
 	// Start of car stuff
 	btTransform localTrans;
@@ -476,7 +487,7 @@ int Simulation::loadWorld()
 				createKart(kart_id);
 				break;
 			}
-		case Events::EventType::ArenaMeshCreated:
+			case Events::EventType::ArenaMeshCreated:
 			{
 				btTriangleMesh *arena_mesh = ((Events::ArenaMeshCreatedEvent *)event)->arena;
 				// Add map
@@ -485,7 +496,7 @@ int Simulation::loadWorld()
 				gContactAddedCallback = CustomMaterialCombinerCallback;
 
 				btBvhTriangleMeshShape *arenaShape = new btBvhTriangleMeshShape( arena_mesh, true, true);
-				m_collisionShapes.push_back(arenaShape);
+				//m_collisionShapes.push_back(arenaShape);
 
 				phy_obj *arena = new phy_obj();
 				arena->is_arena = true;
@@ -621,6 +632,97 @@ void Simulation::handle_bullets(double time)
 	mb.sendMail(events_out);
 }
 
+void Simulation::handle_rockets(double time)
+{
+	// go over all the rockets
+	for(auto rocket_pair : list_of_rockets)
+	{		
+		auto rocket_obj = rocket_pair.second;
+		auto to_move = (rocket_obj->direction * ROCKET_STEP_PER_FRAME);
+
+		auto oldPos = rocket_obj->position;
+		rocket_obj->position += to_move ;
+		auto pos = rocket_obj->position;
+
+		// Reduce ttl
+		rocket_obj->time_to_live -= time;
+
+		btCollisionWorld::ClosestRayResultCallback RayCallback(oldPos, pos);
+		m_world->rayTest(oldPos, pos, RayCallback);
+			
+		// if rocket hit somethings, check what
+		if (RayCallback.hasHit())
+		{	
+			auto user_obj = (phy_obj *)RayCallback.m_collisionObject->getUserPointer();
+
+			bool hit_ground = user_obj->is_arena;
+			bool hit_kart = user_obj->is_kart;
+
+			// If it was a kart, proceed
+			if (hit_kart)
+			{
+				// The kart being hit
+				entity_id kart_id= user_obj->kart_id;
+				
+				// Find which kart was hit. If it was the shooting kart, ignore
+				if (kart_id != rocket_obj->kart_id) 
+				{
+					// Rocket hit a kart
+					sendRocketEvent(kart_id, rocket_obj->kart_id, &rocket_obj->position);
+
+					// Remove rocket
+					rockets_to_remove.push_back(rocket_obj->rocket_id);	
+					break;
+				}
+			}
+			else if ( hit_ground )
+			{
+				// Rocket hit a ground
+				sendRocketEvent(-1, rocket_obj->kart_id, &rocket_obj->position);
+
+				// Remove rocket
+				rockets_to_remove.push_back(rocket_obj->rocket_id);	
+				break;
+			}
+		} 
+		else if ( rocket_obj->time_to_live < 0 )
+		{
+			// Rocket hit a ground
+			sendRocketEvent(-2, rocket_obj->kart_id, &rocket_obj->position);
+
+			// Remove rocket
+			rockets_to_remove.push_back(rocket_obj->rocket_id);	
+			break;
+		}
+	}
+
+	for (auto id : rockets_to_remove)
+	{
+		// Remove rocket
+		delete list_of_rockets[id];
+		list_of_rockets.erase(id);
+	}
+
+	rockets_to_remove.clear();
+}
+
+void Simulation::sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_id , btVector3 * hit_pos)
+{
+	// Send out hit events
+	std::vector<Events::Event *> events_out;
+
+	auto hit_event = NEWEVENT(RocketHitEvent);
+
+	hit_event->shooting_kart_id = shooting_kart_id; // if -1 hit ground, if TTL expired
+	hit_event->kart_hit_id = kart_hit_id;
+	hit_event->hit_pos = *hit_pos;
+
+	DEBUGOUT("Rocket shot by %d has hit %d\n", shooting_kart_id, kart_hit_id)
+
+	// Send event
+	events_out.push_back(hit_event);
+	mb.sendMail(events_out);
+}
 
 void Simulation::step(double seconds)
 {
@@ -635,6 +737,7 @@ void Simulation::step(double seconds)
 
 	// So that bullets don't collide with the kart that shoots
 	handle_bullets(seconds);
+	handle_rockets(seconds);
 
 	// Vector to hold out going mail events
 	std::vector<Events::Event *> events_out;
@@ -754,6 +857,7 @@ void Simulation::step(double seconds)
 			if (input->aPressed && !gamePaused && kart_ent->shoot_timer <= 0) {
 				kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
 				fireBullet(kart_id);
+				fireRocket(kart_id);
 			}
 
 			solveBulletFiring(kart_id, MIN_ANGLE_SHOOTING, MAX_DIST_SHOOTING);
@@ -765,6 +869,7 @@ void Simulation::step(double seconds)
 			auto id = kart_event->kart_id;
 			auto kart = m_karts[id];
 			m_world->removeCollisionObject(kart->vehicle->getRigidBody());
+
 			delete m_karts[id];
 			m_karts.erase(id);
 		}
@@ -781,7 +886,7 @@ void Simulation::step(double seconds)
 
 			// Made powerups a bit bigger
 			auto sphere = new btSphereShape(0.25);
-			m_collisionShapes.push_back(sphere);
+			//m_collisionShapes.push_back(sphere);
 
 			btGhostObject *body = new btGhostObject();
 			body->setCollisionShape(sphere);
@@ -870,7 +975,8 @@ void Simulation::step(double seconds)
 	}
 
 	// Update Kart Entities
-	for (auto id_kart_pair : m_karts) {
+	for (auto id_kart_pair : m_karts) 
+	{
 		UpdateGameState(seconds, id_kart_pair.first);
 	}
 
@@ -921,9 +1027,10 @@ void Simulation::step(double seconds)
 	}
 	m_col_reports.clear();
 
-	// Send the bullets list pointer to rendering. Only happens once, when loading (same list throughout the entire run).
+	// Send the bullets list pointer to rendering. 
 	auto bullet_list_event = NEWEVENT(BulletList);
 	bullet_list_event->list_of_bullets = &list_of_bullets;
+	bullet_list_event->list_of_rockets = &list_of_rockets;
 	events_out.push_back(bullet_list_event);
 
 	mb.sendMail(events_out);
@@ -1067,7 +1174,8 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 void Simulation::fireBullet(entity_id kart_id)
 {
-	if (m_karts.count(kart_id) == 0) {
+	if (m_karts.count(kart_id) == 0) 
+	{
 		DEBUGOUT("Error: Invalid kart_id %d on fireBullet call\n", kart_id);
 		return;
 	}
@@ -1104,6 +1212,54 @@ void Simulation::fireBullet(entity_id kart_id)
 	new_bullet->direction = btVector3(x,y,z);
 	new_bullet->time_to_live = BULLET_TTL;
 	list_of_bullets[new_bullet->bullet_id] = new_bullet;
+}
+
+void Simulation::fireRocket(entity_id kart_id)
+{
+	if (m_karts.count(kart_id) == 0) 
+	{
+		DEBUGOUT("Error: Invalid kart_id %d on fireBullet call\n", kart_id);
+		return;
+	}
+
+	btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+	auto new_rocket = new Simulation::rocket();
+
+	new_rocket->kart_id = kart_id;
+	auto kart_ent = GETENTITY(kart_id, CarEntity);
+	btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
+
+	auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
+	direction.normalize();
+
+	// Perturb angle
+	btScalar x = direction.getX();
+	btScalar y = direction.getY();
+	btScalar z = direction.getZ();
+
+	// Perturb firing pos
+	auto car1 = m_karts[kart_id]->vehicle->getRigidBody()->getMotionState();
+	btTransform trans;
+	car1->getWorldTransform(trans);
+	btVector3 pos = trans.getOrigin();
+
+	new_rocket->position = pos;
+
+	btVector3 sideways = Up.cross(direction);
+
+	// up side
+	new_rocket->positions[0] = pos + (HALF_ROCKET_HIGHT * Up) ;
+	// down side
+	new_rocket->positions[1] = pos - (HALF_ROCKET_HIGHT * Up) ;
+	// left_side
+	new_rocket->positions[2] = pos + (HALF_ROCKET_HIGHT * sideways) ;
+	// right_side
+	new_rocket->positions[3] = pos - (HALF_ROCKET_HIGHT * sideways) ;
+
+
+	new_rocket->direction = btVector3(x,y,z);
+	new_rocket->time_to_live = ROCKET_TTL;
+	list_of_rockets[new_rocket->rocket_id] = new_rocket;
 }
 
 
@@ -1160,7 +1316,7 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 
 		if (!raycast_test.hasHit())
 			continue;
-
+		
 		auto hit_obj = (struct phy_obj *)raycast_test.m_collisionObject->getUserPointer();
 		if (hit_obj == NULL || !(hit_obj->is_kart))
 			continue;
