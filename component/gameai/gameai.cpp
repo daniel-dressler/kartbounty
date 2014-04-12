@@ -272,6 +272,9 @@ int GameAi::planFrame()
 						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
 						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
+					case Entities::HealthPowerup:
+						kart->health = HEALTH_POWERUP_AMOUNT;
+						break;
 
 					default:
 						// Player loses any unused powerups
@@ -525,6 +528,11 @@ int GameAi::planFrame()
 
 	// handle floating gold powerups
 	update_floating_gold( frame_timer.CalcSeconds() );
+	if(player_kart_ids.size())
+	{
+		auto pKart = GETENTITY(player_kart_ids[0], CarEntity);
+		DEBUGOUT("Player Kart Health = %f\n", pKart->health);
+	}
 	
 	return 1;
 }
