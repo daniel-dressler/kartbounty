@@ -1,0 +1,9 @@
+diff a/component/gameai/gameai.cpp b/component/gameai/gameai.cpp	(rejected hunks)
+@@ -52,7 +52,6 @@
+ 	m_mb = new Events::Mailbox();	
+ 	m_mb->request( Events::EventType::Quit );
+ 	m_mb->request( Events::EventType::PowerupPickup );
+-	m_mb->request( Events::EventType::PowerupActivated );
+ 	m_mb->request( Events::EventType::TogglePauseGame );
+ 	m_mb->request( Events::EventType::KartHitByBullet );
+ 	m_mb->request( Events::EventType::RoundStart );

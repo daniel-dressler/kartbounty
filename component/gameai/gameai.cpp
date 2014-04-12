@@ -52,6 +52,7 @@ GameAi::GameAi()
 	m_mb = new Events::Mailbox();	
 	m_mb->request( Events::EventType::Quit );
 	m_mb->request( Events::EventType::PowerupPickup );
+	m_mb->request( Events::EventType::PowerupActivated );
 	m_mb->request( Events::EventType::TogglePauseGame );
 	m_mb->request( Events::EventType::KartHitByBullet );
 	m_mb->request( Events::EventType::RoundStart );
@@ -241,9 +242,6 @@ int GameAi::planFrame()
 						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
 						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
-					case Entities::HealthPowerup:
-						kart->health = HEALTH_POWERUP_AMOUNT;
-						break;
 
 					default:
 						// Player loses any unused powerups
@@ -254,6 +252,24 @@ int GameAi::planFrame()
 						DEBUGOUT("Kart %d picked up a powerup of type %d!\n", kart_id, powerup)
 						break;
 				}
+			}
+			break;
+
+			case Events::EventType::PowerupActivated:
+			{
+				Events::PowerupActivatedEvent *powUsed = (Events::PowerupActivatedEvent *)event;
+				switch (powUsed->powerup_type)
+				{
+					case Entities::HealthPowerup:
+					{
+						auto kart_entity = GETENTITY(powUsed->kart_id, CarEntity);
+						kart_entity->health = HEALTH_POWERUP_AMOUNT;
+					}
+					break;
+
+					default:
+						break;
+				}				
 			}
 			break;
 
@@ -287,11 +303,6 @@ int GameAi::planFrame()
 							kart->powerup_slot = Entities::NullPowerup;
 						}
 					}
-				}
-
-				if(currentState == StartMenu && inputEvent->yPressed)
-				{
-					// If this happens we should display the controller mapping
 				}
 			}
 			break;
@@ -476,11 +487,6 @@ int GameAi::planFrame()
 
 	// handle floating gold powerups
 	update_floating_gold( frame_timer.CalcSeconds() );
-	if(player_kart_ids.size())
-	{
-		auto pKart = GETENTITY(player_kart_ids[0], CarEntity);
-		DEBUGOUT("Player Kart Health = %f\n", pKart->health);
-	}
 	
 	return 1;
 }

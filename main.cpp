@@ -12,7 +12,7 @@
 #include "component/audio/audio.h"
 #endif
 
-#define PLAYAUDIO 1
+#define PLAYAUDIO 0
 
 int main( int argc, char** argv )
 {
