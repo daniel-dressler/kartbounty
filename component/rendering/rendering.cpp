@@ -822,7 +822,7 @@ int Renderer::render( float fElapseSec )
 		glhUpdateBuffer( m_eftGUI, m_bufGUI );
 		glhEnableTexture( m_texGUIScore );
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
-		_DrawScoreBoard( 0, 0, 0 );
+		_DrawScoreBoard( 0, 100, 0 );
 		break;
 	case RS_DRIVING:
 		for( Int32 i = 0; i < aryCameras.size(); i++ )
