@@ -39,11 +39,14 @@ namespace Events {
 		KartColideArena,
 		KartHandbrake,
 		TogglePauseGame,
+		ChangeMusic,
 		ShootReport,
+		MusicVolumeChange,
 		Shoot,
 		BulletList,
 		ScoreBoardUpdate,
 		KartHitByBullet,
+		RocketHit,
 		Quit
 	};
 	
@@ -65,6 +68,10 @@ namespace Events {
 		entity_id kart_id;
 	ENDEVENT;
 
+	EVENTSTRUCT(MusicVolumeChange)
+		bool increase;		// If false decrease music vol
+	ENDEVENT;
+
 	EVENTSTRUCT(PlayerKart)
 		entity_id kart_id;
 	ENDEVENT;
@@ -75,6 +82,9 @@ namespace Events {
 
 	EVENTSTRUCT(ArenaMeshCreated)
 		btTriangleMesh *arena;
+	ENDEVENT;
+
+	EVENTSTRUCT(ChangeMusic)
 	ENDEVENT;
 
 	EVENTSTRUCT(Explosion)
@@ -90,6 +100,7 @@ namespace Events {
 		powerup_id_t powerup_id;
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
+		int floating_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPickup)
@@ -97,6 +108,7 @@ namespace Events {
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
 		entity_id kart_id;
+		int floating_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupDestroyed)
@@ -149,6 +161,7 @@ namespace Events {
 
 	EVENTSTRUCT(BulletList)
 		void *list_of_bullets;
+		void *list_of_rockets;
 	ENDEVENT;
 
 	EVENTSTRUCT(KartHitByBullet)
@@ -224,7 +237,14 @@ namespace Events {
 
 	EVENTSTRUCT(ScoreBoardUpdate)
 		std::vector<entity_id> kartsByScore;		// Karts are ordered from highest score to lowest
+	ENDEVENT;	
+	
+	EVENTSTRUCT(RocketHit)
+		entity_id shooting_kart_id;
+		entity_id kart_hit_id;
+		btVector3 hit_pos;
 	ENDEVENT;
+
 
 	EVENTSTRUCT(Quit)
 	ENDEVENT;

@@ -21,6 +21,16 @@ public:
 		float timer_to_respawn;
 		Vector3 pos;
 	};
+		
+	struct floating_gold
+	{
+		Vector3 location;
+		bool active;
+		float timer;
+		int index_in_vector;
+	};
+
+	void GameAi::floating_gold_int();
 
 private:
 	Events::Mailbox* m_mb;
@@ -59,10 +69,9 @@ private:
 	powerup_id_t m_gold_case_id;
 
 	Vector3 pick_point();
-	void open_point(Vector3);
 	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t p_type, Vector3 pos);
 	void updateScoreBoard();
-	void outputScoreBoard();
+	void outputScoreBoard(std::vector<entity_id> list);
 
 	void add_to_future_respawn(Events::PowerupPickupEvent *);
 	void handle_powerups_not_gold(double time_elapsed);
@@ -72,4 +81,6 @@ private:
 	void newRound(int, int);
 	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
 	void updateExplodingKarts();
+
+	void update_floating_gold( double time );
 };

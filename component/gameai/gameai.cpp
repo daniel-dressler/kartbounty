@@ -5,6 +5,15 @@
 #include "gameai.h"
 #include "../entities/entities.h"
 
+// Rocket radius
+#define ROCKET_DISTANCE 3
+#define ROCKET_DAMAGE 2
+
+// floating gold cooldown
+#define TIMER_FOR_FLOATING_GOLD 5
+// floating gold reward
+#define REWARD_FOR_FLOATING_GOLD 5
+
 // Score to win
 #define FINAL_SCORE_GOAL 9
 // How much health to substruct on bullet hit
@@ -32,6 +41,8 @@ const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10),
 int goldSpawnCounter;
 int goldSpawnPointCount;
 
+std::vector<GameAi::floating_gold *> floating_gold_array;
+
 GameAi::GameAi()
 {
 	active_powerups = 0;
@@ -47,62 +58,11 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::RoundStart );
 	m_mb->request( Events::EventType::Input );
 	m_mb->request( Events::EventType::StartMenuInput );
+	m_mb->request( Events::EventType::RocketHit );
 
 	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
 
-	m_open_points.push_back(Vector3(0.0, 0.0, 5.5));
-
-	m_open_points.push_back(Vector3(1.0, 0.0, 5.5));
-	m_open_points.push_back(Vector3(-1.0, 0.0, 5.5));
-	m_open_points.push_back(Vector3(1.0, 0.0, -5.5));
-	m_open_points.push_back(Vector3(-1.0, 0.0, -5.5));
-
-	m_open_points.push_back(Vector3(6.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, -1.f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, 1.f));
-	m_open_points.push_back(Vector3(6.5f, 0.f, -1.f));
-
-	m_open_points.push_back(Vector3(3.22f, 0.f, 7.59f));
-	m_open_points.push_back(Vector3(-3.22f, 0.f, 7.59f));
-	m_open_points.push_back(Vector3(3.22f, 0.f, -7.59f));
-	m_open_points.push_back(Vector3(-3.22f, 0.f, -7.59f));
-
-	m_open_points.push_back(Vector3(7.59f, 0.f, 3.22f));
-	m_open_points.push_back(Vector3(-7.59f, 0.f, -3.22f));
-	m_open_points.push_back(Vector3(-7.59f, 0.f, 3.22f));
-	m_open_points.push_back(Vector3(7.59f, 0.f, -3.22f));
-
-	m_open_points.push_back(Vector3(15.5f, 2.f, 15.5f));
-	m_open_points.push_back(Vector3(-15.5f, 2.f, 15.5f));
-	m_open_points.push_back(Vector3(15.5f, 2.f, -15.5f));
-	m_open_points.push_back(Vector3(-15.5f, 2.f, -15.5f));
-
-	m_open_points.push_back(Vector3(6.5f, 0.f, 2.5f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, -2.5f));
-	m_open_points.push_back(Vector3(6.5f, 0.f, -2.5f));
-	m_open_points.push_back(Vector3(-6.5f, 0.f, 2.5f));	
-
-	m_open_points.push_back(Vector3(2.5f, 0.f, 6.5f));
-	m_open_points.push_back(Vector3(-2.5f, 0.f, -6.5f));
-	m_open_points.push_back(Vector3(2.5f, 0.f, -6.5f));
-	m_open_points.push_back(Vector3(-2.5f, 0.f, 6.5f));
-
-	m_open_points.push_back(Vector3(0.f, 1.f, 0.f));
-
-	m_open_points.push_back(Vector3(1.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(0.f, 1.f, 1.5f));
-	m_open_points.push_back(Vector3(0.f, 1.f, -1.5f));
-
-	m_open_points.push_back(Vector3(1.5f, 1.f, 1.5f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, -1.5f));
-	m_open_points.push_back(Vector3(1.5f, 1.f, -1.5f));
-	m_open_points.push_back(Vector3(-1.5f, 1.f, 1.5f));
-
-	m_open_points.push_back(Vector3(11.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(-11.5f, 1.f, 0.f));
-	m_open_points.push_back(Vector3(0.f, 1.f, 11.5f));
-	m_open_points.push_back(Vector3(0.f, 1.f, -11.5f));
+	floating_gold_int();
 
 	gamePaused = false;
 	currentState = StartMenu;
@@ -110,6 +70,52 @@ GameAi::GameAi()
 
 GameAi::~GameAi()
 {
+}
+
+void GameAi::floating_gold_int()
+{
+	
+	floating_gold * fg0 = new floating_gold();
+	fg0->location = Vector3(0,2.5f,0);
+	fg0->active = false;
+	fg0->timer = 0;
+	fg0->index_in_vector = 0;
+
+	floating_gold_array.push_back( fg0 );
+
+	floating_gold * fg1 = new floating_gold();
+	fg1->location = Vector3(0,3.5f,19);
+	fg1->active = false;
+	fg1->timer = 0;
+	fg1->index_in_vector = 1;
+
+	floating_gold_array.push_back( fg1 );
+	
+	struct floating_gold * fg2 = new floating_gold();
+	fg2->location = Vector3(0,3.5f,-19);
+	fg2->active = false;
+	fg2->timer = 0;
+	fg2->index_in_vector = 2;
+
+	floating_gold_array.push_back( fg2 );
+
+	struct floating_gold * fg3 = new floating_gold();
+	fg3->location = Vector3(19,3.5f,0);
+	fg3->active = false;
+	fg3->timer = 0;
+	fg3->index_in_vector = 3;
+
+	floating_gold_array.push_back( fg3 );
+
+	struct floating_gold * fg4 = new floating_gold();
+	fg4->location = Vector3(-19,3.5f,0);
+	fg4->active = false;
+	fg4->timer = 0;
+	fg4->index_in_vector = 4;
+	gamePaused = false;
+	currentState = StartMenu;
+
+	floating_gold_array.push_back( fg4 );
 }
 
 void GameAi::setup()
@@ -188,6 +194,53 @@ int GameAi::planFrame()
 			return 0;
 			break;
 
+			case Events::EventType::RocketHit:
+			{
+				auto rocket_hit = ((Events::RocketHitEvent *)event);
+				auto hit_pos = rocket_hit->hit_pos;
+
+				for (auto affected_kart_id : kart_ids)
+				{
+					if (affected_kart_id != rocket_hit->shooting_kart_id)
+					{
+						auto current_kart = GETENTITY(affected_kart_id, CarEntity);
+						auto pos = current_kart->Pos;
+
+						btScalar delta_x =(hit_pos.getX() - pos.x);
+						btScalar delta_z =(hit_pos.getZ() - pos.z);
+
+						float karts_dist = sqrt(delta_x*delta_x + delta_z*delta_z);
+						bool close_enough = (karts_dist < ROCKET_DISTANCE);
+
+						if (close_enough)
+						{
+							current_kart->health -= ROCKET_DAMAGE;
+
+							if (current_kart->health <= 0)
+							{
+								// Add points to the kart that shot the bullet
+								auto shootingKart = GETENTITY(rocket_hit->shooting_kart_id, CarEntity);
+								shootingKart->gold += KART_KILL_GOLD_VALUE;
+
+								auto explodeEvent = NEWEVENT( Explosion );
+								explodeEvent->exploder = affected_kart_id;
+								explodeEvent->pos = current_kart->Pos;
+
+								events_out.push_back(explodeEvent);
+
+								current_kart->isExploding = true;
+								auto localDeadKart = new explodingKart();
+								localDeadKart->kart_id = affected_kart_id;
+								localDeadKart->timer = TIME_TO_EXPLODE;
+
+								m_exploding_karts.push_back(localDeadKart);	
+							}
+						}
+					}
+				}
+			}
+			break;
+
 			case Events::EventType::PowerupPickup:
 			{
 				auto pickup = ((Events::PowerupPickupEvent *)event);
@@ -196,12 +249,12 @@ int GameAi::planFrame()
 
 				// Score or store pickup
 				auto kart = GETENTITY(kart_id, CarEntity);
+				
+				int index_fg;
 
 				switch (powerup) 
 				{
 					case Entities::GoldCasePowerup:
-						// Return point to pool
-						open_point(pickup->pos);
 
 						active_tresures--;
 						kart->gold += BIG_GOLD_VALUE;
@@ -211,6 +264,13 @@ int GameAi::planFrame()
 
 					case Entities::GoldCoinPowerup:
 						kart->gold += SMALL_GOLD_VALUE;
+						break;
+
+					case Entities::FloatingGoldPowerup:
+						index_fg = pickup->floating_index;
+						floating_gold_array[index_fg]->active = false;
+						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
+						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
 
 					default:
@@ -237,8 +297,7 @@ int GameAi::planFrame()
 
 					default:
 						break;
-				}
-				
+				}				
 			}
 			break;
 
@@ -325,6 +384,10 @@ int GameAi::planFrame()
 				// Apply damage to kart
 				entity_id kart_id = ((Events::KartHitByBulletEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
+
+				if(kart->isExploding)
+					break;
+
 				kart->health -= DAMAGE_FROM_BULLET;
 
 				//DEBUGOUT("FROM GAME AI: HIT KART %d, health left: %f\n", kart_id, kart->health);
@@ -349,12 +412,8 @@ int GameAi::planFrame()
 					localDeadKart->kart_id = kart_id;
 					localDeadKart->timer = TIME_TO_EXPLODE;
 
+					m_exploding_karts.push_back(localDeadKart);	
 					m_exploding_karts.push_back(localDeadKart);
-
-/*					kart->health = STARTING_HEALTH;
-					auto reset_kart_event = NEWEVENT(Reset);
-					reset_kart_event->kart_id = kart_id;
-					events_out.push_back(reset_kart_event);		*/			
 				}
 			}
 			break;		
@@ -363,6 +422,7 @@ int GameAi::planFrame()
 			break;
 		}
 	}
+
 	m_mb->emptyMail();
 	
 
@@ -429,6 +489,8 @@ int GameAi::planFrame()
 	// handle powerups
 	handle_powerups_not_gold(frame_timer.CalcSeconds());
 
+	
+
 	// Issue planned events
 	m_mb->sendMail(events_out);
 
@@ -456,6 +518,9 @@ int GameAi::planFrame()
 		timeAtLastFrame = fps_timer.CalcSeconds();
 	}
 
+	// handle floating gold powerups
+	update_floating_gold( frame_timer.CalcSeconds() );
+	
 	return 1;
 }
 
@@ -470,17 +535,8 @@ Vector3 GameAi::pick_point()
 {
 	Vector3	open = goldSpawnLocations[goldSpawnCounter % goldSpawnPointCount];
 	goldSpawnCounter++;
-	//int pt = rand() % m_open_points.size();
-	//Vector3 open = m_open_points[pt];
-	//m_open_points.erase(m_open_points.begin() + pt);
-	return open;
-}
 
-void GameAi::open_point(Vector3 pt)
-{
-	//if (--active_powerups <= 0)
-	//	DEBUGOUT("Warning: Extra powerup location appeared\n");
-	//m_open_points.push_back(pt);
+	return open;
 }
 
 Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)
@@ -539,13 +595,13 @@ void GameAi::updateScoreBoard()
 
 	m_mb->sendMail(events_out);
 
-	//outputScoreBoard();
+	//outputScoreBoard(sortedList);
 }
 
 // Outputs the score borad to the console
-void GameAi::outputScoreBoard()
+void GameAi::outputScoreBoard(std::vector<entity_id> list)
 {
-	for (auto kart_id : kart_ids) {
+	for (auto kart_id : list) {
 		auto kart = GETENTITY(kart_id, CarEntity);
 		DEBUGOUT("Id:%d|Score:%lu || ", kart_id, kart->gold);
 	}
@@ -620,7 +676,7 @@ void GameAi::newRound(int numPlayers, int numAi)
 
 void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out)
 {
-	int type_num =  3; //rand() %4 ;
+	int type_num = rand() %4 ;
 		switch (type_num)
 		{
 			case 0:
@@ -676,4 +732,28 @@ void GameAi::updateExplodingKarts()
 	}
 
 	m_mb->sendMail(events);
+}
+
+void GameAi::update_floating_gold( double time)
+{
+	// handle floating gold powerups
+	std::vector<Events::Event *> events_out_floating_gold ;
+
+	for (auto gold : floating_gold_array)
+	{
+		if ( !gold->active && gold->timer <= 0)
+		{
+			Events::PowerupPlacementEvent * event = spawn_powerup(Entities::FloatingGoldPowerup, gold->location);
+			event->floating_index = gold->index_in_vector;
+			events_out_floating_gold.push_back( event );
+			gold->active = true;
+		}
+		else
+		{
+			gold->timer -= time;
+		}
+	}
+
+	// Issue planned events
+	m_mb->sendMail(events_out_floating_gold);
 }

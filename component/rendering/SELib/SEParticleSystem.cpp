@@ -290,21 +290,5 @@ Int32 ParticleEmitter::Process( Real fElapse, const Vector3& vEyePos )
 
 	glhUpdateInst( m_mshParticle, m_aryParticleInsts, sizeof(PARTICLEINST), m_nParticleCount );
 
-	// TEMP
-	static Real fFPSTime = 0;
-	static Real fFPSLastTime = 0;
-	static Int32 nFPSCount = 0;
-	fFPSTime += fElapse;
-	nFPSCount++;
-	if( fFPSTime - fFPSLastTime > 1.0f )
-	{
-		DEBUGOUT( "FPS: %d - %d - %d - %d - %d\n", nFPSCount, m_nParticleCount, nFound, m_nLastParticle, nTempAdd );
-		fFPSLastTime += 1.0f;
-		nFPSCount = 0;
-		nTempAdd = 0;
-	}
-//	m_vGlobalAccel = Vector3( ABS( COS( m_fLifeTime ) ) * 20, 0, 0 );
-	// ENDTEMP
-
 	return _OK;
 }

@@ -320,6 +320,29 @@ void Input::OnKeyUp(SDL_Event *event, Events::InputEvent *outInput) {
 		outInput->threePressed = false;
 	KEY(4)
 		outInput->fourPressed = false;
+	KEY(m)
+	{
+		std::vector<Events::Event *> outEvents;
+		auto changeMusic = NEWEVENT( ChangeMusic );
+		outEvents.push_back(changeMusic);
+		m_Mailbox.sendMail(outEvents);
+	}
+	KEY(EQUALS)
+	{
+		std::vector<Events::Event *> outEvents;
+		auto increaseMusic = NEWEVENT( MusicVolumeChange );
+		increaseMusic->increase = true;
+		outEvents.push_back(increaseMusic);
+		m_Mailbox.sendMail(outEvents);
+	}
+	KEY(MINUS)
+	{
+		std::vector<Events::Event *> outEvents;
+		auto increaseMusic = NEWEVENT( MusicVolumeChange );
+		increaseMusic->increase = false;
+		outEvents.push_back(increaseMusic);
+		m_Mailbox.sendMail(outEvents);
+	}
 	default:
 		break;
 	}

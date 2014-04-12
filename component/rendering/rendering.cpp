@@ -34,6 +34,7 @@ struct GuiBox
 };
 
 std::map<int, struct Physics::Simulation::bullet *> list_of_bullets;
+std::map<int, struct Physics::Simulation::rocket *> list_of_rockets;
 std::vector<entity_id> kartsByScore;
 
 Renderer::Renderer()
@@ -663,6 +664,19 @@ int Renderer::render( float fElapseSec )
 				glhDrawMesh( m_eftMesh, m_mshGold );
 				glDisable( GL_BLEND );
 			}
+			else if( powerup.type == Entities::FloatingGoldPowerup)
+			{
+				perMesh.vRenderParams = Vector4( 1, 0, 1, 0 );
+				perMesh.vColor = Vector4(0,0,1,1);
+				perMesh.matWorld = Matrix::GetTranslate( pos );
+				perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+				glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+
+				glEnable( GL_BLEND );
+				glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+				glhDrawMesh( m_eftMesh, m_mshGold );
+				glDisable( GL_BLEND );
+			}
 			else
 			{
 				Vector4 color1;
@@ -714,6 +728,41 @@ int Renderer::render( float fElapseSec )
 				glhDrawMesh( m_eftMesh, m_mshPowerSphere );
 				glDisable( GL_BLEND );
 			}
+		}
+
+		// Render rockets hack
+		for (auto rocket_pair : list_of_rockets) 
+		{
+			auto rocket = rocket_pair.second;
+			Vector3 pos;
+			pos.x = rocket->position.getX();
+			pos.y = rocket->position.getY();
+			pos.z = rocket->position.getZ();
+
+			Vector3 vDir = Vector3( rocket->direction.x(), rocket->direction.y(), rocket->direction.z() );
+
+			Vector4 color1 = Vector4(0, 0, 0, 0);
+			Vector4 color2 = Vector4(0, 0, 0, 0);
+
+			perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
+			perMesh.vColor = color1;
+			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
+			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
+
+			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
+			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
+
+			glEnable( GL_BLEND );
+			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+			perMesh.vColor = color2;
+			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
+			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
+			glDisable( GL_BLEND );
 		}
 
 		glEnable( GL_BLEND );
@@ -957,6 +1006,7 @@ void Renderer::_CheckMail()
 		{
 			auto bullet_list_event = ((Events::BulletListEvent *)event);
 			list_of_bullets = *((std::map<int, struct Physics::Simulation::bullet *> *)(bullet_list_event->list_of_bullets)); // This was passed as a void *, don't forget to cast!
+			list_of_rockets = *((std::map<int, struct Physics::Simulation::rocket *> *)(bullet_list_event->list_of_rockets)); // This was passed as a void *, don't forget to cast!
 
 			//DEBUGOUT("LIST OF BULLETS REVIECED!\n")
 		}
