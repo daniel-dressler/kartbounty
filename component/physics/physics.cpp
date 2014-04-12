@@ -1191,7 +1191,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 	// @Kyle: Update this code to cast ray from kart to camera to see if wall is in way (outter walls cause issues)
 	// put ray cast point slightly above the kart to not collide with smaller walls
-	if (kart->isExploding)
+	if (kart->isExploding && m_karts[kart_id]->rigid_body_active)
 	{
 		m_world->removeVehicle(m_karts[kart_id]->vehicle);
 		m_karts[kart_id]->rigid_body_active = false;
@@ -1199,8 +1199,10 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 	else
 	{
 		if (! m_karts[kart_id]->rigid_body_active )
+		{
 			m_world->addVehicle(m_karts[kart_id]->vehicle);
-
+			m_karts[kart_id]->rigid_body_active = true;
+		}
 		Quaternion qOriNew = kart->Orient;
 		Quaternion qOriMod = qOriNew;
 		qOriMod.w = -qOriMod.w;
