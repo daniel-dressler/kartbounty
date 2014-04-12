@@ -574,7 +574,7 @@ int Renderer::render( float fElapseSec )
 
 	std::vector<RCAMERA> aryCameras;
 	_CalcCameras( aryCameras );
-	
+	/*
 	static Real fFPSLastTime = 0;
 	static Int32 nFPSCount = 0;
 	nFPSCount++;
@@ -584,7 +584,7 @@ int Renderer::render( float fElapseSec )
 		fFPSLastTime += 1.0f;
 		nFPSCount = 0;
 	}
-	
+	*/
 	m_ps.Update( fElapseSec, aryCameras[0].eyepos );
 
 	for( Int32 i = 0; i < aryCameras.size(); i++ )
