@@ -6,7 +6,7 @@
 #include "../entities/entities.h"
 
 // Score to win
-#define FINAL_SCORE_GOAL 2
+#define FINAL_SCORE_GOAL 9
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
@@ -18,12 +18,14 @@
 // Amount of gold for killing another kart
 #define KART_KILL_GOLD_VALUE 2
 // How much health does a kart has to start with
-#define STARTING_HEALTH 2
+#define STARTING_HEALTH 1
 #define HEALTH_POWERUP_AMOUNT 5
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
 // time to stop listening to input events at end of round
-#define TIME_TO_IGNORE_INPUT 1
+#define TIME_TO_IGNORE_INPUT 0.5
+// time to wait before resetting kart to show explosion
+#define TIME_TO_EXPLODE 1.5
 
 const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
 	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
@@ -342,10 +344,17 @@ int GameAi::planFrame()
 
 					events_out.push_back(explodeEvent);
 
-					kart->health = STARTING_HEALTH;
+					kart->isExploding = true;
+					auto localDeadKart = new explodingKart();
+					localDeadKart->kart_id = kart_id;
+					localDeadKart->timer = TIME_TO_EXPLODE;
+
+					m_exploding_karts.push_back(localDeadKart);
+
+/*					kart->health = STARTING_HEALTH;
 					auto reset_kart_event = NEWEVENT(Reset);
 					reset_kart_event->kart_id = kart_id;
-					events_out.push_back(reset_kart_event);					
+					events_out.push_back(reset_kart_event);		*/			
 				}
 			}
 			break;		
@@ -379,6 +388,8 @@ int GameAi::planFrame()
 
 		// Update the scoreboard to be sent to rendering
 		updateScoreBoard();
+
+		updateExplodingKarts();
 
 		// Direct controllers to karts
 		for (auto id : this->player_kart_ids) {
@@ -492,40 +503,22 @@ bool sortByScore(entity_id i, entity_id j)
 	return GETENTITY(i, CarEntity)->gold > GETENTITY(j, CarEntity)->gold;	
 }
 
-
 // Sorts the list of kart id's based on score and also issues round end event if player
 // gets over the set score goal
 void GameAi::updateScoreBoard()
 {
 	std::vector<Events::Event *> events_out;
 
-	// Get top 10 scoring karts
-	uint32_t MAX_SCORERS = 10;
-	std::vector<entity_id> top_scorers;
-	for (auto id : kart_ids) {
-		size_t size = top_scorers.size();
-		bool full = size >= MAX_SCORERS;
-		entity_id poorest = 0;
-		if (full && size > 0) {
-			poorest = top_scorers.back();
-		}
-		if (poorest == 0 || sortByScore(id, poorest)) {
-			if (full) {
-				top_scorers.pop_back();
-			}
-			top_scorers.push_back(id);
-			std::sort(top_scorers.begin(), top_scorers.end(), sortByScore);
-		}
-	}
+	std::vector<entity_id> sortedList = kart_ids;
+	std::sort(sortedList.begin(), sortedList.end(), sortByScore);
 
 	auto scoreBoardEvent = NEWEVENT(ScoreBoardUpdate);
-	scoreBoardEvent->kartsByScore = top_scorers;
+	scoreBoardEvent->kartsByScore = sortedList;
 	events_out.push_back(scoreBoardEvent);
-	
-	// Check for end of game condition
-	if(!top_scorers.empty())
+
+	if(!sortedList.empty())
 	{
-		if(GETENTITY(top_scorers[0], CarEntity)->gold > FINAL_SCORE_GOAL)
+		if(GETENTITY(sortedList[0], CarEntity)->gold >= FINAL_SCORE_GOAL)
 		{
 			// Some one has reached the goal, end the round
 			events_out.push_back(NEWEVENT(TogglePauseGame));	// Pause the karts
@@ -533,7 +526,7 @@ void GameAi::updateScoreBoard()
 
 			// Did a player win?
 			for (auto player : player_kart_ids) {
-				if (top_scorers[0] == player) {
+				if (sortedList[0] == player) {
 					roundEndEvent->playerWon = true;
 				}
 			}
@@ -577,6 +570,7 @@ void GameAi::endRound()
 
 	goldSpawnCounter = 0;
 	active_tresures = 0;
+	m_exploding_karts.clear();
 
 	auto removeGoldPow = NEWEVENT( PowerupDestroyed );
 	removeGoldPow->powerup_type = Entities::GoldCasePowerup;
@@ -597,7 +591,9 @@ void GameAi::newRound(int numPlayers, int numAi)
 		auto kart = new Entities::CarEntity(kart_name);
 		entity_id kart_id = g_inventory->AddEntity(kart);
 
+		kart->playerNumber = i + 1;
 		kart->health = STARTING_HEALTH;
+		kart->isExploding = false;
 		kart->powerup_slot = Entities::SpeedPowerup;
 
 		this->kart_ids.push_back(kart_id);
@@ -605,8 +601,10 @@ void GameAi::newRound(int numPlayers, int numAi)
 		// First N karts are players
 		if (i < numPlayers) {
 			this->player_kart_ids.push_back(kart_id);
+			kart->isHumanPlayer = true;
 		} else {
 			this->ai_kart_ids.push_back(kart_id);
+			kart->isHumanPlayer = false;
 		}
 
 		// Tell people of the new kart
@@ -650,4 +648,32 @@ void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> 
 		}
 		
 		return;
+}
+
+void GameAi::updateExplodingKarts()
+{
+	std::vector<Events::Event *> events;
+	float elapsedTime = frame_timer.CalcSeconds();
+
+	for(int i = m_exploding_karts.size() - 1; i >= 0; i--)
+	{
+		auto kart = m_exploding_karts[i];
+		kart->timer -= elapsedTime;
+
+		if(kart->timer <= 0)
+		{
+			auto resetEvent = NEWEVENT( Reset );
+			resetEvent->kart_id = kart->kart_id;
+			events.push_back(resetEvent);
+
+			auto kart_entity = GETENTITY(kart->kart_id, CarEntity);
+			kart_entity->health = STARTING_HEALTH;
+			kart_entity->isExploding = false;
+
+			// Remove kart from local exploding kart list
+			m_exploding_karts.erase(m_exploding_karts.begin() + i);
+		}
+	}
+
+	m_mb->sendMail(events);
 }

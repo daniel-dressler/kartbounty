@@ -93,6 +93,7 @@ Simulation::Simulation()
 	mb.request(Events::EventType::PowerupActivated);
 	mb.request(Events::EventType::Shoot);
 	mb.request(Events::EventType::TogglePauseGame);
+	mb.request(Events::EventType::RoundEnd);
 
 	m_arena = NULL;
 	m_triangleInfoMap = NULL;
@@ -328,6 +329,9 @@ extern ContactAddedCallback gContactAddedCallback;
 #define CON1 (CAR_WIDTH - 0.02)
 #define CON2 (CAR_LENGTH - 0.05)
 
+#define LINEAR_DAMPING 0.4
+#define ANGULAR_DAMPING 0.4
+
 int Simulation::createKart(entity_id kart_id)
 {
 	auto kart_local = new phy_obj();
@@ -378,7 +382,7 @@ int Simulation::createKart(entity_id kart_id)
 
 	// Air resistance
 	// 1 = 100% of speed lost per second
-	carChassis->setDamping(0.4, 0.4);
+	carChassis->setDamping(LINEAR_DAMPING, ANGULAR_DAMPING);
 
 	// Makes us bounce off walls
 	carChassis->setRestitution(0.9);
@@ -523,6 +527,10 @@ int Simulation::loadWorld()
 void Simulation::resetKart(entity_id id)
 {
 	auto kart_entity = GETENTITY(id, CarEntity);
+
+	// Make sure the id is in the map incase we got an old reset event
+	if(m_karts.find(id) == m_karts.end())
+		return;
 
 	btRaycastVehicle *kart_body = m_karts[id]->vehicle;
 	btTransform trans;
@@ -763,14 +771,26 @@ void Simulation::step(double seconds)
 			Events::InputEvent *input = (Events::InputEvent *)event;
 			entity_id kart_id = input->kart_id;
 
+			Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
+			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+
+			// Check if kart is currently blowing up and if so give it empty input
+			if(kart_ent->isExploding)
+			{
+				kart->setSteeringValue(0, 0);
+				kart->setSteeringValue(0, 1);
+				kart->applyEngineForce(0, 0);
+				kart->applyEngineForce(0, 1);
+				
+				break;
+			}
+
 			//DEBUGOUT("id: %d, r: %f, a: %d\n", kart_id, input->rightTrigger, input->aPressed);
 			if (m_karts.count(kart_id) == 0)
 			{
 				DEBUGOUT("Warning: Invalid kart_id on input event\n");
 				break;
-			}
-
-			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+			}			
 
 			Real speed = kart->getCurrentSpeedKmHour();
 
@@ -850,7 +870,6 @@ void Simulation::step(double seconds)
 				DEBUGOUT("Pos: %f, %f, %f\n", orig.x(), orig.y(), orig.z());
 			}
 
-			Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
 			kart_ent->shoot_timer -= seconds; // Every turn reduce the cooldown remained before can shoot again
 
 			// Generate bullets for player shots
@@ -1034,6 +1053,8 @@ void Simulation::step(double seconds)
 	events_out.push_back(bullet_list_event);
 
 	mb.sendMail(events_out);
+
+	//DEBUGOUT("Powerups: %d Kart Bodies: %d\n CollisionShapes: %d", m_powerups.size(), m_kart_bodies.size(), m_collisionShapes.size());
 }
 
 // Updates the car placement in the world state

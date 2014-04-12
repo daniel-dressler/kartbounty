@@ -41,8 +41,8 @@
     <LibraryPath>.\lib\bullet\lib;C:\Libraries\glew-1.10.0\lib\Release\Win32;C:\Libraries\SDL2-2.0.1\lib\x86;c:\Libraries\fMod-4.44.31\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>.\lib\bullet\src;C:\Libraries\glew-1.10.0\include;C:\Libraries\SDL2-2.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\lib\bullet\lib;C:\Libraries\glew-1.10.0\lib\Release\Win32;C:\Libraries\SDL2-2.0.1\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\lib\bullet\src;C:\Libraries\glew-1.10.0\include;C:\Libraries\SDL2-2.0.1\include;c:\Libraries\fMod-4.44.31\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>.\lib\bullet\lib;C:\Libraries\glew-1.10.0\lib\Release\Win32;C:\Libraries\SDL2-2.0.1\lib\x86;c:\Libraries\fMod-4.44.31\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
