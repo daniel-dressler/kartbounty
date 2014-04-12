@@ -244,6 +244,8 @@ int Renderer::setup()
 	if( !glhLoadTexture( m_difKartShadow, "assets/kart_shadow.png" ) )
 		exit(19);
 
+	if( !LoadMesh( m_mshRocket, "assets/Rocket.msh" ) )
+		exit(22);
 	if( !LoadMesh( m_mshPowerSphere, "assets/PowerSphere.msh" ) )
 		exit(22);
 	if( !LoadMesh( m_mshPowerRing1, "assets/PowerRing1.msh" ) )
@@ -740,6 +742,8 @@ int Renderer::render( float fElapseSec )
 		}
 
 		// Render rockets hack
+		perMesh.vColor = Vector4(1, 1, 1, 1);
+		perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
 		for (auto rocket_pair : list_of_rockets) 
 		{
 			auto rocket = rocket_pair.second;
@@ -749,29 +753,15 @@ int Renderer::render( float fElapseSec )
 			pos.z = rocket->position.getZ();
 
 			Vector3 vDir = Vector3( rocket->direction.x(), rocket->direction.y(), rocket->direction.z() );
+			Vector3 vAxis = Vector3::Cross( vDir, Vector3( 0, 0, 1 ) );
+			Real fAngle = ACOS( Vector3::Dot( vDir, Vector3( 0, 0, 1 ) ) );
 
-			Vector4 color1 = Vector4(0, 0, 0, 0);
-			Vector4 color2 = Vector4(0, 0, 0, 0);
-
-			perMesh.vRenderParams = Vector4( 1, 0, 0, 0 );
-			perMesh.vColor = color1;
-			perMesh.vRenderParams = Vector4( 1, 1, 0, 0 );
-			perMesh.matWorld = Matrix::GetRotateY( m_fTime * 7 ) * Matrix::GetTranslate( pos );
+			perMesh.vColor = Vector4(1, 1, 1, 1);
+			perMesh.vRenderParams = Vector4( 1, 1, 1, 0 );
+			perMesh.matWorld = Matrix::GetRotateAxis( vAxis, fAngle ) * Matrix::GetTranslate( pos );
 			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
 			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing1 );
-
-			perMesh.matWorld = Matrix::GetRotateY( -m_fTime * 10 ) * Matrix::GetTranslate( pos );
-			perMesh.matWorldViewProj = perMesh.matWorld * perFrame.matViewProj;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerRing2 );
-
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-			perMesh.vColor = color2;
-			glhUpdateBuffer( m_eftMesh, m_bufPerMesh );
-			glhDrawMesh( m_eftMesh, m_mshPowerSphere );
-			glDisable( GL_BLEND );
+			glhDrawMesh( m_eftMesh, m_mshRocket );
 		}
 
 		glEnable( GL_BLEND );

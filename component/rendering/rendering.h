@@ -73,6 +73,7 @@ private:
 	GLtex				m_texSkybox;
 
 	// Power ups
+	GLmesh				m_mshRocket;
 	GLmesh				m_mshPowerRing1;
 	GLmesh				m_mshPowerRing2;
 	GLmesh				m_mshPowerSphere;
