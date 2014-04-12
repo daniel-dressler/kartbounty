@@ -11,8 +11,8 @@ using namespace Physics;
 
 
 // Powerup sizes - they're spheres with these radiuses:
-#define FLOATING_GOLD_POWERUP_SIZE 0.4
-#define GOLD_CHEST_POWERUP_SIZE 0.35
+#define FLOATING_GOLD_POWERUP_SIZE 1.0f
+#define GOLD_CHEST_POWERUP_SIZE 0.8f
 #define NORMAL_POWERUP_SIZE 0.3
 
 // Please don't modify these if you don't have an idea what they're doing. They're pretty easy to mess up.
@@ -933,7 +933,7 @@ void Simulation::step(double seconds)
 			// Made powerups a bit bigger
 			if (powerup->powerup_type == Entities::FloatingGoldPowerup)
 				sphere = new btSphereShape( FLOATING_GOLD_POWERUP_SIZE );
-			else if (powerup->powerup_type == Entities::FloatingGoldPowerup)
+			else if (powerup->powerup_type == Entities::GoldCasePowerup)
 				sphere = new btSphereShape( GOLD_CHEST_POWERUP_SIZE );
 			else
 				sphere = new btSphereShape( NORMAL_POWERUP_SIZE );
