@@ -127,14 +127,19 @@ namespace Physics {
 			Vector3 powerup_pos;
 			int floating_gold;
 
+			bool rigid_body_active;
+
 			// Arena
 			btRigidBody* arena;
-			phy_obj() {
+			phy_obj() 
+			{
 				lastspeed = 0;
 				is_kart = false;
 				is_powerup = false;
 				is_arena = false;
 				lastofs = Vector3( 0, 1.0f, -1.5f );
+
+				rigid_body_active = true;
 			}
 		};
 		std::map<entity_id, struct phy_obj *> m_karts;
