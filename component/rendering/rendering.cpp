@@ -1072,7 +1072,7 @@ void Renderer::_CheckMail()
 			break;
 		case Events::EventType::Explosion:
 			{
-				auto explody = ((Events::PowerupDestroyedEvent *)event);
+				auto explody = ((Events::ExplosionEvent *)event);
 				_Explode( explody->pos );
 			}
 			break;
