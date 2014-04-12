@@ -162,30 +162,30 @@ void Simulation::substepEnforcer(btDynamicsWorld *world, btScalar timestep)
 			continue;
 		}
 
-		// Clamp kart rotate to 60% of sideways
-		// Prevents flips
-		btTransform tr = rigidBody->getCenterOfMassTransform();
-		btQuaternion rot = tr.getRotation();
-		btVector3 up = rigidBody->getCenterOfMassTransform().getBasis().getColumn(1);
-		up.normalize();
-		btVector3 vUp = btVector3(0, 1, 0);
-		btScalar angle = MAX(up.dot(vUp), 0.1);
+		//// Clamp kart rotate to 60% of sideways
+		//// Prevents flips
+		//btTransform tr = rigidBody->getCenterOfMassTransform();
+		//btQuaternion rot = tr.getRotation();
+		//btVector3 up = rigidBody->getCenterOfMassTransform().getBasis().getColumn(1);
+		//up.normalize();
+		//btVector3 vUp = btVector3(0, 1, 0);
+		//btScalar angle = MAX(up.dot(vUp), 0.1);
 
-		// Slow flips on way up
-		btScalar ang_damp = MIN(1.2 - (angle * angle * angle), 1);
-		btScalar lin_damp = rigidBody->getLinearDamping();
-		btVector3 ang_vol = rigidBody->getAngularVelocity();
-		if (ang_vol.getY() < 0)
-			ang_damp = 0.1;
-		rigidBody->setDamping(lin_damp, ang_damp);
+		//// Slow flips on way up
+		//btScalar ang_damp = MIN(1.2 - (angle * angle * angle), 1);
+		//btScalar lin_damp = rigidBody->getLinearDamping();
+		//btVector3 ang_vol = rigidBody->getAngularVelocity();
+		//if (ang_vol.getY() < 0)
+		//	ang_damp = 0.1;
+		//rigidBody->setDamping(lin_damp, ang_damp);
 
-		// Last resort force unflip
-		if (angle <= 0.2) {
-			btQuaternion qUp = btQuaternion(0, 1, 0);
-			rot = rot.slerp(qUp, timestep / (angle * angle));
-			tr.setRotation(rot);
-			rigidBody->setCenterOfMassTransform(tr);
-		}
+		//// Last resort force unflip
+		//if (angle <= 0.2) {
+		//	btQuaternion qUp = btQuaternion(0, 1, 0);
+		//	rot = rot.slerp(qUp, timestep / (angle * angle));
+		//	tr.setRotation(rot);
+		//	rigidBody->setCenterOfMassTransform(tr);
+		//}
 	}
 
 	// Process Rigid Body Collisions
@@ -779,6 +779,8 @@ void Simulation::step(double seconds)
 
 			Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
 			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
+
+			preventKartFlipping(kart, &toBtVector(&(kart_ent->Up)));
 
 			// Check if kart is currently blowing up and if so give it empty input
 			if(kart_ent->isExploding)
@@ -1440,4 +1442,40 @@ void Simulation::do_pulse_powerup(entity_id using_kart_id)
 	}
 
 	return;
+}
+
+#define MIN_WHEEL_GAP 0.15f
+#define CORRECTION_IMPULSE 40
+
+void Simulation::preventKartFlipping(btRaycastVehicle *kart, btVector3 *up)
+{
+	btVector3 negUp;
+	negUp.setX(up->getX() * -1 * CORRECTION_IMPULSE);
+	negUp.setY(up->getY() * -1 * CORRECTION_IMPULSE);
+	negUp.setZ(up->getZ() * -1 * CORRECTION_IMPULSE);
+
+	// Get the location of the 4 wheels
+	for(int i = 0; i < 4; i++)
+	{
+		btVector3 wheelPos = kart->getWheelTransformWS(i).getOrigin();
+		for(int j = i + 1; j < 4; j++)
+		{
+			btVector3 nextWheelPos = kart->getWheelTransformWS(j).getOrigin();
+			if(abs(wheelPos.getY() - nextWheelPos.getY()) > MIN_WHEEL_GAP)
+			{				
+				btVector3 wheelRelativePosition;
+				// Find the highest wheel and apply the force at that wheels position.
+				if(wheelPos.getY() > nextWheelPos.getY())
+				{
+					wheelRelativePosition = wheelPos - kart->getChassisWorldTransform().getOrigin();
+				}
+				else
+				{
+					wheelRelativePosition = nextWheelPos - kart->getChassisWorldTransform().getOrigin();
+				}
+
+				kart->getRigidBody()->applyImpulse( negUp, wheelRelativePosition);
+			}
+		}
+	}
 }

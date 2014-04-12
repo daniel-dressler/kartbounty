@@ -193,5 +193,7 @@ namespace Physics {
 
 		void handle_rockets(double time);
 		void sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_id , btVector3 * hit_pos);
+
+		void preventKartFlipping(btRaycastVehicle *kart, btVector3 *up);
 	};
 };
