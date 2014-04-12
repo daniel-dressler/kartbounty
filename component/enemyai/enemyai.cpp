@@ -18,7 +18,7 @@
 #define PULSE_DISTANCE 1.2f
 
 // If false, AI doesn't move
-#define AI_MOVEMENT false
+#define AI_MOVEMENT true
 
 #define AI_FORWARD_SPEED 0.8f
 

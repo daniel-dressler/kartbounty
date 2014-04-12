@@ -567,6 +567,7 @@ void Simulation::resetKart(entity_id id)
 	//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 	kart_body->getRigidBody()->setWorldTransform( trans );
 	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+	kart_body->getRigidBody()->setAngularVelocity(btVector3(0,0,0));
 
 	
 	kart_entity->camera.fFOV = 70;
@@ -748,6 +749,10 @@ void Simulation::sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_
 	hit_event->shooting_kart_id = shooting_kart_id; // if -1 hit ground, if TTL expired
 	hit_event->kart_hit_id = kart_hit_id;
 	hit_event->hit_pos = *hit_pos;
+
+	auto explode_event = NEWEVENT(Explosion);
+	explode_event->pos = fromBtVector(hit_pos);
+	events_out.push_back(explode_event);
 
 	//DEBUGOUT("Rocket shot by %d has hit %d\n", shooting_kart_id, kart_hit_id)
 
@@ -1196,6 +1201,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		btTransform trans;
 		//trans.setOrigin( btVector3( 0, 3, 0 ) );
 		trans.setOrigin( btVector3(0,100,0) );
+		
 		//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_karts[kart_id]->vehicle->getRigidBody()->setWorldTransform( trans );
 	}
