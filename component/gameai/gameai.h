@@ -24,6 +24,7 @@ public:
 		
 	struct floating_gold
 	{
+		bool isFloatingGold;
 		Vector3 location;
 		bool active;
 		float timer;
@@ -74,12 +75,10 @@ private:
 	void outputScoreBoard(std::vector<entity_id> list);
 
 	void add_to_future_respawn(Events::PowerupPickupEvent *);
-	void handle_powerups_not_gold(double time_elapsed);
-	void init_powerups_not_gold();
 
 	void endRound();
 	void newRound(int, int);
-	void spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out);
+	Events::PowerupPlacementEvent * GameAi::spawn_a_powerup_not_gold(Vector3 pos);
 	void updateExplodingKarts();
 
 	void update_floating_gold( double time );
