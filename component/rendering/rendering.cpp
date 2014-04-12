@@ -574,7 +574,7 @@ int Renderer::render( float fElapseSec )
 
 	std::vector<RCAMERA> aryCameras;
 	_CalcCameras( aryCameras );
-	
+	/*
 	static Real fFPSLastTime = 0;
 	static Int32 nFPSCount = 0;
 	nFPSCount++;
@@ -584,7 +584,7 @@ int Renderer::render( float fElapseSec )
 		fFPSLastTime += 1.0f;
 		nFPSCount = 0;
 	}
-	
+	*/
 	m_ps.Update( fElapseSec, aryCameras[0].eyepos );
 
 	for( Int32 i = 0; i < aryCameras.size(); i++ )
@@ -981,9 +981,16 @@ void Renderer::_DrawScore( Int32 kart, Int32 x, Int32 y )
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
 
-	GuiBox snum_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
-	snum_box.Num( kart_entity->gold );
+	GuiBox snum_box = GuiBox( -65 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	snum_box.Num( kart_entity->gold % 10 );
 	glhCreateGUI( temp_mesh, snum_box, 6 );
+	glhEnableTexture( m_texGUINumbers );
+	glhDrawMesh( m_eftGUI, temp_mesh );
+	glhDestroyMesh( temp_mesh );
+
+	GuiBox s2num_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	s2num_box.Num( kart_entity->gold / 10 );
+	glhCreateGUI( temp_mesh, s2num_box, 6 );
 	glhEnableTexture( m_texGUINumbers );
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
