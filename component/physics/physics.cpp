@@ -1307,7 +1307,7 @@ void Simulation::fireRocket(entity_id kart_id)
 	btVector3 Up = btVector3(kart_ent->Up.x,kart_ent->Up.y,kart_ent->Up.z) ;
 
 	auto direction = (kart->getForwardVector()).rotate( Up ,DEGTORAD(-90));
-	direction.normalize();
+	direction.safeNormalize();
 
 	// Perturb angle
 	btScalar x = direction.getX();
@@ -1351,7 +1351,7 @@ void Simulation::solveBulletFiring(entity_id firing_kart_id, btScalar min_angle,
 	btVector3 Up = toBtVector(&kart->Up);
 
 	auto kart1_forward = (kart1->vehicle->getForwardVector()).rotate(Up,DEGTORAD(-90));
-	kart1_forward.normalize();
+	kart1_forward.safeNormalize();
 	kart1_pos += (kart1_forward / 3);
 
 	// Find closest karts in cone of firing
@@ -1458,7 +1458,7 @@ void Simulation::do_pulse_powerup(entity_id using_kart_id)
 				pulse_dir.setY(pulse_dir.getY() + Y_OFFSET_PULSE);
 
 				// Just use as direction
-				pulse_dir.normalize();
+				pulse_dir.safeNormalize();
 
 				float pulse_factor = MAX(DIST_FOR_PULSE - karts_dist, 1);
 
