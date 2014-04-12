@@ -1321,8 +1321,8 @@ void Renderer::_Explode( Vector3 vPos )
 	es[1].vVelDir = Vector3( 0, 1, 0 );
 	es[1].fVelMin = 1.0f;
 	es[1].fVelRand = 0.25f;
-	es[0].fVelAngleMin = 10.0f;
-	es[0].fVelAngleRand = 70.0f;
+	es[1].fVelAngleMin = 10.0f;
+	es[1].fVelAngleRand = 70.0f;
 	es[1].bShareVelPosAngle = 0;
 	es[1].vAccel = Vector3( 0,-1,0 );
 	es[1].fLifeMin = 0.4f;
@@ -1351,8 +1351,8 @@ void Renderer::_Explode( Vector3 vPos )
 	es[2].vVelDir = Vector3( 0, 1, 0 );
 	es[2].fVelMin = 2.0f;
 	es[2].fVelRand = 2.0f;
-	es[0].fVelAngleMin = 10.0f;
-	es[0].fVelAngleRand = 70.0f;
+	es[2].fVelAngleMin = 10.0f;
+	es[2].fVelAngleRand = 70.0f;
 	es[2].bShareVelPosAngle = 0;
 	es[2].vAccel = Vector3( 0,-5,0 );
 	es[2].fLifeMin = 1.0f;
