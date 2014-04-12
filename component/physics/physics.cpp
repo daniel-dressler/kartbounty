@@ -11,9 +11,9 @@ using namespace Physics;
 
 
 // Powerup sizes - they're spheres with these radiuses:
-#define FLOATING_GOLD_POWERUP_SIZE 1.0f
-#define GOLD_CHEST_POWERUP_SIZE 0.8f
-#define NORMAL_POWERUP_SIZE 0.3
+#define FLOATING_GOLD_POWERUP_SIZE 0.8f
+#define GOLD_CHEST_POWERUP_SIZE 0.6f
+#define NORMAL_POWERUP_SIZE 0.45f
 
 // Please don't modify these if you don't have an idea what they're doing. They're pretty easy to mess up.
 
