@@ -236,6 +236,20 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 	// ^ HACK TO FIX BUG. For some reason, at times a phy_obj comes here with all 3 fileds is_kart, is_arena and is_powerup as set to true.
 	// Both me and kyle would get these happen every once in a while - no idea what is the trigger for them, couldn't find what was causing it.
 
+	if (A->is_kart)
+	{
+		auto kart_entity = GETENTITY(A->kart_id, CarEntity);
+		if (kart_entity->isExploding)
+			return;
+	}
+
+	if (B->is_kart)
+	{
+		auto kart_entity = GETENTITY(B->kart_id, CarEntity);
+		if (kart_entity->isExploding)
+			return;
+	}
+
 	struct col_report report = col_report();
 	report.type = NULL_TO_NULL;
 	report.impact = 0;
@@ -261,7 +275,8 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 		report.pos = B->powerup_pos;
 	}
 
-	if (report.impact > 10.0 && A->is_kart && B->is_kart) {
+	if (report.impact > 10.0 && A->is_kart && B->is_kart) 
+	{
 		auto id = MIN(A->kart_id, B->kart_id);
 		auto id_alt = MAX(A->kart_id, B->kart_id);
 		report.kart_id = id;
@@ -280,7 +295,8 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 
 	} else if (report.impact > 1000.0 && 
 				((A->is_kart && B->is_arena) ||
-				(B->is_kart && A->is_arena)) ) { 
+				(B->is_kart && A->is_arena)) ) 
+	{ 
 		report.kart_id = A->is_kart ? A->kart_id : B->kart_id;
 		report.type = KART_TO_ARENA;
 	}
@@ -603,9 +619,10 @@ void Simulation::handle_bullets(double time)
 			{
 				// The kart being hit
 				entity_id kart_id= user_obj->kart_id;
-				
+				auto kart_entity = GETENTITY( kart_id , CarEntity );
+
 				// Find which kart was hit. If it was the shooting kart, ignore
-				if (kart_id != bullet_obj->kart_id) 
+				if (kart_id != bullet_obj->kart_id && !kart_entity->isExploding) 
 				{
 					auto hit_event = NEWEVENT(KartHitByBullet);
 					hit_event->kart_id = kart_id;
@@ -677,9 +694,10 @@ void Simulation::handle_rockets(double time)
 			{
 				// The kart being hit
 				entity_id kart_id= user_obj->kart_id;
-				
+				auto kart_entity = GETENTITY( kart_id , CarEntity );
+
 				// Find which kart was hit. If it was the shooting kart, ignore
-				if (kart_id != rocket_obj->kart_id) 
+				if (kart_id != rocket_obj->kart_id && !kart_entity->isExploding) 
 				{
 					// Rocket hit a kart
 					sendRocketEvent(kart_id, rocket_obj->kart_id, &rocket_obj->position);
@@ -1173,43 +1191,53 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 	// @Kyle: Update this code to cast ray from kart to camera to see if wall is in way (outter walls cause issues)
 	// put ray cast point slightly above the kart to not collide with smaller walls
-
-	Quaternion qOriNew = kart->Orient;
-	Quaternion qOriMod = qOriNew;
-	qOriMod.w = -qOriMod.w;
-	Matrix matOri = Matrix::GetRotateQuaternion( qOriMod );
-
-	Vector3 vUp = kart->Up = Vector3( 0, 1, 0 ).Transform( matOri );
-
-	Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
-	vCamOfs.y = 1.0f;
-
-	kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
-
-	seconds = Clamp((Real)seconds, (Real)0.0f, (Real)0.10f);		// This is incase frame rate really drops.
-	Real fLerpAmt = seconds * 5.0f;
-	Clamp(fLerpAmt, 0.1f, 0.0f);
-	Vector3 vLastofs = m_karts[kart_id]->lastofs;
-	auto cameraPos = kart->camera.vPos;
-	auto cameraFocus = kart->camera.vFocus;
-	if( vUp.y > 0.5f )
+	if (kart->isExploding)
 	{
-		m_karts[kart_id]->lastofs = vCamOfs;
+		m_world->removeVehicle(m_karts[kart_id]->vehicle);
+		m_karts[kart_id]->rigid_body_active = false;
 	}
-	kart->camera.vPos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
+	else
+	{
+		if (! m_karts[kart_id]->rigid_body_active )
+			m_world->addVehicle(m_karts[kart_id]->vehicle);
 
-	Real fLastSpeed = m_karts[kart_id]->lastspeed;
-	Real fSpeed = ABS( m_karts[kart_id]->vehicle->getCurrentSpeedKmHour() );
-	Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
-	Real fAdjFOV = Clamp(fAdjSpeed, (Real)0.f, (Real)MAX_SPEED) / (Real)MAX_SPEED;
-	fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
+		Quaternion qOriNew = kart->Orient;
+		Quaternion qOriMod = qOriNew;
+		qOriMod.w = -qOriMod.w;
+		Matrix matOri = Matrix::GetRotateQuaternion( qOriMod );
 
-	kart->camera.fFOV = Lerp( kart->camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
+		Vector3 vUp = kart->Up = Vector3( 0, 1, 0 ).Transform( matOri );
+
+		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
+		vCamOfs.y = 1.0f;
+
+		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
+
+		seconds = Clamp((Real)seconds, (Real)0.0f, (Real)0.10f);		// This is incase frame rate really drops.
+		Real fLerpAmt = seconds * 5.0f;
+		Clamp(fLerpAmt, 0.1f, 0.0f);
+		Vector3 vLastofs = m_karts[kart_id]->lastofs;
+		auto cameraPos = kart->camera.vPos;
+		auto cameraFocus = kart->camera.vFocus;
+		if( vUp.y > 0.5f )
+		{
+			m_karts[kart_id]->lastofs = vCamOfs;
+		}
+		kart->camera.vPos = Vector3::Lerp( cameraPos, vLastofs + cameraFocus, fLerpAmt );
+
+		Real fLastSpeed = m_karts[kart_id]->lastspeed;
+		Real fSpeed = ABS( m_karts[kart_id]->vehicle->getCurrentSpeedKmHour() );
+		Real fAdjSpeed = Lerp( fLastSpeed, fSpeed, fLerpAmt );
+		Real fAdjFOV = Clamp(fAdjSpeed, (Real)0.f, (Real)MAX_SPEED) / (Real)MAX_SPEED;
+		fAdjFOV = (Real)(Int32)( fAdjFOV * 30.0f );
+
+		kart->camera.fFOV = Lerp( kart->camera.fFOV, 90.0f - fAdjFOV, fLerpAmt * 0.1f );
 
 
-	//DEBUGOUT( "%f\n", state->Camera.fFOV );
-	m_karts[kart_id]->lastspeed = fSpeed;
-	kart->Speed = fSpeed;
+		//DEBUGOUT( "%f\n", state->Camera.fFOV );
+		m_karts[kart_id]->lastspeed = fSpeed;
+		kart->Speed = fSpeed;
+	}
 
 }
 
