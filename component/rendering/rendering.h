@@ -99,6 +99,7 @@ private:
 	void _DrawScoreBoard( Int32 x, Int32 y, Int32 player );
 	void _DrawScore( Int32 kart, Int32 x, Int32 y );
 	void _Explode( Vector3 vPos );
+	void _Pulse( Vector3 vPos );
 
 	// Local knowledge of karts
 	struct kart {

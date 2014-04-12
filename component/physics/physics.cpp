@@ -11,9 +11,9 @@ using namespace Physics;
 
 
 // Powerup sizes - they're spheres with these radiuses:
-#define FLOATING_GOLD_POWERUP_SIZE 0.4
-#define GOLD_CHEST_POWERUP_SIZE 0.35
-#define NORMAL_POWERUP_SIZE 0.3
+#define FLOATING_GOLD_POWERUP_SIZE 0.8f
+#define GOLD_CHEST_POWERUP_SIZE 0.6f
+#define NORMAL_POWERUP_SIZE 0.45f
 
 // Please don't modify these if you don't have an idea what they're doing. They're pretty easy to mess up.
 
@@ -567,6 +567,7 @@ void Simulation::resetKart(entity_id id)
 	//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 	kart_body->getRigidBody()->setWorldTransform( trans );
 	kart_body->getRigidBody()->setLinearVelocity(btVector3(0,0,0));
+	kart_body->getRigidBody()->setAngularVelocity(btVector3(0,0,0));
 
 	
 	kart_entity->camera.fFOV = 70;
@@ -748,6 +749,10 @@ void Simulation::sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_
 	hit_event->shooting_kart_id = shooting_kart_id; // if -1 hit ground, if TTL expired
 	hit_event->kart_hit_id = kart_hit_id;
 	hit_event->hit_pos = *hit_pos;
+
+	auto explode_event = NEWEVENT(Explosion);
+	explode_event->pos = fromBtVector(hit_pos);
+	events_out.push_back(explode_event);
 
 	//DEBUGOUT("Rocket shot by %d has hit %d\n", shooting_kart_id, kart_hit_id)
 
@@ -933,7 +938,7 @@ void Simulation::step(double seconds)
 			// Made powerups a bit bigger
 			if (powerup->powerup_type == Entities::FloatingGoldPowerup)
 				sphere = new btSphereShape( FLOATING_GOLD_POWERUP_SIZE );
-			else if (powerup->powerup_type == Entities::FloatingGoldPowerup)
+			else if (powerup->powerup_type == Entities::GoldCasePowerup)
 				sphere = new btSphereShape( GOLD_CHEST_POWERUP_SIZE );
 			else
 				sphere = new btSphereShape( NORMAL_POWERUP_SIZE );
@@ -1198,6 +1203,7 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 		btTransform trans;
 		//trans.setOrigin( btVector3( 0, 3, 0 ) );
 		trans.setOrigin( btVector3(0,100,0) );
+		
 		//trans.setRotation( btQuaternion( 0, 0, 0, 1 ) );
 		m_karts[kart_id]->vehicle->getRigidBody()->setWorldTransform( trans );
 	}
@@ -1210,10 +1216,10 @@ void Simulation::UpdateGameState(double seconds, entity_id kart_id)
 
 		Vector3 vUp = kart->Up = Vector3( 0, 1, 0 ).Transform( matOri );
 
-		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.5f ).Transform( matOri );
+		Vector3 vCamOfs = Vector3( 0, 1.0f, -1.8f ).Transform( matOri );
 		vCamOfs.y = 1.0f;
 
-		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.5f, 0 );
+		kart->camera.vFocus = kart->Pos + Vector3( 0, 0.3f, 0 );
 
 		seconds = Clamp((Real)seconds, (Real)0.0f, (Real)0.10f);		// This is incase frame rate really drops.
 		Real fLerpAmt = seconds * 5.0f;

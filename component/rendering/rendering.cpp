@@ -54,6 +54,7 @@ Renderer::Renderer()
 	m_pMailbox->request( Events::EventType::KartDestroyed );
 	m_pMailbox->request( Events::EventType::PowerupPlacement );
 	m_pMailbox->request( Events::EventType::PowerupDestroyed );
+	m_pMailbox->request( Events::EventType::PowerupActivated );
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::BulletList );
 	m_pMailbox->request( Events::EventType::ScoreBoardUpdate );
@@ -579,7 +580,7 @@ int Renderer::render( float fElapseSec )
 	nFPSCount++;
 	if( m_fTime - fFPSLastTime > 1.0f )
 	{
-		_Explode( Vector3( 1, 1, 2 ) );
+		_Pulse( Vector3( 0, 1, 0 ) );
 		fFPSLastTime += 1.0f;
 		nFPSCount = 0;
 	}
@@ -821,7 +822,7 @@ int Renderer::render( float fElapseSec )
 		glhUpdateBuffer( m_eftGUI, m_bufGUI );
 		glhEnableTexture( m_texGUIScore );
 		glhDrawMesh( m_eftGUI, m_mshGUIStart );
-		_DrawScoreBoard( 0, 0, 0 );
+		_DrawScoreBoard( 0, 100, 0 );
 		break;
 	case RS_DRIVING:
 		for( Int32 i = 0; i < aryCameras.size(); i++ )
@@ -980,9 +981,16 @@ void Renderer::_DrawScore( Int32 kart, Int32 x, Int32 y )
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
 
-	GuiBox snum_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
-	snum_box.Num( kart_entity->gold );
+	GuiBox snum_box = GuiBox( -65 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	snum_box.Num( kart_entity->gold % 10 );
 	glhCreateGUI( temp_mesh, snum_box, 6 );
+	glhEnableTexture( m_texGUINumbers );
+	glhDrawMesh( m_eftGUI, temp_mesh );
+	glhDestroyMesh( temp_mesh );
+
+	GuiBox s2num_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	s2num_box.Num( kart_entity->gold / 10 );
+	glhCreateGUI( temp_mesh, s2num_box, 6 );
 	glhEnableTexture( m_texGUINumbers );
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
@@ -1063,6 +1071,13 @@ void Renderer::_CheckMail()
 			{
 				auto powerup = ((Events::PowerupDestroyedEvent *)event);
 				m_powerups.erase(powerup->powerup_id);
+			}
+			break;
+		case Events::EventType::PowerupActivated:
+			{
+				auto powerup = ((Events::PowerupActivatedEvent *)event);
+				if( powerup->powerup_type == Entities::PulsePowerup )
+					_Pulse( powerup->pos );
 			}
 			break;
 		case Events::EventType::ScoreBoardUpdate:
@@ -1233,7 +1248,8 @@ void Renderer::_Explode( Vector3 vPos )
 	es[0].vVelDir = Vector3( 0, 1, 0 );
 	es[0].fVelMin = 1.0f;
 	es[0].fVelRand = 0.2f;
-	es[0].fVelAngle = 90.0f;
+	es[0].fVelAngleMin = 0.0f;
+	es[0].fVelAngleRand = 90.0f;
 	es[0].bShareVelPosAngle = 0;
 	es[0].vAccel = Vector3( 0,-1,0 );
 	es[0].fLifeMin = 1;
@@ -1261,7 +1277,8 @@ void Renderer::_Explode( Vector3 vPos )
 	es[1].vVelDir = Vector3( 0, 1, 0 );
 	es[1].fVelMin = 1.0f;
 	es[1].fVelRand = 0.25f;
-	es[1].fVelAngle = 80.0f;
+	es[0].fVelAngleMin = 10.0f;
+	es[0].fVelAngleRand = 70.0f;
 	es[1].bShareVelPosAngle = 0;
 	es[1].vAccel = Vector3( 0,-1,0 );
 	es[1].fLifeMin = 0.4f;
@@ -1290,7 +1307,8 @@ void Renderer::_Explode( Vector3 vPos )
 	es[2].vVelDir = Vector3( 0, 1, 0 );
 	es[2].fVelMin = 2.0f;
 	es[2].fVelRand = 2.0f;
-	es[2].fVelAngle = 90.0f;
+	es[0].fVelAngleMin = 10.0f;
+	es[0].fVelAngleRand = 70.0f;
 	es[2].bShareVelPosAngle = 0;
 	es[2].vAccel = Vector3( 0,-5,0 );
 	es[2].fLifeMin = 1.0f;
@@ -1317,5 +1335,42 @@ void Renderer::_Explode( Vector3 vPos )
 	}
 
 
-	m_ps.AddEffect( 10000, Matrix::GetIdentity(), 3, es, m_texParticle );
+	m_ps.AddEffect( 1000, Matrix::GetIdentity(), 3, es, m_texParticle );
+}
+
+void Renderer::_Pulse( Vector3 vPos )
+{
+	SE::EMITTER es[3];
+
+	es[0].fEmitRate = 5000;
+	es[0].fEmitLife = 0.2f;
+	es[0].vTexParams = Vector4( 0, 1 - 0.75f, 0.25f, 0.25f );
+	es[0].vColorEnd = Vector4( 0.2f, 0.2f, 0.2f, 1 );
+	es[0].vColorMin = Vector4( 0.2f, 0.65f, 0.25f, 1 );
+	es[0].vColorRand = Vector4( 0, 0, 0, 0.2f );
+	es[0].fShadeRand = 0.1f;
+	es[0].vPos = vPos;
+	es[0].fPosOfs = 0.05f;
+	es[0].fPosRand = 0.05f;
+	es[0].vVelDir = Vector3( 0, 1, 0 );
+	es[0].fVelMin = 20.0f;
+	es[0].fVelRand = 5.0;
+	es[0].fVelAngleMin = 80.0f;
+	es[0].fVelAngleRand = 10.0f;
+	es[0].bShareVelPosAngle = 0;
+	es[0].vAccel = Vector3( 0,-1,0 );
+	es[0].fLifeMin = 0.5f;
+	es[0].fLifeRand = 0.5f;
+	es[0].fFadeMin = 1;
+	es[0].fFadeRand = 0;
+	es[0].fSizeMin = 0.1f;
+	es[0].fSizeRand = 0.05f;
+	es[0].fScaleMin = 0.2f;
+	es[0].fScaleRand = 0.05f;
+	es[0].fResistance = 10;
+	es[0].fRotateRand = 1;
+	es[0].fAngleVelMin = 0;
+	es[0].fAngleVelRand = 1;
+
+	m_ps.AddEffect( 100, Matrix::GetIdentity(), 1, es, m_texParticle );
 }

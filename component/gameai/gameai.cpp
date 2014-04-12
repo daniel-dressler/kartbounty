@@ -15,26 +15,26 @@
 #define REWARD_FOR_FLOATING_GOLD 5
 
 // Score to win
-#define FINAL_SCORE_GOAL 9
+#define FINAL_SCORE_GOAL 20
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
 #define NUM_KARTS 8
 // Big Gold Powerup
-#define BIG_GOLD_VALUE 1
+#define BIG_GOLD_VALUE 3
 // Small Gold Powerup
 #define SMALL_GOLD_VALUE 1
 // Amount of gold for killing another kart
 #define KART_KILL_GOLD_VALUE 2
 // How much health does a kart has to start with
-#define STARTING_HEALTH 1
-#define HEALTH_POWERUP_AMOUNT 5
+#define STARTING_HEALTH 3
+#define HEALTH_POWERUP_AMOUNT 3
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
 // time to stop listening to input events at end of round
 #define TIME_TO_IGNORE_INPUT 0.5
 // time to wait before resetting kart to show explosion
-#define TIME_TO_EXPLODE 1.5
+#define TIME_TO_EXPLODE 2
 
 const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
 	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
