@@ -74,48 +74,64 @@ GameAi::~GameAi()
 
 void GameAi::floating_gold_int()
 {
-	
+	// Floating gold locations
 	floating_gold * fg0 = new floating_gold();
 	fg0->location = Vector3(0,2.5f,0);
 	fg0->active = false;
 	fg0->timer = 0;
+	fg0->isFloatingGold = true;
 	fg0->index_in_vector = 0;
-
 	floating_gold_array.push_back( fg0 );
 
 	floating_gold * fg1 = new floating_gold();
 	fg1->location = Vector3(0,3.5f,19);
 	fg1->active = false;
 	fg1->timer = 0;
+	fg1->isFloatingGold = true;
 	fg1->index_in_vector = 1;
-
 	floating_gold_array.push_back( fg1 );
 	
 	struct floating_gold * fg2 = new floating_gold();
 	fg2->location = Vector3(0,3.5f,-19);
 	fg2->active = false;
 	fg2->timer = 0;
+	fg2->isFloatingGold = true;
 	fg2->index_in_vector = 2;
-
 	floating_gold_array.push_back( fg2 );
 
+	// Other powerup locations
+
 	struct floating_gold * fg3 = new floating_gold();
-	fg3->location = Vector3(19,3.5f,0);
+	fg3->location = Vector3(12,1,0);
 	fg3->active = false;
 	fg3->timer = 0;
+	fg3->isFloatingGold = false;
 	fg3->index_in_vector = 3;
-
 	floating_gold_array.push_back( fg3 );
 
 	struct floating_gold * fg4 = new floating_gold();
-	fg4->location = Vector3(-19,3.5f,0);
+	fg4->location = Vector3(-12,1,0);
 	fg4->active = false;
 	fg4->timer = 0;
+	fg4->isFloatingGold = false;
 	fg4->index_in_vector = 4;
-	gamePaused = false;
-	currentState = StartMenu;
-
 	floating_gold_array.push_back( fg4 );
+
+	struct floating_gold * fg5 = new floating_gold();
+	fg5->location = Vector3(0,1,12);
+	fg5->active = false;
+	fg5->timer = 0;
+	fg5->isFloatingGold = false;
+	fg5->index_in_vector = 5;
+	floating_gold_array.push_back( fg5 );
+
+	struct floating_gold * fg6 = new floating_gold();
+	fg6->location = Vector3(0,1,-12);
+	fg6->active = false;
+	fg6->timer = 0;
+	fg6->isFloatingGold = false;
+	fg6->index_in_vector = 6;
+	floating_gold_array.push_back( fg6 );
 }
 
 void GameAi::setup()
@@ -135,52 +151,6 @@ void GameAi::add_to_future_respawn(Events::PowerupPickupEvent * event)
 	m_to_spawn_vec[to_spawn->powerup_id] = to_spawn;
 }
 
-void GameAi::init_powerups_not_gold()
-{
-	std::vector<Vector3> powerup_location;
-	std::vector<Events::Event *> events_out;
-	powerup_location.push_back(Vector3(12,1,0));
-	powerup_location.push_back(Vector3(-12,1,0));
-	powerup_location.push_back(Vector3(0,1,12));
-	powerup_location.push_back(Vector3(0,1,-12));
-
-	for (Vector3 pos: powerup_location)
-	{
-		spawn_a_powerup_not_gold(pos, events_out);
-	}
-
-	m_mb->sendMail(events_out);
-}
-
-void GameAi::handle_powerups_not_gold(double time_elapsed)
-{
-	std::vector<Events::Event *> events_out;
-	std::vector<entity_id> to_delete;
-
-	for (auto to_spawn_pair : m_to_spawn_vec)
-	{
-		auto to_spawn = to_spawn_pair.second;
-		auto pos = to_spawn->pos;
-		to_spawn->timer_to_respawn -= time_elapsed;
-
-		if (to_spawn->timer_to_respawn <= 0)
-		{
-			to_delete.push_back( to_spawn->powerup_id );
-			spawn_a_powerup_not_gold(pos, events_out);
-		}
-	}
-	
-	// If spawned, remove struct from to_spawn
-	for (auto id : to_delete)
-	{
-		auto current = m_to_spawn_vec[id];
-		delete current;
-		m_to_spawn_vec.erase(id);
-	}
-
-	if (events_out.size() > 0)
-		m_mb->sendMail(events_out);
-}
 
 int GameAi::planFrame()
 {
@@ -272,11 +242,16 @@ int GameAi::planFrame()
 						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
 						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
+					case Entities::HealthPowerup:
+						kart->health = HEALTH_POWERUP_AMOUNT;
+						break;
 
 					default:
 						// Player loses any unused powerups
 						kart->powerup_slot = powerup;
-						add_to_future_respawn(pickup);
+						index_fg = pickup->floating_index;
+						floating_gold_array[index_fg]->active = false;
+						floating_gold_array[index_fg]->timer = TIME_TO_SPAWN_POWERUPS;
 						DEBUGOUT("Kart %d picked up a powerup of type %d!\n", kart_id, powerup)
 						break;
 				}
@@ -331,6 +306,11 @@ int GameAi::planFrame()
 							kart->powerup_slot = Entities::NullPowerup;
 						}
 					}
+				}
+
+				if(currentState == StartMenu && inputEvent->yPressed)
+				{
+					// If this happens we should display the controller mapping
 				}
 			}
 			break;
@@ -486,11 +466,6 @@ int GameAi::planFrame()
 		} 
 	}
 
-	// handle powerups
-	handle_powerups_not_gold(frame_timer.CalcSeconds());
-
-	
-
 	// Issue planned events
 	m_mb->sendMail(events_out);
 
@@ -520,6 +495,11 @@ int GameAi::planFrame()
 
 	// handle floating gold powerups
 	update_floating_gold( frame_timer.CalcSeconds() );
+	if(player_kart_ids.size())
+	{
+		auto pKart = GETENTITY(player_kart_ids[0], CarEntity);
+		DEBUGOUT("Player Kart Health = %f\n", pKart->health);
+	}
 	
 	return 1;
 }
@@ -669,41 +649,40 @@ void GameAi::newRound(int numPlayers, int numAi)
 		events.push_back(new_kart_ev);
 	}
 
-	init_powerups_not_gold();
-
 	m_mb->sendMail(events);
 }
 
-void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out)
+Events::PowerupPlacementEvent * GameAi::spawn_a_powerup_not_gold(Vector3 pos)
 {
 	int type_num = rand() %4 ;
 		switch (type_num)
 		{
 			case 0:
-				events_out.push_back(spawn_powerup(Entities::HealthPowerup, pos));
 				DEBUGOUT("SPAWNING A HEALTH POWERUP\n!")
+				return spawn_powerup(Entities::HealthPowerup, pos);
+				
 			break;
 
 			case 1:
-				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
 				DEBUGOUT("SPAWNING A SPEED POWERUP!\n")
+				return spawn_powerup(Entities::SpeedPowerup, pos);
 			break;
 
 			case 2:
-				events_out.push_back(spawn_powerup(Entities::RocketPowerup, pos));
 				DEBUGOUT("SPAWNING A ROCKET POWERUP!\n")
+				return spawn_powerup(Entities::RocketPowerup, pos);
 			break;
 
-			case 3:
-				events_out.push_back(spawn_powerup(Entities::PulsePowerup, pos));
+			case 3: default:
 				DEBUGOUT("SPAWNING A PULSE POWERUP!\n")
+				return spawn_powerup(Entities::PulsePowerup, pos);
 			break;
 
-			default:
-				events_out.push_back(spawn_powerup(Entities::SpeedPowerup, pos));
+				
 		}
-		
-		return;
+
+		return spawn_powerup(Entities::SpeedPowerup, pos);
+
 }
 
 void GameAi::updateExplodingKarts()
@@ -743,7 +722,12 @@ void GameAi::update_floating_gold( double time)
 	{
 		if ( !gold->active && gold->timer <= 0)
 		{
-			Events::PowerupPlacementEvent * event = spawn_powerup(Entities::FloatingGoldPowerup, gold->location);
+			Events::PowerupPlacementEvent * event;
+			if (gold->isFloatingGold)
+				event = spawn_powerup(Entities::FloatingGoldPowerup, gold->location);
+			else
+				event = spawn_a_powerup_not_gold(gold->location);
+
 			event->floating_index = gold->index_in_vector;
 			events_out_floating_gold.push_back( event );
 			gold->active = true;
