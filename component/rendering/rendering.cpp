@@ -981,9 +981,16 @@ void Renderer::_DrawScore( Int32 kart, Int32 x, Int32 y )
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
 
-	GuiBox snum_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
-	snum_box.Num( kart_entity->gold );
+	GuiBox snum_box = GuiBox( -65 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	snum_box.Num( kart_entity->gold % 10 );
 	glhCreateGUI( temp_mesh, snum_box, 6 );
+	glhEnableTexture( m_texGUINumbers );
+	glhDrawMesh( m_eftGUI, temp_mesh );
+	glhDestroyMesh( temp_mesh );
+
+	GuiBox s2num_box = GuiBox( -85 + x, y, 20, 30, Vector4( 1,1,1,1 ) );
+	s2num_box.Num( kart_entity->gold / 10 );
+	glhCreateGUI( temp_mesh, s2num_box, 6 );
 	glhEnableTexture( m_texGUINumbers );
 	glhDrawMesh( m_eftGUI, temp_mesh );
 	glhDestroyMesh( temp_mesh );
