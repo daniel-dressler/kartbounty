@@ -18,12 +18,14 @@
 // Amount of gold for killing another kart
 #define KART_KILL_GOLD_VALUE 2
 // How much health does a kart has to start with
-#define STARTING_HEALTH 2
+#define STARTING_HEALTH 1
 #define HEALTH_POWERUP_AMOUNT 5
 // timer to spawn powerups that aren't gold, in seconds
 #define TIME_TO_SPAWN_POWERUPS 3
 // time to stop listening to input events at end of round
-#define TIME_TO_IGNORE_INPUT 1
+#define TIME_TO_IGNORE_INPUT 0.5
+// time to wait before resetting kart to show explosion
+#define TIME_TO_EXPLODE 1.5
 
 const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
 	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
@@ -342,10 +344,17 @@ int GameAi::planFrame()
 
 					events_out.push_back(explodeEvent);
 
-					kart->health = STARTING_HEALTH;
+					kart->isExploding = true;
+					auto localDeadKart = new explodingKart();
+					localDeadKart->kart_id = kart_id;
+					localDeadKart->timer = TIME_TO_EXPLODE;
+
+					m_exploding_karts.push_back(localDeadKart);
+
+/*					kart->health = STARTING_HEALTH;
 					auto reset_kart_event = NEWEVENT(Reset);
 					reset_kart_event->kart_id = kart_id;
-					events_out.push_back(reset_kart_event);					
+					events_out.push_back(reset_kart_event);		*/			
 				}
 			}
 			break;		
@@ -379,6 +388,8 @@ int GameAi::planFrame()
 
 		// Update the scoreboard to be sent to rendering
 		updateScoreBoard();
+
+		updateExplodingKarts();
 
 		// Direct controllers to karts
 		for (auto id : this->player_kart_ids) {
@@ -559,6 +570,7 @@ void GameAi::endRound()
 
 	goldSpawnCounter = 0;
 	active_tresures = 0;
+	m_exploding_karts.clear();
 
 	auto removeGoldPow = NEWEVENT( PowerupDestroyed );
 	removeGoldPow->powerup_type = Entities::GoldCasePowerup;
@@ -581,6 +593,7 @@ void GameAi::newRound(int numPlayers, int numAi)
 
 		kart->playerNumber = i + 1;
 		kart->health = STARTING_HEALTH;
+		kart->isExploding = false;
 		kart->powerup_slot = Entities::SpeedPowerup;
 
 		this->kart_ids.push_back(kart_id);
@@ -637,7 +650,8 @@ void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> 
 		return;
 }
 
-void GameAi::updateExplodingKarts(){
+void GameAi::updateExplodingKarts()
+{
 	std::vector<Events::Event *> events;
 	float elapsedTime = frame_timer.CalcSeconds();
 
@@ -660,4 +674,6 @@ void GameAi::updateExplodingKarts(){
 			m_exploding_karts.erase(m_exploding_karts.begin() + i);
 		}
 	}
+
+	m_mb->sendMail(events);
 }
