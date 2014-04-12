@@ -26,8 +26,10 @@ struct GLmesh
 	GLuint  vao;
 	GLuint	vbuffer;
 	GLuint	ibuffer;
+	GLuint	xbuffer;
 	GLuint  vstride;
 	GLuint	icount;
+	GLuint	xcount;
 	GLint	type;
 };
 
@@ -68,16 +70,20 @@ int glhCreateBuffer( const GLeffect& effect, const GLchar* strBuffer, GLint nSiz
 int glhUpdateBuffer( const GLeffect& effect, const GLbuffer& buffer );
 void glhDestroyBuffer( GLbuffer& buffer );
 
+int glhUpdateInst( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount );
+int glhCreateInst( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount, Int32 nType );
+int glhCreateMesh( GLmesh& glmesh, const void* pData, Int32 nVertSize, Int32 nCount, Int32 nType );
 int glhCreateMesh( GLmesh& glmesh, const SEG::Mesh& meshdata );
 int glhCreateGUI( GLmesh& glmesh, const GLvertex* aryVertices, const GLint nCount );
 int glhDrawMesh( const GLeffect& gleffect, const GLmesh& glmesh );
+int glhDrawInst( const GLeffect& gleffect, const GLmesh& glmesh );
 void glhDestroyMesh( GLmesh& glmesh );
 
 void glhPredefinedVertexLayout( Int32 nType );
 
-int glhLoadTexture( GLtex& gltex, char* strFilename );
-int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData );
-int glhEnableTexture( GLtex& gltex, int nIndex = 0 );
+int glhLoadTexture( GLtex& gltex, char* strFilename, int mips = 0 );
+int glhCreateTexture( GLtex& gltex, int nWidth, int nHeight, char* pData, int mips );
+int glhEnableTexture( const GLtex& gltex, int nIndex = 0 );
 void glhMapTexture( GLeffect& gleft, char* strName, int nIndex );
 void glhDestroyTexture( GLtex& gltex );
 

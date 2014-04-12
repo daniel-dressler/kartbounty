@@ -8,8 +8,10 @@
 #include "../events/events.h"
 
 #include "SELib/SELib.h"
+
 #include "glhelpers.h"
 #include "ShaderStructs.h"
+#include "SELib/SEParticleSystem.h"
 
 #define RS_START	0
 #define RS_DRIVING	3
@@ -40,6 +42,7 @@ private:
 	GLbuffer			m_bufPerFrame;
 	GLbuffer			m_bufGUI;
 
+	SE::ParticleSystem	m_ps;
 
 	// Arena
 	GLmesh				m_mshArenaCldr;
@@ -85,6 +88,8 @@ private:
 	GLtex				m_difBlank;
 	GLtex				m_nrmBlank;
 
+	GLtex				m_texParticle;
+
 	Vector3				m_vArenaOfs;
 
 	void _CheckMail();
@@ -93,6 +98,7 @@ private:
 	void _DrawArenaQuad( Vector3 vColor );
 	void _DrawScoreBoard( Int32 x, Int32 y, Int32 player );
 	void _DrawScore( Int32 kart, Int32 x, Int32 y );
+	void _Explode( Vector3 vPos );
 
 	// Local knowledge of karts
 	struct kart {

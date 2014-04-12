@@ -140,8 +140,19 @@ typedef struct Vector3
 		x = y = z = 0.0f;
 	}
 
+	Vector3& Transform( const Quaternion& q );
 	Vector3& Transform( const Matrix3x3& mat );
 	Vector3& Transform( const Matrix4x4& mat );
+
+	Vector3& RotateXY( const Real fAngle )
+	{
+		Real fSinTheta = SIN( fAngle );
+		Real fCosTheta = COS( fAngle );
+		Real fXTemp = x;
+		x = ( x * fCosTheta ) - ( y * fSinTheta );
+		y = ( fXTemp * fSinTheta ) + ( y * fCosTheta );
+		return *this;
+	}
 
 	Vector3& RotateXZ( const Real fAngle )
 	{
@@ -420,6 +431,16 @@ typedef struct Vector4
 	{
 		Vector4 v = *this;
 		return v.Normalize();
+	}
+
+	static const Vector4 Lerp( const Vector4& fst, const Vector4& snd, const Real s )
+	{
+		Vector4 result;
+		result.x = ::Lerp( fst.x, snd.x, s );
+		result.y = ::Lerp( fst.y, snd.y, s );
+		result.z = ::Lerp( fst.z, snd.z, s );
+		result.w = ::Lerp( fst.w, snd.w, s );
+		return result;
 	}
 
 	#ifdef __D3DX10_H__

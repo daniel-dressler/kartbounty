@@ -26,6 +26,15 @@ Vector2& Vector2::Transform( const Matrix3x3& mat )
 	return *this;
 }
 
+Vector3& Vector3::Transform( const Quaternion& q )
+{
+	Vector3 qxyz = Vector3( q.x, q.y, q.z );
+	*this = 2.0f * Vector3::Dot( qxyz, *this ) * qxyz +
+			( q.w * q.w - Vector3::Dot( qxyz, qxyz ) ) * (*this) +
+			2.0f * q.w * Vector3::Cross( qxyz, *this );
+	return *this;
+}
+
 Vector3& Vector3::Transform( const Matrix3x3& mat )
 {
 	Real tx, ty, tz;

@@ -9,8 +9,13 @@
 
 using namespace Physics;
 
-// Please don't modify these if you don't have an idea what they're doing. They're pretty easy to mess up.
 
+// Powerup sizes - they're spheres with these radiuses:
+#define FLOATING_GOLD_POWERUP_SIZE 0.4
+#define GOLD_CHEST_POWERUP_SIZE 0.35
+#define NORMAL_POWERUP_SIZE 0.3
+
+// Please don't modify these if you don't have an idea what they're doing. They're pretty easy to mess up.
 
 // How far does the bullet "see" each frame, also the speed of the bullet.
 // Changing this can result in bullets flying through karts and walls that they should hit
@@ -270,6 +275,7 @@ void Simulation::actOnCollision(btPersistentManifold *manifold, phy_obj *A, phy_
 		report.kart_id = A->is_kart ? A->kart_id : B->kart_id;
 		report.powerup_type = A->is_powerup ? A->powerup_type : B->powerup_type;
 		report.powerup_id = A->is_powerup ? A->powerup_id : B->powerup_id;
+		report.floating_index =  A->is_powerup ? A->floating_gold : B->floating_gold;
 		report.type = KART_TO_POWERUP;
 
 	} else if (report.impact > 1000.0 && 
@@ -725,7 +731,7 @@ void Simulation::sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_
 	hit_event->kart_hit_id = kart_hit_id;
 	hit_event->hit_pos = *hit_pos;
 
-	DEBUGOUT("Rocket shot by %d has hit %d\n", shooting_kart_id, kart_hit_id)
+	//DEBUGOUT("Rocket shot by %d has hit %d\n", shooting_kart_id, kart_hit_id)
 
 	// Send event
 	events_out.push_back(hit_event);
@@ -903,9 +909,16 @@ void Simulation::step(double seconds)
 			powerup->is_powerup = true;
 			powerup->powerup_type = powerup_event->powerup_type;
 			powerup->powerup_id = id;
-
+			powerup->floating_gold = powerup_event->floating_index;
+			
+			btSphereShape * sphere;
 			// Made powerups a bit bigger
-			auto sphere = new btSphereShape(0.25);
+			if (powerup->powerup_type == Entities::FloatingGoldPowerup)
+				sphere = new btSphereShape( FLOATING_GOLD_POWERUP_SIZE );
+			else if (powerup->powerup_type == Entities::FloatingGoldPowerup)
+				sphere = new btSphereShape( GOLD_CHEST_POWERUP_SIZE );
+			else
+				sphere = new btSphereShape( NORMAL_POWERUP_SIZE );
 			//m_collisionShapes.push_back(sphere);
 
 			btGhostObject *body = new btGhostObject();
@@ -1022,6 +1035,7 @@ void Simulation::step(double seconds)
 				event->kart_id = report.kart_id;
 				event->powerup_type = report.powerup_type;
 				event->powerup_id = report.powerup_id;
+				event->floating_index = report.floating_index;
 				events_out.push_back(event);
 
 				takenPowerups[report.powerup_id] = true;

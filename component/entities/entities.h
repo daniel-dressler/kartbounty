@@ -40,7 +40,8 @@ namespace Entities {
 		SpeedPowerup,
 		HealthPowerup,
 		RocketPowerup,
-		PulsePowerup
+		PulsePowerup,
+		FloatingGoldPowerup
 	} powerup_t;
 
 	class CarEntity : public Entity {

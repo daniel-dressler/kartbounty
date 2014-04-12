@@ -88,6 +88,7 @@
     <ClCompile Include="component\rendering\rendering.cpp" />
     <ClCompile Include="component\rendering\SELib\SEMatrix.cpp" />
     <ClCompile Include="component\rendering\SELib\SEMesh.cpp" />
+    <ClCompile Include="component\rendering\SELib\SEParticleSystem.cpp" />
     <ClCompile Include="component\rendering\SELib\SEQuaternion.cpp" />
     <ClCompile Include="component\rendering\SELib\SEStdMath.cpp" />
     <ClCompile Include="component\rendering\SELib\SETimer.cpp" />
@@ -118,6 +119,7 @@
     <ClInclude Include="component\rendering\SELib\SELinearMath.h" />
     <ClInclude Include="component\rendering\SELib\SEMatrix.h" />
     <ClInclude Include="component\rendering\SELib\SEMesh.h" />
+    <ClInclude Include="component\rendering\SELib\SEParticleSystem.h" />
     <ClInclude Include="component\rendering\SELib\SEQuaternion.h" />
     <ClInclude Include="component\rendering\SELib\SEStdDataTypes.h" />
     <ClInclude Include="component\rendering\SELib\SEStdMath.h" />
@@ -128,6 +130,8 @@
     <ClInclude Include="Standard.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="component\rendering\ParticlePShader.glsl" />
+    <None Include="component\rendering\ParticleVShader.glsl" />
     <None Include="component\rendering\PShader.glsl" />
     <None Include="component\rendering\PShaderGUI.glsl" />
     <None Include="component\rendering\ShaderStructs.glsl" />

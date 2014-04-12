@@ -100,6 +100,7 @@ namespace Events {
 		powerup_id_t powerup_id;
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
+		int floating_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupPickup)
@@ -107,6 +108,7 @@ namespace Events {
 		Vector3 pos;
 		Entities::powerup_t powerup_type;
 		entity_id kart_id;
+		int floating_index;
 	ENDEVENT;
 
 	EVENTSTRUCT(PowerupDestroyed)

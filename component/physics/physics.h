@@ -125,6 +125,7 @@ namespace Physics {
 			powerup_id_t powerup_id;
 			btGhostObject *powerup_body;
 			Vector3 powerup_pos;
+			int floating_gold;
 
 			// Arena
 			btRigidBody* arena;
@@ -161,6 +162,8 @@ namespace Physics {
 			// Powerup
 			Entities::powerup_t powerup_type;
 			powerup_id_t powerup_id;
+			int floating_index;
+
 			// bullet
 			int bullet_id;
 		};

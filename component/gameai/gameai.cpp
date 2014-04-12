@@ -9,6 +9,11 @@
 #define ROCKET_DISTANCE 3
 #define ROCKET_DAMAGE 2
 
+// floating gold cooldown
+#define TIMER_FOR_FLOATING_GOLD 5
+// floating gold reward
+#define REWARD_FOR_FLOATING_GOLD 5
+
 // Score to win
 #define FINAL_SCORE_GOAL 9
 // How much health to substruct on bullet hit
@@ -36,6 +41,8 @@ const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10),
 int goldSpawnCounter;
 int goldSpawnPointCount;
 
+std::vector<GameAi::floating_gold *> floating_gold_array;
+
 GameAi::GameAi()
 {
 	active_powerups = 0;
@@ -55,12 +62,60 @@ GameAi::GameAi()
 
 	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
 
+	floating_gold_int();
+
 	gamePaused = false;
 	currentState = StartMenu;
 }
 
 GameAi::~GameAi()
 {
+}
+
+void GameAi::floating_gold_int()
+{
+	
+	floating_gold * fg0 = new floating_gold();
+	fg0->location = Vector3(0,2.5f,0);
+	fg0->active = false;
+	fg0->timer = 0;
+	fg0->index_in_vector = 0;
+
+	floating_gold_array.push_back( fg0 );
+
+	floating_gold * fg1 = new floating_gold();
+	fg1->location = Vector3(0,3.5f,19);
+	fg1->active = false;
+	fg1->timer = 0;
+	fg1->index_in_vector = 1;
+
+	floating_gold_array.push_back( fg1 );
+	
+	struct floating_gold * fg2 = new floating_gold();
+	fg2->location = Vector3(0,3.5f,-19);
+	fg2->active = false;
+	fg2->timer = 0;
+	fg2->index_in_vector = 2;
+
+	floating_gold_array.push_back( fg2 );
+
+	struct floating_gold * fg3 = new floating_gold();
+	fg3->location = Vector3(19,3.5f,0);
+	fg3->active = false;
+	fg3->timer = 0;
+	fg3->index_in_vector = 3;
+
+	floating_gold_array.push_back( fg3 );
+
+	struct floating_gold * fg4 = new floating_gold();
+	fg4->location = Vector3(-19,3.5f,0);
+	fg4->active = false;
+	fg4->timer = 0;
+	fg4->index_in_vector = 4;
+	gamePaused = false;
+	currentState = StartMenu;
+
+	floating_gold_array.push_back( fg4 );
 }
 
 void GameAi::setup()
@@ -194,6 +249,8 @@ int GameAi::planFrame()
 
 				// Score or store pickup
 				auto kart = GETENTITY(kart_id, CarEntity);
+				
+				int index_fg;
 
 				switch (powerup) 
 				{
@@ -207,6 +264,13 @@ int GameAi::planFrame()
 
 					case Entities::GoldCoinPowerup:
 						kart->gold += SMALL_GOLD_VALUE;
+						break;
+
+					case Entities::FloatingGoldPowerup:
+						index_fg = pickup->floating_index;
+						floating_gold_array[index_fg]->active = false;
+						floating_gold_array[index_fg]->timer = TIMER_FOR_FLOATING_GOLD;
+						kart->gold += REWARD_FOR_FLOATING_GOLD;
 						break;
 
 					default:
@@ -358,6 +422,7 @@ int GameAi::planFrame()
 			break;
 		}
 	}
+
 	m_mb->emptyMail();
 	
 
@@ -424,6 +489,8 @@ int GameAi::planFrame()
 	// handle powerups
 	handle_powerups_not_gold(frame_timer.CalcSeconds());
 
+	
+
 	// Issue planned events
 	m_mb->sendMail(events_out);
 
@@ -451,6 +518,9 @@ int GameAi::planFrame()
 		timeAtLastFrame = fps_timer.CalcSeconds();
 	}
 
+	// handle floating gold powerups
+	update_floating_gold( frame_timer.CalcSeconds() );
+	
 	return 1;
 }
 
@@ -662,4 +732,28 @@ void GameAi::updateExplodingKarts()
 	}
 
 	m_mb->sendMail(events);
+}
+
+void GameAi::update_floating_gold( double time)
+{
+	// handle floating gold powerups
+	std::vector<Events::Event *> events_out_floating_gold ;
+
+	for (auto gold : floating_gold_array)
+	{
+		if ( !gold->active && gold->timer <= 0)
+		{
+			Events::PowerupPlacementEvent * event = spawn_powerup(Entities::FloatingGoldPowerup, gold->location);
+			event->floating_index = gold->index_in_vector;
+			events_out_floating_gold.push_back( event );
+			gold->active = true;
+		}
+		else
+		{
+			gold->timer -= time;
+		}
+	}
+
+	// Issue planned events
+	m_mb->sendMail(events_out_floating_gold);
 }
