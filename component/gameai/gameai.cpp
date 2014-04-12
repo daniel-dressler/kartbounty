@@ -332,6 +332,11 @@ int GameAi::planFrame()
 						}
 					}
 				}
+
+				if(currentState == StartMenu && inputEvent->yPressed)
+				{
+					// If this happens we should display the controller mapping
+				}
 			}
 			break;
 
