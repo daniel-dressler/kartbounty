@@ -29,12 +29,12 @@ private:
 
 	float inputPauseTimer;
 
-	struct exploadingKart {
+	struct explodingKart {
 		entity_id kart_id;
 		float timer;
 	};
 
-	std::vector<exploadingKart *> m_exploding_karts;
+	std::vector<explodingKart *> m_exploding_karts;
 	
 	enum GameStates
 	{
