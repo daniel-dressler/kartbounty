@@ -719,7 +719,7 @@ void Simulation::sendRocketEvent(entity_id kart_hit_id, entity_id shooting_kart_
 	// Send out hit events
 	std::vector<Events::Event *> events_out;
 
-	auto hit_event = NEWEVENT(RocketHitEvent);
+	auto hit_event = NEWEVENT(RocketHit);
 
 	hit_event->shooting_kart_id = shooting_kart_id; // if -1 hit ground, if TTL expired
 	hit_event->kart_hit_id = kart_hit_id;
@@ -876,7 +876,6 @@ void Simulation::step(double seconds)
 			if (input->aPressed && !gamePaused && kart_ent->shoot_timer <= 0) {
 				kart_ent->shoot_timer = PLAYER_SHOOTING_COOLDOWN;
 				fireBullet(kart_id);
-				fireRocket(kart_id);
 			}
 
 			solveBulletFiring(kart_id, MIN_ANGLE_SHOOTING, MAX_DIST_SHOOTING);
@@ -958,6 +957,11 @@ void Simulation::step(double seconds)
 				case Entities::PulsePowerup:
 				{
 					do_pulse_powerup(powUsed->kart_id);
+				}
+				break;
+				case Entities::RocketPowerup:
+				{
+					fireRocket(powUsed->kart_id);
 				}
 				break;
 			default:

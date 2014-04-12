@@ -44,7 +44,7 @@ namespace Events {
 		BulletList,
 		ScoreBoardUpdate,
 		KartHitByBullet,
-		RocketHitEvent,
+		RocketHit,
 		Quit
 	};
 	
@@ -228,7 +228,7 @@ namespace Events {
 		std::vector<entity_id> kartsByScore;		// Karts are ordered from highest score to lowest
 	ENDEVENT;	
 	
-	EVENTSTRUCT(RocketHitEvent)
+	EVENTSTRUCT(RocketHit)
 		entity_id shooting_kart_id;
 		entity_id kart_hit_id;
 		btVector3 hit_pos;
