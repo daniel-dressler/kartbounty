@@ -498,33 +498,16 @@ void GameAi::updateScoreBoard()
 {
 	std::vector<Events::Event *> events_out;
 
-	// Get top 10 scoring karts
-	uint32_t MAX_SCORERS = 10;
-	std::vector<entity_id> top_scorers;
-	for (auto id : kart_ids) {
-		size_t size = top_scorers.size();
-		bool full = size >= MAX_SCORERS;
-		entity_id poorest = 0;
-		if (full && size > 0) {
-			poorest = top_scorers.back();
-		}
-		if (poorest == 0 || sortByScore(id, poorest)) {
-			if (full) {
-				top_scorers.pop_back();
-			}
-			top_scorers.push_back(id);
-			std::sort(top_scorers.begin(), top_scorers.end(), sortByScore);
-		}
-	}
+	std::vector<entity_id> sortedList = kart_ids;
+	std::sort(sortedList.begin(), sortedList.end(), sortByScore);
 
 	auto scoreBoardEvent = NEWEVENT(ScoreBoardUpdate);
-	scoreBoardEvent->kartsByScore = top_scorers;
+	scoreBoardEvent->kartsByScore = sortedList;
 	events_out.push_back(scoreBoardEvent);
-	
-	// Check for end of game condition
-	if(!top_scorers.empty())
+
+	if(!sortedList.empty())
 	{
-		if(GETENTITY(top_scorers[0], CarEntity)->gold > FINAL_SCORE_GOAL)
+		if(GETENTITY(sortedList[0], CarEntity)->gold >= FINAL_SCORE_GOAL)
 		{
 			// Some one has reached the goal, end the round
 			events_out.push_back(NEWEVENT(TogglePauseGame));	// Pause the karts
@@ -532,7 +515,7 @@ void GameAi::updateScoreBoard()
 
 			// Did a player win?
 			for (auto player : player_kart_ids) {
-				if (top_scorers[0] == player) {
+				if (sortedList[0] == player) {
 					roundEndEvent->playerWon = true;
 				}
 			}
