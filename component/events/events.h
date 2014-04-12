@@ -41,6 +41,7 @@ namespace Events {
 		TogglePauseGame,
 		ChangeMusic,
 		ShootReport,
+		MusicVolumeChange,
 		Shoot,
 		BulletList,
 		ScoreBoardUpdate,
@@ -65,6 +66,10 @@ namespace Events {
 
 	EVENTSTRUCT(KartDestroyed)
 		entity_id kart_id;
+	ENDEVENT;
+
+	EVENTSTRUCT(MusicVolumeChange)
+		bool increase;		// If false decrease music vol
 	ENDEVENT;
 
 	EVENTSTRUCT(PlayerKart)

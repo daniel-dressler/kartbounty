@@ -112,6 +112,8 @@ void GameAi::floating_gold_int()
 	fg4->active = false;
 	fg4->timer = 0;
 	fg4->index_in_vector = 4;
+	gamePaused = false;
+	currentState = StartMenu;
 
 	floating_gold_array.push_back( fg4 );
 }
@@ -253,8 +255,6 @@ int GameAi::planFrame()
 				switch (powerup) 
 				{
 					case Entities::GoldCasePowerup:
-						// Return point to pool
-						open_point(pickup->pos);
 
 						active_tresures--;
 						kart->gold += BIG_GOLD_VALUE;
@@ -535,17 +535,8 @@ Vector3 GameAi::pick_point()
 {
 	Vector3	open = goldSpawnLocations[goldSpawnCounter % goldSpawnPointCount];
 	goldSpawnCounter++;
-	//int pt = rand() % m_open_points.size();
-	//Vector3 open = m_open_points[pt];
-	//m_open_points.erase(m_open_points.begin() + pt);
-	return open;
-}
 
-void GameAi::open_point(Vector3 pt)
-{
-	//if (--active_powerups <= 0)
-	//	DEBUGOUT("Warning: Extra powerup location appeared\n");
-	//m_open_points.push_back(pt);
+	return open;
 }
 
 Events::PowerupPlacementEvent * GameAi::spawn_powerup(Entities::powerup_t p_type, Vector3 pos)

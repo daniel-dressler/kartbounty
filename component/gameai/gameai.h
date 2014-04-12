@@ -69,7 +69,6 @@ private:
 	powerup_id_t m_gold_case_id;
 
 	Vector3 pick_point();
-	void open_point(Vector3);
 	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t p_type, Vector3 pos);
 	void updateScoreBoard();
 	void outputScoreBoard(std::vector<entity_id> list);

@@ -909,7 +909,7 @@ void Simulation::step(double seconds)
 			powerup->powerup_id = id;
 			powerup->floating_gold = powerup_event->floating_index;
 			
-			auto sphere;
+			btSphereShape * sphere;
 			// Made powerups a bit bigger
 			if (powerup->powerup_type == Entities::FloatingGoldPowerup)
 				sphere = new btSphereShape( FLOATING_GOLD_POWERUP_SIZE );
