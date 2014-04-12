@@ -26,7 +26,8 @@ namespace SE
 		Vector3 vVelDir;
 		Real fVelMin;
 		Real fVelRand;
-		Real fVelAngle;
+		Real fVelAngleMin;
+		Real fVelAngleRand;
 
 		Int32 bShareVelPosAngle;
 

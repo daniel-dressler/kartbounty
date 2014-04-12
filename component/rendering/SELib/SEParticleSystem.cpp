@@ -235,7 +235,8 @@ Int32 ParticleEmitter::Process( Real fElapse, const Vector3& vEyePos )
 
 			Real fAngle = fRandAdj * ( rand() % 32767 );
 			fAngle = fAngle*(fAngle*(fAngle*6-15)+10)*0.5f;
-			fAngle = DEGTORAD( settings.fVelAngle ) * -fAngle;
+			fAngle = DEGTORAD( settings.fVelAngleRand ) * -fAngle;
+			fAngle += DEGTORAD( settings.fVelAngleMin );
 			if( !settings.bShareVelPosAngle )
 				fXZAngle = ( 6.28f * fRandAdj * ( rand() % 32767 ) );
 
