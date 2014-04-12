@@ -7,15 +7,15 @@
 
 // Rocket radius
 #define ROCKET_DISTANCE 3
-#define ROCKET_DAMAGE 2
+#define ROCKET_DAMAGE 5
 
 // floating gold cooldown
-#define TIMER_FOR_FLOATING_GOLD 5
+#define TIMER_FOR_FLOATING_GOLD 20
 // floating gold reward
 #define REWARD_FOR_FLOATING_GOLD 5
 
 // Score to win
-#define FINAL_SCORE_GOAL 9
+#define FINAL_SCORE_GOAL 30
 // How much health to substruct on bullet hit
 #define DAMAGE_FROM_BULLET 1
 // Number of karts
@@ -34,7 +34,7 @@
 // time to stop listening to input events at end of round
 #define TIME_TO_IGNORE_INPUT 0.5
 // time to wait before resetting kart to show explosion
-#define TIME_TO_EXPLODE 2
+#define TIME_TO_EXPLODE 3
 
 const Vector3 goldSpawnLocations[] = { Vector3(0,1.1, 0), Vector3(10, 1.1, -10), Vector3(-10, 1.1, 10), Vector3(17,2.1,0), Vector3(-17,2.1,0),
 	Vector3(10,1.1,10), Vector3(-10,1.1,-10), Vector3(0,2.1,17), Vector3(0,2.1,-17) };
