@@ -590,7 +590,7 @@ void GameAi::updateScoreBoard()
 
 	m_mb->sendMail(events_out);
 
-	outputScoreBoard(sortedList);
+	//outputScoreBoard(sortedList);
 }
 
 // Outputs the score borad to the console

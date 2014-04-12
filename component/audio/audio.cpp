@@ -1,5 +1,6 @@
 #include <fmod.h>
 #include <fmod_errors.h>
+#include <time.h>
 
 #include "audio.h"
 
@@ -14,7 +15,7 @@
 #define ROLL_OFF_SCALE 1.0f
 
 // Volumes
-#define MUSIC_VOLUME 0.15f
+#define MUSIC_VOLUME 0.30f
 #define SOUND_EFFECTS_VOLUME 0.5f
 #define LOW_ENGINE_NOISE_VOLUME 0.2f
 
@@ -62,7 +63,6 @@ void Audio::setup() {
 	SetupHardware();
 
 	gamePaused = false;
-	m_musicTrack = 0;
 
 	//// Setup music and sound effects channels
 	ERRCHECK(m_system->createChannelGroup("Effects", &m_channelGroupEffects));
@@ -77,7 +77,10 @@ void Audio::setup() {
 
 	// Load all the sound files
 	LoadMusic("assets/audio/BrainDead.mp3");
-	//LoadMusic("assets/audio/Brothers.mp3");
+	LoadMusic("assets/audio/Brothers.mp3");
+	LoadMusic("assets/audio/Below-the-Canopy.mp3");
+	LoadMusic("assets/audio/Breaking-the-Sky.mp3");
+	LoadMusic("assets/audio/Last-stand.mp3");
 	playMusic = true;
 
 	Sounds.EngineSound = LoadSound("assets/audio/engineNoise3.wav", FMOD_3D);
@@ -95,6 +98,9 @@ void Audio::setup() {
 	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
 	Sounds.KartBulletHit = LoadSound("assets/audio/KartBulletHit.mp3", FMOD_3D);
 	Sounds.PulsePowerUp = LoadSound("assets/audio/pulseSound.wav", FMOD_3D);
+
+	srand(time(NULL));
+	m_musicTrack = rand() % m_MusicList.size();
 
 	StartMusic();
 	//Setup3DEnvironment();
@@ -274,7 +280,7 @@ int Audio::LoadSound(char* file, FMOD_MODE mode){
 }
 
 void Audio::StartMusic(){
-	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicPlaybackChannel);
+	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[m_musicTrack], 0, &musicPlaybackChannel);
 	musicPlaybackChannel->setMode(FMOD_LOOP_NORMAL);
 	musicPlaybackChannel->setChannelGroup(m_channelGroupMusic);
 	m_channelGroupMusic->setVolume(MUSIC_VOLUME);
@@ -376,6 +382,7 @@ void Audio::update(Real seconds){
 					false, &roundStartChannel));
 
 				m_channelGroupEngineSound->setPaused(false);
+				ChangeMusic();
 			}
 			break;
 		case Events::EventType::RoundEnd:
