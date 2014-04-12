@@ -835,7 +835,7 @@ int Renderer::render( float fElapseSec )
 		for( Int32 i = 0; i < aryCameras.size(); i++ )
 		{	
 			glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
-			guidata.matWorldViewProj.Orthographic( 0, nWinWidth, 0, nWinWidth * ( (Real)aryCameras[i].h / aryCameras[i].w ), -1, 1 );
+			guidata.matWorldViewProj.Orthographic( 0, nWinHeight * ( (Real)aryCameras[i].w / aryCameras[i].h ), 0, nWinHeight, -1, 1 );
 			glhUpdateBuffer( m_eftGUI, m_bufGUI );
 
 			_DrawScoreBoard( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40, camplayerid[i] );
@@ -846,6 +846,7 @@ int Renderer::render( float fElapseSec )
 				if( camplayerid[i] == kart_entity->playerNumber )
 				{
 					GLmesh temp_mesh;
+
 					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - 100, (nWinHeight>>1) - 100, 60, 40, Vector4( 1,1,1,0.8f ) ) ), 6 );
 					switch( kart_entity->powerup_slot )
 					{
@@ -863,6 +864,24 @@ int Renderer::render( float fElapseSec )
 						break;
 					}
 					glhDestroyMesh( temp_mesh );
+
+					Int32 width = 150;
+					Int32 height = 20;
+					Int32 xx = 100;
+					Int32 yy = 60;
+
+					glhEnableTexture( m_difBlank );
+					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - xx, (nWinHeight>>1) - yy, width, height, Vector4( 0,0,0,0.8f ) ) ), 6 );
+					glhDrawMesh( m_eftGUI, temp_mesh );
+					glhDestroyMesh( temp_mesh );
+
+					Int32 hpw = kart_entity->health * ( width - 6 );
+					Int32 ofs = ( 1.0f - kart_entity->health ) * ( width - 6 );
+
+					glhCreateGUI( temp_mesh, GuiBox( GuiBox( (nWinWidth>>1) - xx - ( ofs >> 1 ), (nWinHeight>>1) - yy, hpw - 6, height - 6, Vector4( 1,0,0,0.8f ) ) ), 6 );
+					glhDrawMesh( m_eftGUI, temp_mesh );
+					glhDestroyMesh( temp_mesh );
+
 					break;
 				}
 			}
