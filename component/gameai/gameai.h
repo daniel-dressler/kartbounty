@@ -62,7 +62,7 @@ private:
 	void open_point(Vector3);
 	Events::PowerupPlacementEvent *spawn_powerup(Entities::powerup_t p_type, Vector3 pos);
 	void updateScoreBoard();
-	void outputScoreBoard();
+	void outputScoreBoard(std::vector<entity_id> list);
 
 	void add_to_future_respawn(Events::PowerupPickupEvent *);
 	void handle_powerups_not_gold(double time_elapsed);

@@ -30,6 +30,7 @@ Audio::Audio() {
 	m_pMailbox->request( Events::EventType::PlayerKart );
 	m_pMailbox->request( Events::EventType::AiKart );
 	m_pMailbox->request( Events::EventType::AudioPlayPause);
+	m_pMailbox->request( Events::EventType::ChangeMusic );
 	m_pMailbox->request( Events::EventType::PowerupPickup );
 	m_pMailbox->request( Events::EventType::PowerupActivated );
 	m_pMailbox->request( Events::EventType::KartHitByBullet );
@@ -61,6 +62,7 @@ void Audio::setup() {
 	SetupHardware();
 
 	gamePaused = false;
+	m_musicTrack = 0;
 
 	//// Setup music and sound effects channels
 	ERRCHECK(m_system->createChannelGroup("Effects", &m_channelGroupEffects));
@@ -75,6 +77,7 @@ void Audio::setup() {
 
 	// Load all the sound files
 	LoadMusic("assets/audio/BrainDead.mp3");
+	//LoadMusic("assets/audio/Brothers.mp3");
 	playMusic = true;
 
 	Sounds.EngineSound = LoadSound("assets/audio/engineNoise3.wav", FMOD_3D);
@@ -91,6 +94,7 @@ void Audio::setup() {
 	Sounds.Boo = LoadSound("assets/audio/boo.mp3", FMOD_2D);
 	Sounds.Cheer = LoadSound("assets/audio/cheer.mp3", FMOD_2D);
 	Sounds.KartBulletHit = LoadSound("assets/audio/KartBulletHit.mp3", FMOD_3D);
+	Sounds.PulsePowerUp = LoadSound("assets/audio/pulseSound.wav", FMOD_3D);
 
 	StartMusic();
 	//Setup3DEnvironment();
@@ -259,7 +263,7 @@ int Audio::LoadSound(char* file, FMOD_MODE mode){
 	FMOD::Sound *newSound;
 	FMOD::Channel *newChannel;
 
-	DEBUGOUT("Loading file %s\n", file);
+	//DEBUGOUT("Loading file %s\n", file);
 	
 	ERRCHECK(m_system->createSound(file, mode, 0, &newSound));
 
@@ -270,10 +274,9 @@ int Audio::LoadSound(char* file, FMOD_MODE mode){
 }
 
 void Audio::StartMusic(){
-	FMOD::Channel *musicChannel;
-	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicChannel);
-	musicChannel->setMode(FMOD_LOOP_NORMAL);
-	musicChannel->setChannelGroup(m_channelGroupMusic);
+	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[0], 0, &musicPlaybackChannel);
+	musicPlaybackChannel->setMode(FMOD_LOOP_NORMAL);
+	musicPlaybackChannel->setChannelGroup(m_channelGroupMusic);
 	m_channelGroupMusic->setVolume(MUSIC_VOLUME);
 }
 
@@ -352,6 +355,9 @@ void Audio::update(Real seconds){
 	for( Events::Event *event : m_pMailbox->checkMail() )
 	{
 		switch (event->type) {
+		case Events::ChangeMusic:
+			ChangeMusic();
+			break;
 		case Events::EventType::AudioPlayPause:
 			{
 				ToggleMusic();
@@ -636,23 +642,35 @@ void Audio::update(Real seconds){
 				pos.y = powUsed->pos.y;
 				pos.z = powUsed->pos.z;
 
-				FMOD::Channel *channel;
 
 				switch (powUsed->powerup_type)
 				{
 				case Entities::SpeedPowerup:
 					{
+						FMOD::Channel *channel;
+
 						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.SpeedPowerup], true, &channel));
+						// Set the sounds position and start the sound playing
+						channel->setChannelGroup(m_channelGroupEffects);
+						channel->set3DAttributes(&pos, 0);
+						channel->setPaused(false);
+					}
+					break;
+				case Entities::PulsePowerup:
+					{
+						FMOD::Channel *channel;
+						ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.PulsePowerUp], true, &channel));
+						channel->setChannelGroup(m_channelGroupEffects);
+						channel->set3DAttributes(&pos, 0);
+						channel->setPaused(false);
 					}
 					break;
 				default:
+					//ERRCHECK(m_system->playSound(FMOD_CHANNEL_FREE, m_SoundList[Sounds.SpeedPowerup], true, &channel));
 					break;
 				}
 
-				// Set the sounds position and start the sound playing
-				channel->setChannelGroup(m_channelGroupEffects);
-				channel->set3DAttributes(&pos, 0);
-				channel->setPaused(false);
+
 			}
 			break;
 		case Events::EventType::Explosion:
@@ -681,6 +699,16 @@ void Audio::update(Real seconds){
 	ERRCHECK(m_system->update());
 
 	//OutputMemUsage();
+}
+
+void Audio::ChangeMusic()
+{
+	musicPlaybackChannel->stop();
+	m_musicTrack++;
+	m_system->playSound(FMOD_CHANNEL_FREE, m_MusicList[m_musicTrack % (m_MusicList.size())], 0, &musicPlaybackChannel);
+	musicPlaybackChannel->setMode(FMOD_LOOP_NORMAL);
+	musicPlaybackChannel->setChannelGroup(m_channelGroupMusic);
+	m_channelGroupMusic->setVolume(MUSIC_VOLUME);
 }
 
 

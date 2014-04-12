@@ -39,6 +39,7 @@ namespace Events {
 		KartColideArena,
 		KartHandbrake,
 		TogglePauseGame,
+		ChangeMusic,
 		ShootReport,
 		Shoot,
 		BulletList,
@@ -76,6 +77,9 @@ namespace Events {
 
 	EVENTSTRUCT(ArenaMeshCreated)
 		btTriangleMesh *arena;
+	ENDEVENT;
+
+	EVENTSTRUCT(ChangeMusic)
 	ENDEVENT;
 
 	EVENTSTRUCT(Explosion)
