@@ -115,7 +115,7 @@ void GameAi::floating_gold_int()
 	fg4->timer = 0;
 	fg4->isFloatingGold = false;
 	fg4->index_in_vector = 4;
-	floating_gold_array.push_back( fg2 );
+	floating_gold_array.push_back( fg4 );
 
 	struct floating_gold * fg5 = new floating_gold();
 	fg5->location = Vector3(0,1,12);
@@ -132,14 +132,6 @@ void GameAi::floating_gold_int()
 	fg6->isFloatingGold = false;
 	fg6->index_in_vector = 6;
 	floating_gold_array.push_back( fg6 );
-
-	struct floating_gold * fg7 = new floating_gold();
-	fg7->location = Vector3(12,1,0);
-	fg7->active = false;
-	fg7->timer = 0;
-	fg7->isFloatingGold = false;
-	fg7->index_in_vector = 7;
-	floating_gold_array.push_back( fg7 );
 }
 
 void GameAi::setup()
