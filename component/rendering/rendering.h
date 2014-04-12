@@ -77,6 +77,10 @@ private:
 	GLmesh				m_mshPowerRing2;
 	GLmesh				m_mshPowerSphere;
 
+	GLtex				m_texPowerRocket;
+	GLtex				m_texPowerPulse;
+	GLtex				m_texPowerSpeed;
+
 	// GUI
 	GLmesh				m_mshGUIStart;
 	GLtex				m_texGUIStart;
