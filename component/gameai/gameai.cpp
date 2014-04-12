@@ -5,6 +5,10 @@
 #include "gameai.h"
 #include "../entities/entities.h"
 
+// Rocket radius
+#define ROCKET_DISTANCE 3
+#define ROCKET_DAMAGE 2
+
 // Score to win
 #define FINAL_SCORE_GOAL 9
 // How much health to substruct on bullet hit
@@ -47,6 +51,7 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::RoundStart );
 	m_mb->request( Events::EventType::Input );
 	m_mb->request( Events::EventType::StartMenuInput );
+	m_mb->request( Events::EventType::RocketHit );
 
 	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
 
@@ -186,6 +191,53 @@ int GameAi::planFrame()
 		{
 			case Events::EventType::Quit:
 			return 0;
+			break;
+
+			case Events::EventType::RocketHit:
+			{
+				auto rocket_hit = ((Events::RocketHitEvent *)event);
+				auto hit_pos = rocket_hit->hit_pos;
+
+				for (auto affected_kart_id : kart_ids)
+				{
+					if (affected_kart_id != rocket_hit->shooting_kart_id)
+					{
+						auto current_kart = GETENTITY(affected_kart_id, CarEntity);
+						auto pos = current_kart->Pos;
+
+						btScalar delta_x =(hit_pos.getX() - pos.x);
+						btScalar delta_z =(hit_pos.getZ() - pos.z);
+
+						float karts_dist = sqrt(delta_x*delta_x + delta_z*delta_z);
+						bool close_enough = (karts_dist < ROCKET_DISTANCE);
+
+						if (close_enough)
+						{
+							current_kart->health -= ROCKET_DAMAGE;
+
+							if (current_kart->health <= 0)
+							{
+								// Add points to the kart that shot the bullet
+								auto shootingKart = GETENTITY(rocket_hit->shooting_kart_id, CarEntity);
+								shootingKart->gold += KART_KILL_GOLD_VALUE;
+
+								auto explodeEvent = NEWEVENT( Explosion );
+								explodeEvent->exploder = affected_kart_id;
+								explodeEvent->pos = current_kart->Pos;
+
+								events_out.push_back(explodeEvent);
+
+								current_kart->isExploding = true;
+								auto localDeadKart = new explodingKart();
+								localDeadKart->kart_id = affected_kart_id;
+								localDeadKart->timer = TIME_TO_EXPLODE;
+
+								m_exploding_karts.push_back(localDeadKart);	
+							}
+						}
+					}
+				}
+			}
 			break;
 
 			case Events::EventType::PowerupPickup:
@@ -353,6 +405,7 @@ int GameAi::planFrame()
 					localDeadKart->timer = TIME_TO_EXPLODE;
 
 					m_exploding_karts.push_back(localDeadKart);	
+					m_exploding_karts.push_back(localDeadKart);
 				}
 			}
 			break;		
@@ -618,7 +671,7 @@ void GameAi::newRound(int numPlayers, int numAi)
 
 void GameAi::spawn_a_powerup_not_gold(Vector3 pos, std::vector<Events::Event *> &events_out)
 {
-	int type_num =  3; //rand() %4 ;
+	int type_num = rand() %4 ;
 		switch (type_num)
 		{
 			case 0:
