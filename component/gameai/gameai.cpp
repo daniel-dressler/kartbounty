@@ -60,7 +60,7 @@ GameAi::GameAi()
 	m_mb->request( Events::EventType::StartMenuInput );
 	m_mb->request( Events::EventType::RocketHit );
 
-	goldSpawnPointCount = sizeof goldSpawnLocations / sizeof Vector3;
+	goldSpawnPointCount = sizeof(goldSpawnLocations) / sizeof(Vector3);
 
 	floating_gold_int();
 

@@ -803,7 +803,9 @@ void Simulation::step(double seconds)
 			Entities::CarEntity *kart_ent = GETENTITY(kart_id, CarEntity);
 			btRaycastVehicle *kart = m_karts.at(kart_id)->vehicle;
 
-			preventKartFlipping(kart, &toBtVector(&(kart_ent->Up)));
+
+			btVector3 up = toBtVector(&(kart_ent->Up));
+			preventKartFlipping(kart, &up);
 
 			// Check if kart is currently blowing up and if so give it empty input
 			if(kart_ent->isExploding)

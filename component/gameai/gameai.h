@@ -31,7 +31,7 @@ public:
 		int index_in_vector;
 	};
 
-	void GameAi::floating_gold_int();
+	void floating_gold_int();
 
 private:
 	Events::Mailbox* m_mb;
@@ -78,7 +78,7 @@ private:
 
 	void endRound();
 	void newRound(int, int);
-	Events::PowerupPlacementEvent * GameAi::spawn_a_powerup_not_gold(Vector3 pos);
+	Events::PowerupPlacementEvent *spawn_a_powerup_not_gold(Vector3 pos);
 	void updateExplodingKarts();
 
 	void update_floating_gold( double time );

@@ -25,6 +25,7 @@ SRC = main.cpp Standard.cpp \
 	component/rendering/SELib/SEVector.cpp \
 	component/rendering/SELib/SEQuaternion.cpp \
 	component/rendering/SELib/SEMesh.cpp \
+	component/rendering/SELib/SEParticleSystem.cpp \
 	component/physics/physics.cpp \
 	component/entities/entities.cpp
 OBJS = $(patsubst %.cpp,$(ODIR)/%.o, $(SRC))
