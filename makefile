@@ -3,7 +3,7 @@ BULLET = ./lib/bullet
 BULLETFLAGS = -I $(BULLET)/src/
 CXXFLAGS += -Wno-ignored-qualifiers -g -Wall -Wextra -Wno-write-strings -std=c++11 $(shell pkg-config --cflags sdl2 glew glu gl) $(BULLETFLAGS)
 
-BULLETLIB = $(BULLET)/static_lib/src
+BULLETLIB = $(BULLET)/src
 BULLETLIBS = $(BULLETLIB)/BulletDynamics/libBulletDynamics.a $(BULLETLIB)/BulletCollision/libBulletCollision.a $(BULLETLIB)/LinearMath/libLinearMath.a
 LDLIBS += -g -lm $(shell pkg-config --libs sdl2 glew glu gl) $(BULLETLIBS) \
 		  -lXv -lXext -lX11 -lXxf86vm -ldl
@@ -40,12 +40,10 @@ $(ODIR)/%.o: %.cpp
 
 $(BULLET)/built:
 	cd $(BULLET); \
-		mkdir -p static_lib; \
-		cd static_lib; \
-		cmake ../ -G "Unix Makefiles" -DBUILD_DEMOS=off -DBUILD_EXTRAS=off -DINSTALL_LIBS=on; \
+		cmake -G "Unix Makefiles" -DBUILD_DEMOS=off -DBUILD_EXTRAS=off -DINSTALL_LIBS=on; \
 		make -j4; \
-		touch ../built;
+		touch built;
 
 .PHONY: clean
 clean:
-	rm -rf $(BDIR) $(ODIR) $(BULLET)/built
+	rm -rf $(BDIR) $(ODIR) $(BULLET)/built $(BULLET)/static_lib

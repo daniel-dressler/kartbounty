@@ -1,0 +1,3 @@
+[submodule "lib/bullet"]
+	path = lib/bullet
+	url = git@github.com:vancegroup-mirrors/bullet-physics.git
