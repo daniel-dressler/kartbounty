@@ -23,6 +23,7 @@ struct _TimerDataStruct
 
 Timer::Timer( Int32 bAutoStart ) : m_pData( 0 )
 {
+	bAutoStart = bAutoStart; // Hide unused param warning
 #ifdef _WIN32
 	m_pData = calloc( 1, sizeof(_TimerDataStruct) );
 #else
