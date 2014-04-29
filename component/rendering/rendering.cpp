@@ -596,7 +596,7 @@ int Renderer::render( float fElapseSec )
 	*/
 	m_ps.Update( fElapseSec, aryCameras[0].eyepos );
 
-	for( Int32 i = 0; i < aryCameras.size(); i++ )
+	for( UInt32 i = 0; i < aryCameras.size(); i++ )
 	{	
 		glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
 
@@ -822,7 +822,7 @@ int Renderer::render( float fElapseSec )
 		_DrawScoreBoard( 0, 100, 0 );
 		break;
 	case RS_DRIVING:
-		for( Int32 i = 0; i < aryCameras.size(); i++ )
+		for( UInt32 i = 0; i < aryCameras.size(); i++ )
 		{	
 			glViewport( aryCameras[i].x, aryCameras[i].y, aryCameras[i].w, aryCameras[i].h );
 			guidata.matWorldViewProj.Orthographic( 0, nWinHeight * ( (Real)aryCameras[i].w / aryCameras[i].h ), 0, nWinHeight, -1, 1 );
@@ -830,7 +830,7 @@ int Renderer::render( float fElapseSec )
 
 			_DrawScoreBoard( -(nWinWidth>>1) + 125, (nWinHeight>>1) - 40, camplayerid[i] );
 
-			for( Int32 j = 0; j < kartsByScore.size(); j++ )
+			for( UInt32 j = 0; j < kartsByScore.size(); j++ )
 			{
 				auto kart_entity = GETENTITY(kartsByScore[j], CarEntity);
 				if( camplayerid[i] == kart_entity->playerNumber )
@@ -851,6 +851,9 @@ int Renderer::render( float fElapseSec )
 					case Entities::RocketPowerup:
 						glhEnableTexture( m_texPowerRocket );
 						glhDrawMesh( m_eftGUI, temp_mesh );
+						break;
+					default:
+						// Not all powerups can be held
 						break;
 					}
 					glhDestroyMesh( temp_mesh );
@@ -964,8 +967,6 @@ void Renderer::_DrawScoreBoard( Int32 x, Int32 y, Int32 player ) // 125, 40
 	Int32 nWinWidth, nWinHeight;
 	SDL_GetWindowSize( m_Window, &nWinWidth, &nWinHeight );
 
-	GLmesh temp_mesh;
-
 	if( player )
 	{
 		Int32 draw[3];
@@ -973,7 +974,7 @@ void Renderer::_DrawScoreBoard( Int32 x, Int32 y, Int32 player ) // 125, 40
 		draw[1] = 1;
 		draw[2] = 2;
 
-		for( Int32 i = 3; i < kartsByScore.size(); i++ )
+		for( UInt32 i = 3; i < kartsByScore.size(); i++ )
 		{
 			auto kart_entity = GETENTITY(kartsByScore[i], CarEntity);
 			if( player == kart_entity->playerNumber )
@@ -992,7 +993,7 @@ void Renderer::_DrawScoreBoard( Int32 x, Int32 y, Int32 player ) // 125, 40
 	}
 	else
 	{
-		for( Int32 i = 0; i < kartsByScore.size(); i++ )
+		for( UInt32 i = 0; i < kartsByScore.size(); i++ )
 		{
 			Int32 ofs = i * 30;
 			_DrawScore( i, x, y - ofs );
@@ -1082,21 +1083,8 @@ void Renderer::_CheckMail()
 				entity_id kart_id = ((Events::PlayerKartEvent *)event)->kart_id;
 				auto kart = GETENTITY(kart_id, CarEntity);
 				
-//				cameras.clear();
 				cameras.push_back(kart->camera);
 				camplayerid.push_back(kart->playerNumber);
-			}
-			break;
-		case Events::EventType::AiKart:
-			{
-//				if (!player_kart_found)
-				{
-					entity_id kart_id = ((Events::AiKartEvent *)event)->kart_id;
-					auto kart = GETENTITY(kart_id, CarEntity);
-
-//					cameras.push_back(kart->camera);
-//					camplayerid.push_back(kart->playerNumber);
-				}
 			}
 			break;
 		case Events::EventType::PowerupPlacement:
