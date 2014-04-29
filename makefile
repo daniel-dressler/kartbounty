@@ -21,7 +21,6 @@ SRC = main.cpp Standard.cpp \
 	component/rendering/Outsource/lodepng.cpp \
 	component/rendering/SELib/SEStdMath.cpp \
 	component/rendering/SELib/SEMatrix.cpp \
-	component/rendering/SELib/SETimer.cpp \
 	component/rendering/SELib/SEVector.cpp \
 	component/rendering/SELib/SEQuaternion.cpp \
 	component/rendering/SELib/SEMesh.cpp \
