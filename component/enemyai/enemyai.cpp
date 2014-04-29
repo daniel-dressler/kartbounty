@@ -82,7 +82,6 @@ void EnemyAi::get_target_pickups(struct ai_kart *kart)
 
 void EnemyAi::get_target_aggressive(struct ai_kart *kart)
 {
-	int isPlayer = std::rand() % 3;
 	kart->target_kart_id = m_player_kart;
 
 	// ALWAYS ATTACK PLAYER. Fun stuff.
@@ -278,7 +277,7 @@ Events::InputEvent *EnemyAi::move_kart(struct ai_kart *kart_local, Real elapsed_
 	}
 	
 	// Generate input for car.
-	auto directions = drive(diff_in_angles, distance_to_target, kart_local, elapsed_time);
+	auto directions = drive(diff_in_angles, kart_local);
 	directions->reset_requested = false;
 
 	// Shoot rocket when have it
@@ -327,7 +326,7 @@ btScalar EnemyAi::getAngle(Vector2 target, Vector3 pos, btVector3 *forward)
 	return angle;
 }
 
-Events::InputEvent *EnemyAi::drive(btScalar diff_ang, btScalar dist, struct ai_kart *kart_local, Real elapsed_time)
+Events::InputEvent *EnemyAi::drive(btScalar diff_ang, struct ai_kart *kart_local)
 {
 		// Make a new event.
 		auto directions = NEWEVENT(Input);

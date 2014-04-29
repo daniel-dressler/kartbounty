@@ -49,7 +49,7 @@ private:
 	void get_target_pickups(struct ai_kart *kart);
 
 	Events::InputEvent *move_kart(struct ai_kart *, Real);
-	Events::InputEvent *drive(btScalar ang, btScalar dist, struct ai_kart *, Real elapse_time);
+	Events::InputEvent *drive(btScalar ang, struct ai_kart *);
 	void avoid_obs(int index, bool send);
 	float avoid_obs_sqr(struct ai_kart *);
 	
