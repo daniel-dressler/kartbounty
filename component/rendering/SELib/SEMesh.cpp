@@ -77,6 +77,7 @@ namespace SEG
 
 	Int32 Mesh::ReadData( Byte* pData, Int32 nSize, UInt32 uFlags, btTriangleMesh* pCollider, Vector3 vOfs )
 	{
+		uFlags = uFlags; // Hide unused param warning
 		SafeFree( m_aryIndices );
 		SafeFree( m_aryVertices );
 		SafeFree( m_aryMaterials );
@@ -105,10 +106,7 @@ namespace SEG
 		};
 	
 		m_nMaterialSet		= scan.Read<Int32>();	
-		Int32 nPointCount	= scan.Read<Int32>();
-		Int32 nTangentCount	= scan.Read<Int32>();
 		m_nMaterialCount	= scan.Read<Int32>();
-		Int32 nCoordCount	= scan.Read<Int32>();
 		Int32 nBoneCount	= scan.Read<Int32>();
 		m_nVertexCount		= scan.Read<Int32>();
 		m_nTriangleCount	= scan.Read<Int32>();
@@ -121,8 +119,6 @@ namespace SEG
 		CompBone*	pBones		= (CompBone*)  &pData[scan.Read<Int32>()];
 		Iter		scnVertices	= Iter( scan, scan.Read<Int32>() );
 		Comp3x16*	pTriangles	= (Comp3x16*)  &pData[scan.Read<Int32>()];
-
-		Int32 nFilesize = scan.Read<Int32>();
 
 		m_nVertexDataSize = m_nVertexCount * m_nVertexSize;
 		m_nIndexDataSize = m_nIndexCount * sizeof(UInt16);
@@ -149,7 +145,6 @@ namespace SEG
 
 		std::vector<Vector3> aryVertices;
 
-		Int32 v = 0;
 		switch( m_nType )
 		{
 		case SE_MT_STATICSINGLE:
