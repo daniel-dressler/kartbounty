@@ -105,8 +105,11 @@ namespace SEG
 			break;
 		};
 	
-		m_nMaterialSet		= scan.Read<Int32>();	
+		m_nMaterialSet		= scan.Read<Int32>();
+		Int32 nPointCount	= scan.Read<Int32>();
+		Int32 nTangentCount	= scan.Read<Int32>();
 		m_nMaterialCount	= scan.Read<Int32>();
+		Int32 nCoordCount	= scan.Read<Int32>();
 		Int32 nBoneCount	= scan.Read<Int32>();
 		m_nVertexCount		= scan.Read<Int32>();
 		m_nTriangleCount	= scan.Read<Int32>();
@@ -119,6 +122,16 @@ namespace SEG
 		CompBone*	pBones		= (CompBone*)  &pData[scan.Read<Int32>()];
 		Iter		scnVertices	= Iter( scan, scan.Read<Int32>() );
 		Comp3x16*	pTriangles	= (Comp3x16*)  &pData[scan.Read<Int32>()];
+
+		Int32 nFilesize = scan.Read<Int32>();
+
+		// Unused vars
+		// We need to keep the reads
+		// to match the file format
+		nPointCount = nPointCount;
+		nTangentCount = nTangentCount;
+		nCoordCount = nCoordCount;
+		nFilesize = nFilesize;
 
 		m_nVertexDataSize = m_nVertexCount * m_nVertexSize;
 		m_nIndexDataSize = m_nIndexCount * sizeof(UInt16);
@@ -144,6 +157,7 @@ namespace SEG
 		}
 
 		std::vector<Vector3> aryVertices;
+
 
 		switch( m_nType )
 		{
