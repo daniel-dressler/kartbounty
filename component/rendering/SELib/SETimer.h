@@ -8,7 +8,6 @@ class Timer
 private:
     
     using ClockType = std::chrono::high_resolution_clock;
-    using Duration = ClockType::duration;
     using TimePoint = ClockType::time_point;
     
     TimePoint m_start;
@@ -24,10 +23,10 @@ public:
     
     Float64 CalcSeconds() const 
     { 
-        auto const dur = std::chrono::duration_cast<std::chrono::seconds>(
+        auto const dur = std::chrono::duration_cast<std::chrono::milliseconds>(
                 ClockType::now() - m_start 
         );
-        return static_cast<Float64>(dur.count());
+        return static_cast<Float64>(dur.count()) / 1000.0;
     }
 };
 

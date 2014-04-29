@@ -154,6 +154,8 @@ void GameAi::add_to_future_respawn(Events::PowerupPickupEvent * event)
 
 int GameAi::planFrame()
 {
+	frame_timer.ResetClock();
+
 	const std::vector<Events::Event*> events_in = m_mb->checkMail();
 	std::vector<Events::Event *> events_out;
 	
@@ -495,7 +497,6 @@ int GameAi::planFrame()
 Real GameAi::getElapsedTime()
 {
 	Real period = frame_timer.CalcSeconds();
-	frame_timer.ResetClock();
 	return period;
 }
 
