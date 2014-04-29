@@ -25,9 +25,7 @@ int main( int argc, char** argv )
 	init_inventory();
 	Physics::Simulation *simulation = new Physics::Simulation();
 	Input *input = new Input();
-#if (PLAYAUDIO)
 	Audio *audio = new Audio();  
-#endif
 
 	GameAi *gameai = new GameAi();
 	EnemyAi *enemyai = new EnemyAi();
@@ -38,9 +36,7 @@ int main( int argc, char** argv )
 	simulation->loadWorld();
 	input->setup();
 	enemyai->setup();
-#if (PLAYAUDIO)
 	audio->setup();
-#endif
 
 
 	// -- Main Loop -----------------------------------------------------------
@@ -53,9 +49,7 @@ int main( int argc, char** argv )
 
 		simulation->step(elapsed_time);
 
-#if (PLAYAUDIO)
 		audio->update(elapsed_time);
-#endif
 		renderer->render(elapsed_time);
 	}
 
@@ -64,9 +58,7 @@ int main( int argc, char** argv )
 	delete input;
 	delete simulation;
 	delete gameai;
-#if (PLAYAUDIO)
 	delete audio;
-#endif
 	delete renderer;
 	shutdown_inventory();
 
