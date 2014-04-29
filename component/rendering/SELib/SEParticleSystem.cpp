@@ -11,7 +11,7 @@ ParticleSystem::ParticleSystem()
 
 ParticleSystem::~ParticleSystem()
 {
-	for( Int32 i = 0; i < m_aryEmitters.size(); i++ )
+	for( UInt32 i = 0; i < m_aryEmitters.size(); i++ )
 	{
 		SafeDelete( m_aryEmitters[i] );
 	}
@@ -41,7 +41,7 @@ Int32 ParticleSystem::AddEffect( Int32 nMaxParticles, const Matrix& matWorld, In
 
 Int32 ParticleSystem::RemoveEffect( Int32 nID )
 {
-	for( Int32 i = 0; i < m_aryEmitters.size(); i++ )
+	for( UInt32 i = 0; i < m_aryEmitters.size(); i++ )
 	{
 		if( m_aryEmitters[i]->GetID() == nID )
 		{
@@ -63,7 +63,7 @@ Int32 ParticleSystem::Draw( const Quaternion& qViewAngle, const Matrix& matViewP
 	p.vEyeUp = Vector3( 0,1,0 ).Transform( qViewAngle );
 	p.vEyeSide = Vector3( 1,0,0 ).Transform( qViewAngle );
 
-	for( Int32 i = 0; i < m_aryEmitters.size(); i++ )
+	for( UInt32 i = 0; i < m_aryEmitters.size(); i++ )
 	{
 		p.matWVP = m_aryEmitters[i]->GetWorldMatrix() * matViewProj;
 		glhUpdateBuffer( m_eftParticle, m_bufParticle );
@@ -89,7 +89,7 @@ Int32 ParticleSystem::Update( Real fElapse, const Vector3& vEyePos )
 		}
 	}
 
-	for( Int32 i = 0; i < m_aryEmitters.size(); i++ )
+	for( UInt32 i = 0; i < m_aryEmitters.size(); i++ )
 	{
 		m_aryEmitters[i]->Process( fElapse, vEyePos );
 	}
